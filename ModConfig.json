@@ -1,0 +1,20 @@
+{
+  "ModId": "p4gpc.dungeonloader",
+  "ModName": "Persona 4 Golden Dungeon Loader",
+  "ModAuthor": "Somebody Else",
+  "ModVersion": "1.0.0",
+  "ModDescription": "Description",
+  "ModDll": "p4gpc.dungeonloader.dll",
+  "ModIcon": "Preview.png",
+  "ModR2RManagedDll32": "x86/p4gpc.dungeonloader.dll",
+  "ModR2RManagedDll64": "x64/p4gpc.dungeonloader.dll",
+  "ModNativeDll32": "",
+  "ModNativeDll64": "",
+  "IsLibrary": false,
+  "ReleaseMetadataFileName": "p4gpc.dungeonloader.ReleaseMetadata.json",
+  "PluginData": {},
+  "IsUniversalMod": false,
+  "ModDependencies": [ "reloaded.sharedlib.hooks" ],
+  "OptionalDependencies": [],
+  "SupportedAppId": [ "p4g.exe" ]
+}
