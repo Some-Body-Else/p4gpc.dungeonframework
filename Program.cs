@@ -1,5 +1,7 @@
 ﻿using p4gpc.dungeonloader.Configuration;
+using p4gpc.dungeonloader.Accessors;
 using p4gpc.dungeonloader.Configuration.Implementation;
+
 using Reloaded.Hooks.ReloadedII.Interfaces;
 using Reloaded.Memory.Sources;
 using Reloaded.Mod.Interfaces;
@@ -43,13 +45,11 @@ namespace p4gpc.dungeonloader
         /// Configuration of the current mod.
         /// </summary>
         private IModConfig _modConfig;
-
-
-        // Encapsulates your mod logic.
-        private DungeonLoader _dungeonloader;
-
         // Accesses memory of our running process
         private IMemory _memory;
+
+        private TemplateAccessor _templates;
+
 
         private Utilities _utilities;
 
@@ -74,7 +74,7 @@ namespace p4gpc.dungeonloader
             using var currentProc = Process.GetCurrentProcess();
             int baseAddress = currentProc.MainModule.BaseAddress.ToInt32();
             _utilities = new Utilities(_configuration, _logger, baseAddress);
-            _dungeonloader = new DungeonLoader(_hooks, _utilities, _memory, _configuration);
+            _templates = new TemplateAccessor(_hooks, _utilities, _memory, _configuration);
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)
@@ -82,7 +82,7 @@ namespace p4gpc.dungeonloader
             _configuration = (Config)obj;
             _logger.WriteLine($"[{_modConfig.ModId}] Config Updated: Applying");
 
-            _dungeonloader._configuration = _configuration;
+            _templates._configuration = _configuration;
         }
 
         /* Mod loader actions. */
