@@ -8,6 +8,7 @@ using Reloaded.Memory.SigScan.ReloadedII.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -103,15 +104,7 @@ namespace p4gpc.dungeonloader
         }
 
         /// <summary>
-        /// Our original idea for scanning the entire file. Runs into an issue when it runs out of stuff its supposed to
-        /// scan for and ends up throwing an AccessViolationException. This requires some witchcraft to work around that
-        /// probably should be implemented, but I can't be bothered at the moment, so this is vestigial for the moment.
-        /// Keeping it around in case we decide to revisit the idea.
-        /// 
-        /// As note for future, AccessViolationException is not treated like other exceptions due to its relation to
-        /// memory corruption. In .NET versions past 4, the error will skip past any catch statements and present itself to
-        /// the IDE directly. There is a way to re-enable the old behavior, allowing AccessViolationException to be caught like
-        /// any other exception, but getting that to work is the issue.
+        /// Scans the executable for every instance of the given pattern
         /// </summary>
         /// <param name="pattern"></param>
         /// <param name="funcName"></param>
@@ -121,31 +114,24 @@ namespace p4gpc.dungeonloader
             using var currentProc = Process.GetCurrentProcess();
             var baseAddress = currentProc.MainModule.BaseAddress;
             var exeSize = currentProc.MainModule.ModuleMemorySize;
+            using var sigscanner = new Scanner((byte*)baseAddress, exeSize);
+            int funcOffset = 0;
+            long funcAddress = 0;
             List<long> return_list = new List<long>();
             while(true)
             {
                 try
                 {
-                    using var sigscanner = new Scanner((byte*)baseAddress, exeSize);
-                    long funcAddress = 0;
-                    try
+                    var scanResult = sigscanner.FindPattern(pattern, funcOffset+1);
+                    funcOffset = scanResult.Offset;
+                    if (funcOffset < 0)
                     {
-                        var scanResult = sigscanner.FindPattern(pattern);
-                        funcAddress = scanResult.Offset;
-                    }
-                    catch (AccessViolationException ex)
-                    {
-                        Log("Scanner reached AccessViolationException, presumed to be end of scanner");
-                        break;
-                    }
-                    if (funcAddress < 0) {
                         if (return_list.Count == 0)
                             throw new Exception($"Unable to find byte pattern {pattern}");
                         break;
                     };
-                    funcAddress += (long)baseAddress;
+                    funcAddress = (long)baseAddress+funcOffset;
                     return_list.Add(funcAddress);
-                    baseAddress = (IntPtr)funcAddress+1;
                 }
                 catch (Exception ex)
                 {

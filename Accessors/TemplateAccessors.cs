@@ -79,7 +79,7 @@ namespace p4gpc.dungeonloader.Accessors
         private DungeonTemplates _templates;
 
         private IReverseWrapper _reverseWrapper;
-        private List<long> Template_Size_MovZX;
+        private List<long> foundAddresses;
 
         public TemplateAccessor(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config)
         {
@@ -109,8 +109,11 @@ namespace p4gpc.dungeonloader.Accessors
         public void Initialize()
         {
             Debugger.Launch();
-            Template_Size_MovZX = _utils.SigScan_FindCount("0F B6 ?? ?? E4 69 9F 00", "Template_Size_MovZX", 7);
-            foreach (int address in Template_Size_MovZX)
+            //foundAddresses = _utils.SigScan_FindCount("0F B6 ?? ?? E4 69 9F 00", "Template_Size_MovZX", 7);
+            //This command currently doesn't work, but we're trying to get it there
+            foundAddresses = _utils.SigScan_FindAll("0F B6 ?? ?? E4 69 9F 00", "Template_Size_MovZX");
+
+            foreach (int address in foundAddresses)
             {
                 _utils.LogDebug($"Function found at: {address.ToString("X8")}");
                 byte R_M_BYTE;
@@ -122,19 +125,26 @@ namespace p4gpc.dungeonloader.Accessors
                 mod = (byte)(R_M_BYTE >> 6);
                 reg_out = (registerReference)((R_M_BYTE >> 3) & 0x7);
                 reg_out_src = (registerReference)(R_M_BYTE & 0x7); //4th bit doesn't seem to change mapping, so we treat it as 3
+
+                /*
+                 * Something used for MovZX, don't think it is applicable elsewhere
                 if (reg_out_src != registerReference.ESP)
                 {
                     throw new ToBeNamedExcpetion();
                     //Issue, since we only expect to handle something using the SIB byte
                 }
+                 */
                 scale = (byte)(SIB_BYTE >> 6);
                 reg_in = (registerReference)((SIB_BYTE >> 3) & 0x7);
                 reg_base = (registerReference)(SIB_BYTE & 0x7); //4th bit doesn't seem to change mapping, so we treat it as 3
-                if (reg_base != registerReference.EBP)
+                /*
+                 * Something used for MovZX, don't think it is applicable elsewhere
+                 if (reg_base != registerReference.EBP)
                 {
                     throw new ToBeNamedExcpetion();
                     //Issue, since we only expect to handle something using an address
                 }
+                 */
                 _functionAddress = address;
                 switch (0x009F69E4)
                 {
@@ -181,6 +191,7 @@ namespace p4gpc.dungeonloader.Accessors
                             break;
                         }
                 }
+                //Need more flexible way to determine what the call is to
                 SetupAsm_MovZX();
             }
         }
