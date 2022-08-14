@@ -42,6 +42,14 @@ namespace p4gpc.dungeonloader.Accessors
             ESI = 6,    //110
             EDI = 7     //111
         }
+        private enum instructionType
+        {
+            MOVZX = 0,
+            MOV = 1,
+            CMP = 2,
+            MOVSX = 3,
+            MOVSX_LOWER = 4
+        }
         
         private templateInstruction _accessType;
         private IReloadedHooks? _hooks;
@@ -99,6 +107,8 @@ namespace p4gpc.dungeonloader.Accessors
             _reverseWrapperCountExList = new List<IReverseWrapper<GetRoomExCountFunction>>();
             _reverseWrapperGetList = new List<IReverseWrapper<GetRoomFunction>>();
 
+            //Debugger.Launch();
+
             //Set up garbage here, this is where we sink our hooks in
             List<Task> initialTasks = new List<Task>();
             initialTasks.Add(Task.Run((() => Initialize())));
@@ -108,95 +118,217 @@ namespace p4gpc.dungeonloader.Accessors
 
         public void Initialize()
         {
-            Debugger.Launch();
+            byte idByte;
+            byte idByte2 = 0;
+            byte idByte3 = 0;
+            byte R_M_BYTE;
+            byte SIB_BYTE;
+            int accessedAddress;
+            bool twoByteID = false;
+            bool threeByteID = false;
+            List<String> functions = _jsonImporter.GetTemplateFunctions();
+            instructionType currentInstruction;
             //foundAddresses = _utils.SigScan_FindCount("0F B6 ?? ?? E4 69 9F 00", "Template_Size_MovZX", 7);
             //This command currently doesn't work, but we're trying to get it there
-            foundAddresses = _utils.SigScan_FindAll("0F B6 ?? ?? E4 69 9F 00", "Template_Size_MovZX");
-
-            foreach (int address in foundAddresses)
+            
+            Debugger.Launch();
+            foreach (string function in functions)
             {
-                _utils.LogDebug($"Function found at: {address.ToString("X8")}");
-                byte R_M_BYTE;
-                byte SIB_BYTE;
-                _memory.SafeRead((nuint)(address + 2), out R_M_BYTE);
-                _utils.LogDebug($"Byte found: {R_M_BYTE}");
-                _memory.SafeRead((nuint)(address + 3), out SIB_BYTE);
-                _utils.LogDebug($"Byte found: {SIB_BYTE}");
-                mod = (byte)(R_M_BYTE >> 6);
-                reg_out = (registerReference)((R_M_BYTE >> 3) & 0x7);
-                reg_out_src = (registerReference)(R_M_BYTE & 0x7); //4th bit doesn't seem to change mapping, so we treat it as 3
 
-                /*
-                 * Something used for MovZX, don't think it is applicable elsewhere
-                if (reg_out_src != registerReference.ESP)
+                foundAddresses = _utils.SigScan_FindAll(function, "TemplateFunction");
+                foreach (int address in foundAddresses)
                 {
-                    throw new ToBeNamedExcpetion();
-                    //Issue, since we only expect to handle something using the SIB byte
+                    twoByteID = false;
+                    threeByteID = false;
+                    _utils.LogDebug($"Function found at: {address.ToString("X8")}");
+                    _memory.SafeRead((nuint)(address), out idByte);
+                    if (idByte == 0x0F || idByte == 0x40)
+                    {
+                        twoByteID = true;
+                        _memory.SafeRead((nuint)(address + 1), out idByte2);
+                    }
+                    else if (idByte == 0x66)
+                    {
+                        threeByteID = true;
+                        _memory.SafeRead((nuint)(address + 1), out idByte2);
+                        _memory.SafeRead((nuint)(address + 2), out idByte3);
+                    }
+                    if (twoByteID)
+                    {
+                        _memory.SafeRead((nuint)(address + 4), out accessedAddress);
+                        if (accessedAddress != 0x009F69E4)
+                        {
+
+                            //_utils.LogDebug($"Function found at: {address.ToString("X8")}");
+                            //_utils.LogDebug($"Accessed address: {accessedAddress.ToString("X8")}");
+                        }
+                        _memory.SafeRead((nuint)(address + 2), out R_M_BYTE);
+                        //_utils.LogDebug($"R/M Byte: {R_M_BYTE.ToString("X2")}");
+                        _memory.SafeRead((nuint)(address + 3), out SIB_BYTE);
+                        //_utils.LogDebug($"SIB Byte: {SIB_BYTE.ToString("X2")}");
+                        if (idByte == 0x0F)
+                        {
+                            if (idByte2 == 0xBE)
+                            {
+
+                                currentInstruction = instructionType.MOVSX;
+                            }
+                            else if (idByte2 == 0xB6)
+                            {
+                                currentInstruction = instructionType.MOVZX;
+
+                            }
+                            else
+                            {
+                                throw new InvalidAsmInstructionTypeException(_functionAddress);
+                            }
+                        }
+                        else if (idByte == 0x40)
+                        {
+                            currentInstruction = instructionType.CMP;
+                        }
+                        else
+                        {
+                            throw new InvalidAsmInstructionTypeException(_functionAddress);
+                        }
+                    }
+                    else if (threeByteID)
+                    {
+                        _memory.SafeRead((nuint)(address + 5), out accessedAddress);
+                        if (accessedAddress != 0x009F69E4)
+                        {
+
+                            //_utils.LogDebug($"Function found at: {address.ToString("X8")}");
+                            //_utils.LogDebug($"Accessed address: {accessedAddress.ToString("X8")}");
+                        }
+                        _memory.SafeRead((nuint)(address + 3), out R_M_BYTE);
+                        //_utils.LogDebug($"R/M Byte: {R_M_BYTE.ToString("X2")}");
+                        _memory.SafeRead((nuint)(address + 4), out SIB_BYTE);
+                        //_utils.LogDebug($"SIB Byte: {SIB_BYTE.ToString("X2")}");
+                        if (idByte == 0x66)
+                        {
+                            if (idByte2 == 0x0F)
+                            {
+                                if (idByte3 == 0xBE)
+                                {
+                                    currentInstruction = instructionType.MOVSX_LOWER;
+                                }
+                                else
+                                {
+                                    throw new InvalidAsmInstructionTypeException(_functionAddress);
+                                }
+                            }
+                            else
+                            {
+                                throw new InvalidAsmInstructionTypeException(_functionAddress);
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidAsmInstructionTypeException(_functionAddress);
+                        }
+                    }
+                    else
+                    {
+                        _memory.SafeRead((nuint)(address + 3), out accessedAddress);
+                        //_utils.LogDebug($"Accessed address: {accessedAddress.ToString("X8")}");
+                        _memory.SafeRead((nuint)(address + 1), out R_M_BYTE);
+                        //_utils.LogDebug($"R/M Byte: {R_M_BYTE.ToString("X2")}");
+                        _memory.SafeRead((nuint)(address + 2), out SIB_BYTE);
+                        //_utils.LogDebug($"SIB Byte: {SIB_BYTE.ToString("X2")}");
+
+                        currentInstruction = instructionType.MOV;
+                    }
+                    mod = (byte)(R_M_BYTE >> 6);
+                    reg_out = (registerReference)((R_M_BYTE >> 3) & 0x7);
+                    reg_out_src = (registerReference)(R_M_BYTE & 0x7); //4th bit doesn't seem to change mapping, so we treat it as 3
+
+                    /*
+                     * Something used for MovZX, don't think it is applicable elsewhere
+                    if (reg_out_src != registerReference.ESP)
+                    {
+                        throw new ToBeNamedExcpetion();
+                        //Issue, since we only expect to handle something using the SIB byte
+                    }
+                     */
+                    scale = (byte)(SIB_BYTE >> 6);
+                    reg_in = (registerReference)((SIB_BYTE >> 3) & 0x7);
+                    reg_base = (registerReference)(SIB_BYTE & 0x7); //4th bit doesn't seem to change mapping, so we treat it as 3
+                    /*
+                     * Something used for MovZX, don't think it is applicable elsewhere
+                     if (reg_base != registerReference.EBP)
+                    {
+                        throw new ToBeNamedExcpetion();
+                        //Issue, since we only expect to handle something using an address
+                    }
+                     */
+                    _functionAddress = address;
+                    switch (accessedAddress)
+                    {
+                        case 0x009F69E4:
+                            {
+                                _accessType = templateInstruction.ROOM_COUNT;
+                                break;
+                            }
+                        case 0x009F69E5:
+                            {
+                                _accessType = templateInstruction.ROOM_EX_COUNT;
+                                break;
+                            }
+                        case 0x009F69E6:
+                            {
+                                _accessType = templateInstruction.ROOM_GET;
+                                break;
+                            }
+                        default:
+                            {
+                                throw new InvalidTemplateAccessorAddressException(0x7FFFFFFF);
+                            }
+                    }
+                    switch (_accessType)
+                    {
+                        case (templateInstruction.ROOM_COUNT):
+                            {
+                                _reverseWrapperCount = _hooks.CreateReverseWrapper<GetRoomCountFunction>(GetRoomCount);
+                                break;
+                            }
+                        case (templateInstruction.ROOM_EX_COUNT):
+                            {
+                                _reverseWrapperCountEx = _hooks.CreateReverseWrapper<GetRoomExCountFunction>(GetRoomExCount);
+                                break;
+                            }
+                        case (templateInstruction.ROOM_GET):
+                            {
+                                _reverseWrapperGet = _hooks.CreateReverseWrapper<GetRoomFunction>(GetRoom);
+                                break;
+                            }
+                        default:
+                            {
+                                throw new InvalidTemplateAccessorTypeException(_functionAddress);
+                                break;
+                            }
+                    }
+                    switch (currentInstruction)
+                    {
+                        //Despite being seperate commands, the type of move appears to be irrelevant.
+                        //As such, we can put all of them under the same function
+                        case instructionType.MOVZX:
+                        case instructionType.MOVSX:
+                        case instructionType.MOVSX_LOWER:
+                        case instructionType.MOV:
+                            SetupAsm_Mov();
+                            break;
+                        case instructionType.CMP:
+                            SetupAsm_Cmp();
+                            break;
+                        default:
+                            throw new InvalidAsmInstructionTypeException(_functionAddress);
+                    };
                 }
-                 */
-                scale = (byte)(SIB_BYTE >> 6);
-                reg_in = (registerReference)((SIB_BYTE >> 3) & 0x7);
-                reg_base = (registerReference)(SIB_BYTE & 0x7); //4th bit doesn't seem to change mapping, so we treat it as 3
-                /*
-                 * Something used for MovZX, don't think it is applicable elsewhere
-                 if (reg_base != registerReference.EBP)
-                {
-                    throw new ToBeNamedExcpetion();
-                    //Issue, since we only expect to handle something using an address
-                }
-                 */
-                _functionAddress = address;
-                switch (0x009F69E4)
-                {
-                    case 0x009F69E4:
-                        {
-                            _accessType = templateInstruction.ROOM_COUNT;
-                            break;
-                        }
-                    case 0x009F69E5:
-                        {
-                            _accessType = templateInstruction.ROOM_EX_COUNT;
-                            break;
-                        }
-                    case 0x009F69E6:
-                        {
-                            _accessType = templateInstruction.ROOM_GET;
-                            break;
-                        }
-                    default:
-                        {
-                            throw new InvalidTemplateAccessorAddressException(0x7FFFFFFF);
-                        }
-                }
-                switch (_accessType)
-                {
-                    case (templateInstruction.ROOM_COUNT):
-                        {
-                            _reverseWrapperCount = _hooks.CreateReverseWrapper<GetRoomCountFunction>(GetRoomCount);
-                            break;
-                        }
-                    case (templateInstruction.ROOM_EX_COUNT):
-                        {
-                            _reverseWrapperCountEx = _hooks.CreateReverseWrapper<GetRoomExCountFunction>(GetRoomExCount);
-                            break;
-                        }
-                    case (templateInstruction.ROOM_GET):
-                        {
-                            _reverseWrapperGet = _hooks.CreateReverseWrapper<GetRoomFunction>(GetRoom);
-                            break;
-                        }
-                    default:
-                        {
-                            throw new ToBeNamedExcpetion();
-                            break;
-                        }
-                }
-                //Need more flexible way to determine what the call is to
-                SetupAsm_MovZX();
+
             }
         }
-
-        private void SetupAsm_MovZX()
+        private void SetupAsm_Mov()
         {
             List<string> instruction_list = new List<string>();
             bool eax_out = false;
@@ -208,6 +340,7 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"push edx");
             //Technically there's two other forms the mod can have (1 and 3)
             //however they don't seem to be used for our particular functions
+            //Will be added if the need arises
             if (mod == 0)
             {
                 switch (reg_in)
@@ -253,7 +386,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new ToBeNamedExcpetion();
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
                         }
                 }
 
@@ -267,7 +400,7 @@ namespace p4gpc.dungeonloader.Accessors
                 }
                 else
                 {
-                    throw new ToBeNamedExcpetion();
+                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress);
                 }
 
                 switch (reg_out)
@@ -314,6 +447,10 @@ namespace p4gpc.dungeonloader.Accessors
                             instruction_list.Add($"mov edi, ecx");
                             break;
                         }
+                    default:
+                        {
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                        }
                 }
 
                 if (eax_out)
@@ -347,12 +484,9 @@ namespace p4gpc.dungeonloader.Accessors
             {
                 //In the off chance that reg_in is EDX and reg_base is EAX, we would lose information with our algorithm as is
                 //We'll detect if that's the case and flip it if necessary
-                bool flipped = false;
-                //(index register's contents * scale) + baseregisterContent+ base_address
-                //_accessor.AccessTemplate(reg_in, reg_base);
-                //Accesses the rooms individually, so we need another register
-
-                //Actual 'difficult' part here, once again need more switch/case statements
+                bool flipAD = false;
+                bool flipAC = false;
+                //bool flipCD = false;
 
                 switch (reg_in)
                 {
@@ -362,14 +496,19 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     case registerReference.ECX:
                         {
+                            if (reg_base == registerReference.EAX)
+                            {
+                                flipAC = true;
+                                break;
+                            }
                             instruction_list.Add($"mov eax, ecx");
                             break;
                         }
                     case registerReference.EDX:
                         {
-                            if (reg_base == registerReference.EBX)
+                            if (reg_base == registerReference.EAX)
                             {
-                                flipped = true;
+                                flipAD = true;
                                 break;
                             }
                             instruction_list.Add($"mov eax, edx");
@@ -402,7 +541,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new ToBeNamedExcpetion();
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
                         }
                 }
 
@@ -410,7 +549,7 @@ namespace p4gpc.dungeonloader.Accessors
                 {
                     case registerReference.EAX:
                         {
-                            if (flipped == true)
+                            if (flipAD || flipAC)
                             {
                                 break;
                             }
@@ -454,10 +593,10 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new ToBeNamedExcpetion();
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
                         }
                 }
-                if (flipped)
+                if (flipAD)
                 {
                     instruction_list.Add($"push ecx");
                     instruction_list.Add($"mov ecx, edx");
@@ -465,16 +604,35 @@ namespace p4gpc.dungeonloader.Accessors
                     instruction_list.Add($"mov eax, ecx");
                     instruction_list.Add($"pop ecx");
                 }
-
-
-                if (_accessType != templateInstruction.ROOM_GET)
+                if (flipAC)
                 {
-                    throw new ToBeNamedExcpetion();
+                    instruction_list.Add($"push eax");
+                    instruction_list.Add($"mov eax, ecx");
+                    instruction_list.Add($"pop edx");
+                }
+
+
+                if (_accessType == templateInstruction.ROOM_GET)
+
+                {
+                    instruction_list.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetRoom, out _reverseWrapperGet)}");
+
+                }
+                else if (_accessType == templateInstruction.ROOM_EX_COUNT)
+                {
+                    //There's a one-off instruction that uses the address associated
+                    //with the ex room count that for the sake of getting a value from
+                    //the template table. This will account for it.
+
+                    instruction_list.Add($"sub edx, 1");
+                    instruction_list.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetRoom, out _reverseWrapperGet)}");
+                    _accessType = templateInstruction.ROOM_GET;
                 }
                 else
                 {
-                    instruction_list.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetRoom, out _reverseWrapperGet)}");
+                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress);
                 }
+
                 switch (reg_out)
                 {
                     case registerReference.EAX:
@@ -519,6 +677,10 @@ namespace p4gpc.dungeonloader.Accessors
                             instruction_list.Add($"mov edi, ecx");
                             break;
                         }
+                    default:
+                        {
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                        }
                 }
                 if (eax_out)
                 {
@@ -548,10 +710,8 @@ namespace p4gpc.dungeonloader.Accessors
             }
             else
             {
-                throw new ToBeNamedExcpetion();
+                throw new InvalidAsmInstructionModValueException(_functionAddress);
             }
-            //Do NOT want a return, since Reloaded-II's jump-based system means that there's no address to return to.
-            //instruction_list.Add($"ret");
             switch (_accessType)
             {
                 case (templateInstruction.ROOM_COUNT):
@@ -571,54 +731,59 @@ namespace p4gpc.dungeonloader.Accessors
                     }
                 default:
                     {
-                        throw new ToBeNamedExcpetion();
+                        throw new InvalidAsmInstructionAccessTypeException(_functionAddress);
                         break;
                     }
             }
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), _functionAddress, AsmHookBehaviour.DoNotExecuteOriginal).Activate());
-            //return instruction_list.ToArray();
         }
 
-        private int GetRoomCount(int ebx)
+        private void SetupAsm_Cmp()
+        {
+
+        }
+
+
+        private int GetRoomCount(int eax)
         {
             //Everything that accesses the template  has the index multiplied by 3 because each template is 12 bytes long.
             //The index is multiplied by 4 to actually access the template.
-            ebx /= 3;
-            return _dungeonTemplates[ebx].roomCount;
+            eax /= 3;
+            return _dungeonTemplates[eax].roomCount;
         }
 
-        private int GetRoomExCount(int ebx)
+        private int GetRoomExCount(int eax)
         {
             //Everything that accesses the template  has the index multiplied by 3 because each template is 12 bytes long.
             //The index is multiplied by 4 to actually access the template.
             //We will presumably change this once we have the foundations for this mod a bit more settled
-            ebx /= 3;
-            return _dungeonTemplates[ebx].roomExCount;
+            eax /= 3;
+            return _dungeonTemplates[eax].roomExCount;
         }
 
-        private int GetRoom(int ebx, int edx)
+        private int GetRoom(int eax, int edx)
         {
-            if (edx >= _dungeonTemplates[ebx].rooms.Count || edx <= 0)
-            {
-                throw new ArgumentOutOfRangeException("edx", $"Attempting to access room index {edx} while there exist {_dungeonTemplates[ebx].rooms.Count} rooms.");
-            }
             //Everything that accesses the template  has the index multiplied by 3 because each template is 12 bytes long.
             //The index is multiplied by 4 to actually access the template.
             //Room Index is the same value, however
-            ebx /= 3;
-            return _dungeonTemplates[ebx].rooms[edx];
+            eax /= 3;
+            if (edx > _dungeonTemplates[eax].rooms.Count || edx < 0)
+            {
+                throw new ArgumentOutOfRangeException("edx", $"Attempting to access room index {edx} while there exist {_dungeonTemplates[eax].rooms.Count} rooms.");
+            }
+            return _dungeonTemplates[eax].rooms[edx];
         }
 
         [Function(Register.eax, Register.ecx, StackCleanup.Callee)]
-        //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int GetRoomCountFunction(int ebx);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int GetRoomCountFunction(int eax);
 
         [Function(Register.eax, Register.ecx, StackCleanup.Callee)]
-        //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int GetRoomExCountFunction(int ebx);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int GetRoomExCountFunction(int eax);
 
         [Function(new[] { Register.eax, Register.edx }, Register.ecx, StackCleanup.Callee)]
-        //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int GetRoomFunction(int ebx, int edx);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int GetRoomFunction(int eax, int edx);
     }
 }

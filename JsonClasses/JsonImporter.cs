@@ -16,6 +16,10 @@ namespace p4gpc.dungeonloader.JsonClasses
         private List<DungeonFloors> _floors;
         private List<DungeonRooms> _rooms;
         private List<DungeonList> _list;
+        private List<String> _templateSearch;
+        private List<String> _floorSearch;
+        private List<String> _roomSearch;
+        private List<String> _listSearch;
         private Config _config;
         public JsonImporter(Config config, Utilities _utils)
         {
@@ -24,12 +28,22 @@ namespace p4gpc.dungeonloader.JsonClasses
             string jsonContents = jsonReader.ReadToEnd();
             _utils.Log($"\n"+jsonContents);
             _templates = JsonSerializer.Deserialize<List<DungeonTemplates>>(jsonContents)!;
+
+            jsonReader = new StreamReader(config.Json_Folder_Path + "/template_search.json");
+            jsonContents = jsonReader.ReadToEnd();
+            _utils.Log($"\n" + jsonContents);
+            _templateSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
             //Add other json list assignments here
             jsonReader.Close();
         }
         public List<DungeonTemplates> GetTemplates()
         {
             return _templates;
+        }
+
+        public List<String> GetTemplateFunctions()
+        {
+            return _templateSearch;
         }
     }
 }

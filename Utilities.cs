@@ -136,6 +136,7 @@ namespace p4gpc.dungeonloader
                 catch (Exception ex)
                 {
                     LogError($"Error when searching for address of {funcName}", ex);
+                    break;
                 }
             }
             return return_list;
