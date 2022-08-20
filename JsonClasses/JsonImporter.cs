@@ -29,10 +29,20 @@ namespace p4gpc.dungeonloader.JsonClasses
             _utils.Log($"\n"+jsonContents);
             _templates = JsonSerializer.Deserialize<List<DungeonTemplates>>(jsonContents)!;
 
+            jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_floors.json");
+            jsonContents = jsonReader.ReadToEnd();
+            _utils.Log($"\n"+jsonContents);
+            _floors = JsonSerializer.Deserialize<List<DungeonFloors>>(jsonContents)!;
+
             jsonReader = new StreamReader(config.Json_Folder_Path + "/template_search.json");
             jsonContents = jsonReader.ReadToEnd();
             _utils.Log($"\n" + jsonContents);
             _templateSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
+
+            jsonReader = new StreamReader(config.Json_Folder_Path + "/floor_search.json");
+            jsonContents = jsonReader.ReadToEnd();
+            _utils.Log($"\n" + jsonContents);
+            _floorSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
             //Add other json list assignments here
             jsonReader.Close();
         }
@@ -44,6 +54,15 @@ namespace p4gpc.dungeonloader.JsonClasses
         public List<String> GetTemplateFunctions()
         {
             return _templateSearch;
+        }
+        public List<DungeonFloors> GetFloors()
+        {
+            return _floors;
+        }
+
+        public List<String> getFloorFunctions()
+        {
+            return _floorSearch;
         }
     }
 }

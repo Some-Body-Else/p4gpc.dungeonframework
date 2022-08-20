@@ -1,6 +1,7 @@
 ﻿using p4gpc.dungeonloader.Configuration;
 using p4gpc.dungeonloader.Accessors;
 using p4gpc.dungeonloader.Configuration.Implementation;
+using p4gpc.dungeonloader.JsonClasses;
 
 using Reloaded.Hooks.ReloadedII.Interfaces;
 using Reloaded.Memory.Sources;
@@ -48,7 +49,10 @@ namespace p4gpc.dungeonloader
         // Accesses memory of our running process
         private IMemory _memory;
 
-        private TemplateAccessor _templates;
+        private JsonImporter _jsonImporter;
+
+        private TemplateAccessors _templates;
+        private FloorAccessors _floors;
 
 
         private Utilities _utilities;
@@ -69,12 +73,13 @@ namespace p4gpc.dungeonloader
             _configuration = configurator.GetConfiguration<Config>(0);
             _configuration.ConfigurationUpdated += OnConfigurationUpdated;
 
-
             _memory = new Memory();
             using var currentProc = Process.GetCurrentProcess();
             int baseAddress = currentProc.MainModule.BaseAddress.ToInt32();
             _utilities = new Utilities(_configuration, _logger, baseAddress);
-            _templates = new TemplateAccessor(_hooks, _utilities, _memory, _configuration);
+            _jsonImporter = new JsonImporter(_configuration, _utilities);
+            _templates = new TemplateAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
+            _floors = new FloorAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)

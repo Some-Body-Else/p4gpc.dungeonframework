@@ -53,6 +53,12 @@ namespace p4gpc.dungeonloader
             _logger.WriteLine($"[DungeonLoader] {message}: {e.Message}", System.Drawing.Color.Red);
         }
 
+        /// <summary>
+        /// Scans the executable to find the first instance of the given pattern. Function name is for potential exceptions.
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <param name="funcName"></param>
+        /// <returns></returns>
         public unsafe long SigScan(string pattern, string funcName)
         {
             try
@@ -73,6 +79,14 @@ namespace p4gpc.dungeonloader
             }
         }
 
+        /// <summary>
+        /// Scans the executable to find X instances of the given pattern, starting from the beginning of the executable,
+        /// where X is defined as the funcCount parameter. Currently has no use, but keeping it around for now in case it pops up.
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <param name="funcName"></param>
+        /// <param name="funcCount"></param>
+        /// <returns></returns>
         public unsafe List<long> SigScan_FindCount(string pattern, string funcName, int funcCount)
         {
             using var currentProc = Process.GetCurrentProcess();
@@ -140,6 +154,17 @@ namespace p4gpc.dungeonloader
                 }
             }
             return return_list;
+        }
+
+        /// <summary>
+        /// Returns the length of a byte pattern, ignores whitespace.
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <returns></returns>
+        public int GetPatternLength(string pattern)
+        {
+            pattern = pattern.Replace(" ", "");
+            return pattern.Length/2;
         }
     }
 }

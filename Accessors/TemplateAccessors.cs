@@ -23,7 +23,7 @@ using p4gpc.dungeonloader.Configuration;
 
 namespace p4gpc.dungeonloader.Accessors
 {
-    public class TemplateAccessor
+    public class TemplateAccessors
     {
         private enum templateInstruction
         {
@@ -44,11 +44,12 @@ namespace p4gpc.dungeonloader.Accessors
         }
         private enum instructionType
         {
-            MOVZX = 0,
-            MOV = 1,
-            CMP = 2,
-            MOVSX = 3,
-            MOVSX_LOWER = 4
+            MOV,
+            MOVZX,
+            MOVSX,
+            MOVSX_LOWER,
+            CMP,
+            CMP_CONST
         }
         
         private templateInstruction _accessType;
@@ -71,9 +72,14 @@ namespace p4gpc.dungeonloader.Accessors
         private registerReference reg_in;
         private registerReference reg_base; //This should be irrelevant, but better safe than sorry
 
+        /// <summary>
+        /// There is one comparison command that compares the value in the table to a constant value (0x06)
+        /// This is to account for that opcode and any other opcodes that may compare to a constant
+        /// </summary>
+        private byte constInput;
+
         private List<DungeonTemplates>? _dungeonTemplates;
         private List<IAsmHook>? _functionHookList;
-        private List<IReverseWrapper>? _reverseWrapperList;
         private List<IReverseWrapper<GetRoomCountFunction>>? _reverseWrapperCountList;
         private List<IReverseWrapper<GetRoomExCountFunction>>? _reverseWrapperCountExList;
         private List<IReverseWrapper<GetRoomFunction>>? _reverseWrapperGetList;
@@ -89,7 +95,7 @@ namespace p4gpc.dungeonloader.Accessors
         private IReverseWrapper _reverseWrapper;
         private List<long> foundAddresses;
 
-        public TemplateAccessor(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config)
+        public TemplateAccessors(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)
         {
             _hooks = hooks;
             _utils = utils;
@@ -97,9 +103,8 @@ namespace p4gpc.dungeonloader.Accessors
             _configuration = config;
 
             //_jsonImporter will handle all json loading and deserialization
-            _jsonImporter = new JsonImporter(_configuration, utils);
+            _jsonImporter = jsonImporter;
 
-            _reverseWrapperList = new List<IReverseWrapper>();
             _functionHookList = new List<IAsmHook>();
             _dungeonTemplates = _jsonImporter.GetTemplates();
 
@@ -183,10 +188,6 @@ namespace p4gpc.dungeonloader.Accessors
                                 throw new InvalidAsmInstructionTypeException(_functionAddress);
                             }
                         }
-                        else if (idByte == 0x40)
-                        {
-                            currentInstruction = instructionType.CMP;
-                        }
                         else
                         {
                             throw new InvalidAsmInstructionTypeException(_functionAddress);
@@ -230,14 +231,32 @@ namespace p4gpc.dungeonloader.Accessors
                     }
                     else
                     {
+                        if (idByte == 0x38)
+                        {
+
+                            currentInstruction = instructionType.CMP;
+                        }
+                        else if (idByte == 0x80)
+                        {
+                            currentInstruction = instructionType.CMP_CONST;
+                            _memory.SafeRead((nuint)(address + 7), out constInput);
+
+                        }
+                        else if (idByte == 0x8A)
+                        {
+                            currentInstruction = instructionType.MOV;
+
+                        }
+                        else
+                        {
+                            throw new InvalidAsmInstructionTypeException(_functionAddress);
+                        }
                         _memory.SafeRead((nuint)(address + 3), out accessedAddress);
                         //_utils.LogDebug($"Accessed address: {accessedAddress.ToString("X8")}");
                         _memory.SafeRead((nuint)(address + 1), out R_M_BYTE);
                         //_utils.LogDebug($"R/M Byte: {R_M_BYTE.ToString("X2")}");
                         _memory.SafeRead((nuint)(address + 2), out SIB_BYTE);
                         //_utils.LogDebug($"SIB Byte: {SIB_BYTE.ToString("X2")}");
-
-                        currentInstruction = instructionType.MOV;
                     }
                     mod = (byte)(R_M_BYTE >> 6);
                     reg_out = (registerReference)((R_M_BYTE >> 3) & 0x7);
@@ -319,7 +338,8 @@ namespace p4gpc.dungeonloader.Accessors
                             SetupAsm_Mov();
                             break;
                         case instructionType.CMP:
-                            SetupAsm_Cmp();
+                        case instructionType.CMP_CONST:
+                            SetupAsm_Cmp(currentInstruction);
                             break;
                         default:
                             throw new InvalidAsmInstructionTypeException(_functionAddress);
@@ -633,6 +653,7 @@ namespace p4gpc.dungeonloader.Accessors
                     throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress);
                 }
 
+                
                 switch (reg_out)
                 {
                     case registerReference.EAX:
@@ -738,9 +759,452 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), _functionAddress, AsmHookBehaviour.DoNotExecuteOriginal).Activate());
         }
 
-        private void SetupAsm_Cmp()
+        private void SetupAsm_Cmp(instructionType currentInstruction)
         {
 
+            List<string> instruction_list = new List<string>();
+            bool eax_out = false;
+            bool ecx_out = false;
+            bool edx_out = false;
+            instruction_list.Add($"use32");
+            instruction_list.Add($"push eax");
+            instruction_list.Add($"push ecx");
+            instruction_list.Add($"push edx");
+            //Technically there's two other forms the mod can have (1 and 3)
+            //however they don't seem to be used for our particular functions
+            //Will be added if the need arises
+            if (mod == 0)
+            {
+                switch (reg_in)
+                {
+                    case registerReference.EAX:
+                        {
+                            break;
+                        }
+                    case registerReference.ECX:
+                        {
+                            instruction_list.Add($"mov eax, ecx");
+                            break;
+                        }
+                    case registerReference.EDX:
+                        {
+                            instruction_list.Add($"mov eax, edx");
+                            break;
+                        }
+                    case registerReference.EBX:
+                        {
+                            instruction_list.Add($"mov eax, ebx");
+                            break;
+                        }
+                    case registerReference.ESP:
+                        {
+                            instruction_list.Add($"mov eax, esp");
+                            break;
+                        }
+                    case registerReference.EBP:
+                        {
+                            instruction_list.Add($"mov eax, ebp");
+                            break;
+                        }
+                    case registerReference.ESI:
+                        {
+                            instruction_list.Add($"mov eax, esi");
+                            break;
+                        }
+                    case registerReference.EDI:
+                        {
+                            instruction_list.Add($"mov eax, edi");
+                            break;
+                        }
+                    default:
+                        {
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                        }
+                }
+
+                if (_accessType == templateInstruction.ROOM_COUNT)
+                {
+                    instruction_list.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetRoomCount, out _reverseWrapperCount)}");
+                }
+                else if (_accessType == templateInstruction.ROOM_EX_COUNT)
+                {
+                    instruction_list.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetRoomExCount, out _reverseWrapperCountEx)}");
+                }
+                else
+                {
+                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress);
+                }
+
+                if (currentInstruction == instructionType.CMP_CONST)
+                {
+                    instruction_list.Add($"cmp ecx, {constInput}");
+                }
+                else
+                {
+                    switch (reg_out)
+                    {
+                        case registerReference.EAX:
+                            {
+                                eax_out = true;
+                                instruction_list.Add($"add esp, 8");
+                                instruction_list.Add($"pop eax");
+                                instruction_list.Add($"sub esp, 8");
+                                instruction_list.Add($"pop edx");
+
+                                instruction_list.Add($"push eax");
+                                instruction_list.Add($"push edx");
+                                instruction_list.Add($"sub esp, 4");
+
+                                instruction_list.Add($"pop edx");
+                                instruction_list.Add($"pop eax");
+
+                                instruction_list.Add($"cmp eax, ecx");
+
+                                break;
+                            }
+                        case registerReference.ECX:
+                            {
+                                ecx_out = true;
+                                instruction_list.Add($"pop edx");
+                                instruction_list.Add($"mov eax, ecx");
+                                instruction_list.Add($"pop ecx");
+                                instruction_list.Add($"cmp eax, ecx");
+
+                                break;
+                            }
+                        case registerReference.EDX:
+                            {
+                                edx_out = true;
+                                instruction_list.Add($"cmp edx, ecx");
+                                break;
+                            }
+                        case registerReference.EBX:
+                            {
+                                instruction_list.Add($"cmp ebx, ecx");
+                                break;
+                            }
+                        case registerReference.ESP:
+                            {
+                                instruction_list.Add($"cmp esp, ecx");
+                                break;
+                            }
+                        case registerReference.EBP:
+                            {
+                                instruction_list.Add($"cmp ebp, ecx");
+                                break;
+                            }
+                        case registerReference.ESI:
+                            {
+                                instruction_list.Add($"cmp esi, ecx");
+                                break;
+                            }
+                        case registerReference.EDI:
+                            {
+                                instruction_list.Add($"cmp edi, ecx");
+                                break;
+                            }
+                        default:
+                            {
+                                throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            }
+                    }
+                }
+                if (eax_out)
+                {
+                    instruction_list.Add($"pop ecx");
+                }
+                else if (ecx_out)
+                {
+                    instruction_list.Add($"pop eax");
+                }
+                else if (edx_out)
+                {
+                    instruction_list.Add($"pop ecx");
+                    instruction_list.Add($"pop eax");
+                }
+                else
+                {
+                    instruction_list.Add($"pop edx");
+                    instruction_list.Add($"pop ecx");
+                    instruction_list.Add($"pop eax");
+                }
+
+            }
+            else if (mod == 2)
+            {
+                //In the off chance that reg_in is EDX and reg_base is EAX, we would lose information with our algorithm as is
+                //We'll detect if that's the case and flip it if necessary
+                bool flipAD = false;
+                bool flipAC = false;
+                //bool flipCD = false;
+
+                switch (reg_in)
+                {
+                    case registerReference.EAX:
+                        {
+                            break;
+                        }
+                    case registerReference.ECX:
+                        {
+                            if (reg_base == registerReference.EAX)
+                            {
+                                flipAC = true;
+                                break;
+                            }
+                            instruction_list.Add($"mov eax, ecx");
+                            break;
+                        }
+                    case registerReference.EDX:
+                        {
+                            if (reg_base == registerReference.EAX)
+                            {
+                                flipAD = true;
+                                break;
+                            }
+                            instruction_list.Add($"mov eax, edx");
+                            break;
+                        }
+                    case registerReference.EBX:
+                        {
+                            instruction_list.Add($"mov eax, ebx");
+                            break;
+                        }
+                    case registerReference.ESP:
+                        {
+                            instruction_list.Add($"mov eax, esp");
+                            break;
+                        }
+                    case registerReference.EBP:
+                        {
+                            instruction_list.Add($"mov eax, ebp");
+                            break;
+                        }
+                    case registerReference.ESI:
+                        {
+                            instruction_list.Add($"mov eax, esi");
+                            break;
+                        }
+                    case registerReference.EDI:
+                        {
+                            instruction_list.Add($"mov eax, edi");
+                            break;
+                        }
+                    default:
+                        {
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                        }
+                }
+
+                switch (reg_base)
+                {
+                    case registerReference.EAX:
+                        {
+                            if (flipAD || flipAC)
+                            {
+                                break;
+                            }
+                            instruction_list.Add($"mov edx, eax");
+                            break;
+                        }
+                    case registerReference.ECX:
+                        {
+                            instruction_list.Add($"mov edx, ecx");
+                            break;
+                        }
+                    case registerReference.EDX:
+                        {
+                            break;
+                        }
+                    case registerReference.EBX:
+                        {
+
+                            instruction_list.Add($"mov edx, ebx");
+                            break;
+                        }
+                    case registerReference.ESP:
+                        {
+                            instruction_list.Add($"mov edx, esp");
+                            break;
+                        }
+                    case registerReference.EBP:
+                        {
+                            instruction_list.Add($"mov edx, ebp");
+                            break;
+                        }
+                    case registerReference.ESI:
+                        {
+                            instruction_list.Add($"mov edx, esi");
+                            break;
+                        }
+                    case registerReference.EDI:
+                        {
+                            instruction_list.Add($"mov edx, edi");
+                            break;
+                        }
+                    default:
+                        {
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                        }
+                }
+                if (flipAD)
+                {
+                    instruction_list.Add($"push ecx");
+                    instruction_list.Add($"mov ecx, edx");
+                    instruction_list.Add($"mov edx, eax");
+                    instruction_list.Add($"mov eax, ecx");
+                    instruction_list.Add($"pop ecx");
+                }
+                if (flipAC)
+                {
+                    instruction_list.Add($"push eax");
+                    instruction_list.Add($"mov eax, ecx");
+                    instruction_list.Add($"pop edx");
+                }
+
+
+                if (_accessType == templateInstruction.ROOM_GET)
+
+                {
+                    instruction_list.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetRoom, out _reverseWrapperGet)}");
+
+                }
+                else if (_accessType == templateInstruction.ROOM_EX_COUNT)
+                {
+                    //There's a one-off instruction that uses the address associated
+                    //with the ex room count that for the sake of getting a value from
+                    //the template table. This will account for it.
+
+                    instruction_list.Add($"sub edx, 1");
+                    instruction_list.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetRoom, out _reverseWrapperGet)}");
+                    _accessType = templateInstruction.ROOM_GET;
+                }
+                else
+                {
+                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress);
+                }
+                if (currentInstruction == instructionType.CMP_CONST)
+                {
+                    instruction_list.Add($"cmp ecx, {constInput}");
+                }
+                else
+                {
+                    switch (reg_out)
+                    {
+                        case registerReference.EAX:
+                            {
+                                eax_out = true;
+                                instruction_list.Add($"add esp, 8");
+                                instruction_list.Add($"pop eax");
+                                instruction_list.Add($"sub esp, 8");
+                                instruction_list.Add($"pop edx");
+
+                                instruction_list.Add($"push eax");
+                                instruction_list.Add($"push edx");
+                                instruction_list.Add($"sub esp, 4");
+
+                                instruction_list.Add($"pop edx");
+                                instruction_list.Add($"pop eax");
+
+                                instruction_list.Add($"cmp eax, ecx");
+
+                                break;
+                            }
+                        case registerReference.ECX:
+                            {
+                                ecx_out = true;
+                                instruction_list.Add($"pop edx");
+                                instruction_list.Add($"mov eax, ecx");
+                                instruction_list.Add($"pop ecx");
+                                instruction_list.Add($"cmp eax, ecx");
+
+                                break;
+                            }
+                        case registerReference.EDX:
+                            {
+                                edx_out = true;
+                                instruction_list.Add($"cmp edx, ecx");
+                                break;
+                            }
+                        case registerReference.EBX:
+                            {
+                                instruction_list.Add($"cmp ebx, ecx");
+                                break;
+                            }
+                        case registerReference.ESP:
+                            {
+                                instruction_list.Add($"cmp esp, ecx");
+                                break;
+                            }
+                        case registerReference.EBP:
+                            {
+                                instruction_list.Add($"cmp ebp, ecx");
+                                break;
+                            }
+                        case registerReference.ESI:
+                            {
+                                instruction_list.Add($"cmp esi, ecx");
+                                break;
+                            }
+                        case registerReference.EDI:
+                            {
+                                instruction_list.Add($"cmp edi, ecx");
+                                break;
+                            }
+                        default:
+                            {
+                                throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            }
+                    }
+                }
+                if (eax_out)
+                {
+                    instruction_list.Add($"pop ecx");
+                }
+                else if (ecx_out)
+                {
+                    instruction_list.Add($"pop eax");
+                }
+                else if (edx_out)
+                {
+                    instruction_list.Add($"pop ecx");
+                    instruction_list.Add($"pop eax");
+                }
+                else
+                {
+                    instruction_list.Add($"pop edx");
+                    instruction_list.Add($"pop ecx");
+                    instruction_list.Add($"pop eax");
+                }
+
+            }
+            else
+            {
+                throw new InvalidAsmInstructionModValueException(_functionAddress);
+            }
+            switch (_accessType)
+            {
+                case (templateInstruction.ROOM_COUNT):
+                    {
+                        _reverseWrapperCountList.Add(_reverseWrapperCount);
+                        break;
+                    }
+                case (templateInstruction.ROOM_EX_COUNT):
+                    {
+                        _reverseWrapperCountExList.Add(_reverseWrapperCountEx);
+                        break;
+                    }
+                case (templateInstruction.ROOM_GET):
+                    {
+                        _reverseWrapperGetList.Add(_reverseWrapperGet);
+                        break;
+                    }
+                default:
+                    {
+                        throw new InvalidAsmInstructionAccessTypeException(_functionAddress);
+                        break;
+                    }
+            }
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), _functionAddress, AsmHookBehaviour.DoNotExecuteOriginal).Activate());
         }
 
 
@@ -767,7 +1231,7 @@ namespace p4gpc.dungeonloader.Accessors
             //The index is multiplied by 4 to actually access the template.
             //Room Index is the same value, however
             eax /= 3;
-            if (edx > _dungeonTemplates[eax].rooms.Count || edx < 0)
+            if (edx >= _dungeonTemplates[eax].rooms.Count || edx < 0)
             {
                 throw new ArgumentOutOfRangeException("edx", $"Attempting to access room index {edx} while there exist {_dungeonTemplates[eax].rooms.Count} rooms.");
             }
