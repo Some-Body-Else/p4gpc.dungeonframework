@@ -64,6 +64,7 @@ namespace p4gpc.dungeonloader.Accessors
         private void Initialize()
         {
             List<String> functions = _jsonImporter.getFloorFunctions();
+            long currentAddress;
             IReverseWrapper<GetIdFunction> reverseWrapperID = _hooks.CreateReverseWrapper<GetIdFunction>(GetID);
             IReverseWrapper<GetSubIdFunction> reverseWrapperSubID = _hooks.CreateReverseWrapper<GetSubIdFunction>(GetSubID);
             IReverseWrapper<GetByte04Function> reverseWrapperByte04 = _hooks.CreateReverseWrapper<GetByte04Function>(GetByte04);
@@ -88,12 +89,18 @@ namespace p4gpc.dungeonloader.Accessors
             _reverseWrapperList.Add(reverseWrapperByte0A);
             _reverseWrapperList.Add(reverseWrapperScript);
             _reverseWrapperList.Add(reverseWrapperEnv);
-            long currentAddress = _utils.SigScan(functions[0], "StaticFloorDungeonBin");
+            currentAddress = _utils.SigScan(functions[0], "StaticFloorDungeonBin");
             SetupStaticFloorDungeonBin((int)(currentAddress & 0xFFFFFFFF), functions[0]);
 
 
             currentAddress = _utils.SigScan(functions[1], "RandomFloorDungeonBin");
             SetupRandomFloorDungeonBin((int)(currentAddress & 0xFFFFFFFF), functions[1]);
+
+            currentAddress = _utils.SigScan(functions[2], "ScriptHandlingDungeonBin");
+            SetupScriptHandling((int)(currentAddress & 0xFFFFFFFF), functions[2]);
+
+            currentAddress = _utils.SigScan(functions[3], "EnvHandlingDungeonBin");
+            SetupEnvHandling((int)(currentAddress & 0xFFFFFFFF), functions[3]);
         }
 
         private void SetupStaticFloorDungeonBin(int functionAddress, string pattern)
@@ -212,6 +219,47 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop ecx");
             instruction_list.Add($"mov ecx, esi");
             instruction_list.Add($"push eax");
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+
+        }
+
+        private void SetupScriptHandling(int functionAddress, string pattern)
+        {
+
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use32");
+            instruction_list.Add($"push edx");
+            instruction_list.Add($"mov edx, eax");
+            instruction_list.Add($"sub edx, 0x21EB4AA0");
+            instruction_list.Add($"shr edx, 4");
+            instruction_list.Add($"push ecx");
+            instruction_list.Add(_commands[6]);
+            instruction_list.Add($"pop ecx");
+            instruction_list.Add($"pop edx");
+            instruction_list.Add($"push eax");
+            instruction_list.Add($"lea eax,[ebp-0x000000A4]");
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+
+        }
+
+        private void SetupEnvHandling(int functionAddress, string pattern)
+        {
+
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use32");
+            instruction_list.Add($"push edx");
+            instruction_list.Add($"mov edx, ecx");
+            instruction_list.Add($"sub edx, 0x21EB4AA0");
+            instruction_list.Add($"shr edx, 4");
+            //instruction_list.Add($"push ecx");
+            instruction_list.Add(_commands[7]);
+            //instruction_list.Add($"pop ecx");
+            instruction_list.Add($"pop edx");
+            instruction_list.Add($"pop edi");
+            instruction_list.Add($"pop esi");
+            instruction_list.Add($"pop ebx"); 
+            instruction_list.Add($"mov ecx,[ebp-04]");
+
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
 
         }
