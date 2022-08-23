@@ -161,12 +161,6 @@ namespace p4gpc.dungeonloader.Accessors
                     if (twoByteID)
                     {
                         _memory.SafeRead((nuint)(address + 4), out accessedAddress);
-                        if (accessedAddress != 0x009F69E4)
-                        {
-
-                            //_utils.LogDebug($"Function found at: {address.ToString("X8")}");
-                            //_utils.LogDebug($"Accessed address: {accessedAddress.ToString("X8")}");
-                        }
                         _memory.SafeRead((nuint)(address + 2), out R_M_BYTE);
                         //_utils.LogDebug($"R/M Byte: {R_M_BYTE.ToString("X2")}");
                         _memory.SafeRead((nuint)(address + 3), out SIB_BYTE);
@@ -196,12 +190,6 @@ namespace p4gpc.dungeonloader.Accessors
                     else if (threeByteID)
                     {
                         _memory.SafeRead((nuint)(address + 5), out accessedAddress);
-                        if (accessedAddress != 0x009F69E4)
-                        {
-
-                            //_utils.LogDebug($"Function found at: {address.ToString("X8")}");
-                            //_utils.LogDebug($"Accessed address: {accessedAddress.ToString("X8")}");
-                        }
                         _memory.SafeRead((nuint)(address + 3), out R_M_BYTE);
                         //_utils.LogDebug($"R/M Byte: {R_M_BYTE.ToString("X2")}");
                         _memory.SafeRead((nuint)(address + 4), out SIB_BYTE);

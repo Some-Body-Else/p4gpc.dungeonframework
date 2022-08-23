@@ -6,7 +6,14 @@ using System.Threading.Tasks;
 
 namespace p4gpc.dungeonloader.JsonClasses
 {
-    internal class DungeonRooms
+    public class DungeonRooms
     {
+        public byte ID { get; set; }
+        public byte sizeX { get; set; }
+        public byte sizeY { get; set; }
+        public List<List<byte>> connectionPointers { get; set; }
+        public List<List<byte>> revealProperties { get; set; }
+        public List<byte> unknownMasks { get; set; }
+        public List<List<byte>> mapRamOutline { get; set; }
     }
 }

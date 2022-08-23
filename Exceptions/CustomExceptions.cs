@@ -54,4 +54,10 @@ namespace p4gpc.dungeonloader.Exceptions
         {
         }
     }
+    public class InvalidRoomIndexException : Exception
+    {
+        public InvalidRoomIndexException(int index) : base($"RoomAccessor given invalid index: {index}")
+        {
+        }
+    }
 }

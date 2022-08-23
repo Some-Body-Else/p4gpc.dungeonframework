@@ -63,7 +63,7 @@ namespace p4gpc.dungeonloader.Accessors
         }
         private void Initialize()
         {
-            List<String> functions = _jsonImporter.getFloorFunctions();
+            List<String> functions = _jsonImporter.GetFloorFunctions();
             long currentAddress;
             IReverseWrapper<GetIdFunction> reverseWrapperID = _hooks.CreateReverseWrapper<GetIdFunction>(GetID);
             IReverseWrapper<GetSubIdFunction> reverseWrapperSubID = _hooks.CreateReverseWrapper<GetSubIdFunction>(GetSubID);

@@ -42,7 +42,7 @@ namespace p4gpc.dungeonloader
         public void LogDebug(string message)
         {
             //Should give a proper debug condition later
-            if (1 == 1)
+            if (1 == 0)
             {
                 _logger.WriteLine($"[DungeonLoader] {message}");
             }
@@ -165,6 +165,11 @@ namespace p4gpc.dungeonloader
         {
             pattern = pattern.Replace(" ", "");
             return pattern.Length/2;
+        }
+
+        public int AccountForBaseAddress(int address)
+        {
+            return address + _processBaseAddress;
         }
     }
 }

@@ -26,24 +26,35 @@ namespace p4gpc.dungeonloader.JsonClasses
             _config = config;
             StreamReader jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_templates.json");
             string jsonContents = jsonReader.ReadToEnd();
-            _utils.Log($"\n"+jsonContents);
+            _utils.LogDebug($"\n"+jsonContents);
             _templates = JsonSerializer.Deserialize<List<DungeonTemplates>>(jsonContents)!;
 
             jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_floors.json");
             jsonContents = jsonReader.ReadToEnd();
-            _utils.Log($"\n"+jsonContents);
+            _utils.LogDebug($"\n"+jsonContents);
             _floors = JsonSerializer.Deserialize<List<DungeonFloors>>(jsonContents)!;
+
+            jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_rooms.json");
+            jsonContents = jsonReader.ReadToEnd();
+            _utils.LogDebug($"\n"+jsonContents);
+            _rooms = JsonSerializer.Deserialize<List<DungeonRooms>>(jsonContents)!;
+
 
             jsonReader = new StreamReader(config.Json_Folder_Path + "/template_search.json");
             jsonContents = jsonReader.ReadToEnd();
-            _utils.Log($"\n" + jsonContents);
+            _utils.LogDebug($"\n" + jsonContents);
             _templateSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
 
             jsonReader = new StreamReader(config.Json_Folder_Path + "/floor_search.json");
             jsonContents = jsonReader.ReadToEnd();
-            _utils.Log($"\n" + jsonContents);
+            _utils.LogDebug($"\n" + jsonContents);
             _floorSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
-            //Add other json list assignments here
+
+            jsonReader = new StreamReader(config.Json_Folder_Path + "/room_search.json");
+            jsonContents = jsonReader.ReadToEnd();
+            _utils.LogDebug($"\n" + jsonContents);
+            _roomSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
+
             jsonReader.Close();
         }
         public List<DungeonTemplates> GetTemplates()
@@ -60,9 +71,18 @@ namespace p4gpc.dungeonloader.JsonClasses
             return _floors;
         }
 
-        public List<String> getFloorFunctions()
+        public List<String> GetFloorFunctions()
         {
             return _floorSearch;
+        }
+        public List<DungeonRooms> GetRooms()
+        {
+            return _rooms;
+        }
+
+        public List<String> GetRoomFunctions()
+        {
+            return _roomSearch;
         }
     }
 }

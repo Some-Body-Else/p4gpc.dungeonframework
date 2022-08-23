@@ -1,0 +1,17 @@
+[
+	{
+		"roomCount": 8,
+		"roomExCount": 9,
+		"rooms": [1, 2, 3, 5, 6, 7, 9, 10, 4]
+	},
+	{
+		"roomCount": 9,
+		"roomExCount": 10,
+		"rooms": [1, 2, 3, 5, 7, 6, 8, 11, 12, 4]
+	},
+	{
+		"roomCount": 8,
+		"roomExCount": 9,
+		"rooms": [1, 2, 3, 5, 6, 8, 13, 14, 4]
+	}
+]

@@ -53,6 +53,7 @@ namespace p4gpc.dungeonloader
 
         private TemplateAccessors _templates;
         private FloorAccessors _floors;
+        private RoomAccessors _rooms;
 
 
         private Utilities _utilities;
@@ -65,9 +66,6 @@ namespace p4gpc.dungeonloader
             _modConfig = (IModConfig)modConfig;
             _logger = (ILogger)_modLoader.GetLogger();
             _modLoader.GetController<IReloadedHooks>().TryGetTarget(out _hooks!);
-
-
-            //_logger.WriteLine($"[DungeonLoader] Successfully attached to Reloaded-II logger");
             
             var configurator = new Configurator(_modLoader.GetModConfigDirectory(_modConfig.ModId));
             _configuration = configurator.GetConfiguration<Config>(0);
@@ -76,10 +74,14 @@ namespace p4gpc.dungeonloader
             _memory = new Memory();
             using var currentProc = Process.GetCurrentProcess();
             int baseAddress = currentProc.MainModule.BaseAddress.ToInt32();
+
             _utilities = new Utilities(_configuration, _logger, baseAddress);
             _jsonImporter = new JsonImporter(_configuration, _utilities);
+            
             _templates = new TemplateAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _floors = new FloorAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
+            _rooms = new RoomAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
+            _utilities.Log("DungeonLoader set up complete.");
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)
