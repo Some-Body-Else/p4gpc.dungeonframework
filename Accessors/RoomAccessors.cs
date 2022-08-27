@@ -80,8 +80,22 @@ namespace p4gpc.dungeonloader.Accessors
 
             address = _utils.SigScan(functions[2], "SetupRoomRam3");
             SetupRoomRAM((int)address, functions[2], RoomPushType.ADD_COMMANDS_1);
+
+
+            address = _utils.SigScan(functions[3], "SetupRoomRam3");
+            skipFunction((int)address, functions[3]);
         }
 
+        private void skipFunction(int functionAddress, string pattern)
+        {
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use32");
+            instruction_list.Add($"xor edi, edi");
+            instruction_list.Add($"mov [ebp-32], edi");
+            instruction_list.Add($"xor ecx, ecx");
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
         private void SetupRoomRAM(int functionAddress, string pattern, RoomPushType variance)
         {
             List<string> instruction_list = new List<string>();
@@ -171,12 +185,40 @@ namespace p4gpc.dungeonloader.Accessors
             }
             _memory.SafeWrite(targetAddress+counter, (byte)0);
             counter++;
+
+            writeConnectionValues(index, targetAddress, counter);
+            /*
             for (int i = 0; i < 36; i++)
             {
                 _memory.SafeWrite(targetAddress+counter, (byte)0);
                 counter++;
             }
 
+
+            foreach (List<int> row in _dungeonRooms[index].connectionValues)
+            {
+                foreach (int value in row)
+                {
+
+                    _memory.SafeWrite(targetAddress+counter, value);
+                    counter+=4;
+                }
+            }
+
+             */
+        }
+
+        private void writeConnectionValues(int index, int targetAddress, int counter)
+        {
+            foreach (List<int> row in _dungeonRooms[index].connectionValues)
+            {
+                foreach (int value in row)
+                {
+
+                    _memory.SafeWrite(targetAddress+counter, value);
+                    counter+=4;
+                }
+            }
         }
 
         [Function(new[] { Register.edx, Register.ecx }, Register.edx, StackCleanup.Callee)]

@@ -101,6 +101,8 @@ namespace p4gpc.dungeonloader.Accessors
 
             currentAddress = _utils.SigScan(functions[3], "EnvHandlingDungeonBin");
             SetupEnvHandling((int)(currentAddress & 0xFFFFFFFF), functions[3]);
+
+            //_utils.Log(GetFloorNameAddress(1).ToString());
         }
 
         private void SetupStaticFloorDungeonBin(int functionAddress, string pattern)
@@ -264,6 +266,11 @@ namespace p4gpc.dungeonloader.Accessors
 
         }
 
+        private void setupNameHandling(int functionAddress, string pattern)
+        {
+
+        }
+
         private int GetID(int entryID)
         {
             entryID /= 2;
@@ -304,6 +311,21 @@ namespace p4gpc.dungeonloader.Accessors
             entryID /= 2;
             return _dungeonFloors[entryID].usedEnv;
         }
+        private unsafe int GetFloorNameAddress(int entryID)
+        {
+            //Doesn't do what we need
+            string name = _dungeonFloors[entryID].floorName;
+            fixed(char* pointer = name)
+            {
+
+                return (int)pointer;
+            };
+        }
+        private string GetFloorName(int entryID)
+        {
+            return _dungeonFloors[entryID].floorName;
+        }
+
 
         [Function(Register.edx, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

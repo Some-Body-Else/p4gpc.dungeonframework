@@ -6,6 +6,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 //using Newtonsoft.Json;
 
 namespace p4gpc.dungeonloader.JsonClasses
@@ -23,6 +24,7 @@ namespace p4gpc.dungeonloader.JsonClasses
         private Config _config;
         public JsonImporter(Config config, Utilities _utils)
         {
+            Debugger.Launch();
             _config = config;
             StreamReader jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_templates.json");
             string jsonContents = jsonReader.ReadToEnd();

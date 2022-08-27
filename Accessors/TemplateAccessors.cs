@@ -136,7 +136,7 @@ namespace p4gpc.dungeonloader.Accessors
             //foundAddresses = _utils.SigScan_FindCount("0F B6 ?? ?? E4 69 9F 00", "Template_Size_MovZX", 7);
             //This command currently doesn't work, but we're trying to get it there
             
-            Debugger.Launch();
+            //Debugger.Launch();
             foreach (string function in functions)
             {
 

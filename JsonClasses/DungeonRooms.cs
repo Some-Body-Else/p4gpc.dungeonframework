@@ -15,5 +15,6 @@ namespace p4gpc.dungeonloader.JsonClasses
         public List<List<byte>> revealProperties { get; set; }
         public List<byte> unknownMasks { get; set; }
         public List<List<byte>> mapRamOutline { get; set; }
+        public List<List<int>> connectionValues { get; set; }
     }
 }
