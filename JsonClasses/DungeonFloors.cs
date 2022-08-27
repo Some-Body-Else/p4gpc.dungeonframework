@@ -17,5 +17,6 @@ namespace p4gpc.dungeonloader.JsonClasses
         public int dungeonScript{ get; set; }
         public int usedEnv{ get; set; }
         public string floorName { get; set; }
+        public nuint nameAddress { get; set; }
     }
 }

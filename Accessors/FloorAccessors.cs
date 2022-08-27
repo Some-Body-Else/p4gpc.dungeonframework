@@ -35,7 +35,7 @@ namespace p4gpc.dungeonloader.Accessors
         private List<IAsmHook> _functionHookList;
         private List<DungeonFloors> _dungeonFloors;
         private List<String> _commands;
-
+        private List<nuint> _nameAddresses;
         /**
          * An idea for refactoring is to, instead of replacing commands, redirect the address values pointing to 0x21EB4AA0
          * to an address referring to a space set aside by our mod, thereby allowing for any amount of entries to be added while
@@ -55,7 +55,7 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList = new List<IAsmHook>();
             _dungeonFloors = _jsonImporter.GetFloors();
             _commands = new List<String>();
-
+            _nameAddresses = new List<nuint>();
 
             List<Task> initialTasks = new List<Task>();
             initialTasks.Add(Task.Run((() => Initialize())));
@@ -73,6 +73,8 @@ namespace p4gpc.dungeonloader.Accessors
             IReverseWrapper<GetByte0AFunction> reverseWrapperByte0A = _hooks.CreateReverseWrapper<GetByte0AFunction>(GetByte0A);
             IReverseWrapper<GetScriptIdFunction> reverseWrapperScript = _hooks.CreateReverseWrapper<GetScriptIdFunction>(GetScriptID);
             IReverseWrapper<GetEnvIdFunction> reverseWrapperEnv = _hooks.CreateReverseWrapper<GetEnvIdFunction>(GetEnvID);
+            IReverseWrapper<GetFloorNameFunction> reverseWrapperFloorName = _hooks.CreateReverseWrapper<GetFloorNameFunction>(GetFloorName);
+            IReverseWrapper<GetFloorNameAddressFunction> reverseWrapperFloorNameAddress = _hooks.CreateReverseWrapper<GetFloorNameAddressFunction>(GetFloorNameAddress);
             _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetID, out reverseWrapperID)}");
             _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetSubID, out reverseWrapperSubID)}");
             _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetByte04, out reverseWrapperByte04)}");
@@ -81,6 +83,8 @@ namespace p4gpc.dungeonloader.Accessors
             _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetByte0A, out reverseWrapperByte0A)}");
             _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetScriptID, out reverseWrapperScript)}");
             _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetEnvID, out reverseWrapperEnv)}");
+            _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetFloorName, out reverseWrapperFloorName)}");
+            _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetFloorNameAddress, out reverseWrapperFloorNameAddress)}");
             _reverseWrapperList.Add(reverseWrapperID);
             _reverseWrapperList.Add(reverseWrapperSubID);
             _reverseWrapperList.Add(reverseWrapperByte04);
@@ -89,9 +93,13 @@ namespace p4gpc.dungeonloader.Accessors
             _reverseWrapperList.Add(reverseWrapperByte0A);
             _reverseWrapperList.Add(reverseWrapperScript);
             _reverseWrapperList.Add(reverseWrapperEnv);
+            _reverseWrapperList.Add(reverseWrapperFloorName);
+            _reverseWrapperList.Add(reverseWrapperFloorNameAddress);
+
+            SetupNameRamSpace();
+
             currentAddress = _utils.SigScan(functions[0], "StaticFloorDungeonBin");
             SetupStaticFloorDungeonBin((int)(currentAddress & 0xFFFFFFFF), functions[0]);
-
 
             currentAddress = _utils.SigScan(functions[1], "RandomFloorDungeonBin");
             SetupRandomFloorDungeonBin((int)(currentAddress & 0xFFFFFFFF), functions[1]);
@@ -101,6 +109,9 @@ namespace p4gpc.dungeonloader.Accessors
 
             currentAddress = _utils.SigScan(functions[3], "EnvHandlingDungeonBin");
             SetupEnvHandling((int)(currentAddress & 0xFFFFFFFF), functions[3]);
+
+            currentAddress = _utils.SigScan(functions[4], "NameHandling");
+            SetupNameHandling((int)(currentAddress & 0xFFFFFFFF), functions[4]);
 
             //_utils.Log(GetFloorNameAddress(1).ToString());
         }
@@ -265,10 +276,35 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
 
         }
-
-        private void setupNameHandling(int functionAddress, string pattern)
+        
+        public void SetupNameRamSpace()
         {
-
+            int nameSize = 0;
+            nuint offsetFromAllocation = 0;
+            foreach (DungeonFloors entry in _dungeonFloors)
+            {
+                nameSize++;
+                nameSize += entry.floorName.Length;
+            }
+            nuint baseAddress = _memory.Allocate(nameSize);
+            foreach (DungeonFloors entry in _dungeonFloors)
+            {
+                entry.nameAddress = baseAddress+offsetFromAllocation;
+                _utils.Log(entry.floorName + " at " + entry.nameAddress.ToString());
+                _memory.SafeWriteRaw(baseAddress+offsetFromAllocation, Encoding.ASCII.GetBytes(entry.floorName));
+                offsetFromAllocation += (nuint)entry.floorName.Length;
+                _memory.SafeWrite(baseAddress+offsetFromAllocation, (byte)0);
+                offsetFromAllocation++;
+                
+            }
+        }
+        private void SetupNameHandling(int functionAddress, string pattern)
+        {
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use32");
+            instruction_list.Add($"{_commands[9]}");
+            instruction_list.Add($"mov edx, eax");
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
         private int GetID(int entryID)
@@ -311,21 +347,14 @@ namespace p4gpc.dungeonloader.Accessors
             entryID /= 2;
             return _dungeonFloors[entryID].usedEnv;
         }
-        private unsafe int GetFloorNameAddress(int entryID)
-        {
-            //Doesn't do what we need
-            string name = _dungeonFloors[entryID].floorName;
-            fixed(char* pointer = name)
-            {
-
-                return (int)pointer;
-            };
-        }
         private string GetFloorName(int entryID)
         {
             return _dungeonFloors[entryID].floorName;
         }
-
+        private nuint GetFloorNameAddress(int entryID)
+        {
+            return _dungeonFloors[entryID].nameAddress;
+        }
 
         [Function(Register.edx, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -351,6 +380,12 @@ namespace p4gpc.dungeonloader.Accessors
         [Function(Register.edx, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int GetEnvIdFunction(int edx);
+        [Function(Register.edx, Register.eax, StackCleanup.Callee)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate string GetFloorNameFunction(int edx);
+        [Function(Register.edx, Register.eax, StackCleanup.Callee)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate nuint GetFloorNameAddressFunction(int edx);
     }
 
 }
