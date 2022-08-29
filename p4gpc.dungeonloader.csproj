@@ -64,6 +64,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="JSON\compare_search.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="JSON\dungeon_floors.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -71,6 +74,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="JSON\dungeon_templates.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="JSON\field_compares.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="JSON\floor_search.json">
@@ -82,10 +88,6 @@
     <None Update="JSON\template_search.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ArcLoader\" />
   </ItemGroup>
 
 </Project>

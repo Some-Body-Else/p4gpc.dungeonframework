@@ -60,6 +60,7 @@ namespace p4gpc.dungeonloader.Accessors
             List<Task> initialTasks = new List<Task>();
             initialTasks.Add(Task.Run((() => Initialize())));
             Task.WaitAll(initialTasks.ToArray());
+            _utils.Log("Floor-adjacent hooks established.");
         }
         private void Initialize()
         {
@@ -115,7 +116,6 @@ namespace p4gpc.dungeonloader.Accessors
 
             //_utils.Log(GetFloorNameAddress(1).ToString());
         }
-
         private void SetupStaticFloorDungeonBin(int functionAddress, string pattern)
         {
             //tracks ID in register eix
@@ -175,7 +175,6 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList.Add( _hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate() );
 
         }
-
         private void SetupRandomFloorDungeonBin(int functionAddress, string pattern)
         {
             //tracks ID in register edx
@@ -235,7 +234,6 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
 
         }
-
         private void SetupScriptHandling(int functionAddress, string pattern)
         {
 
@@ -254,7 +252,6 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
 
         }
-
         private void SetupEnvHandling(int functionAddress, string pattern)
         {
 
@@ -276,8 +273,7 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
 
         }
-        
-        public void SetupNameRamSpace()
+        private void SetupNameRamSpace()
         {
             int nameSize = 0;
             nuint offsetFromAllocation = 0;
@@ -290,12 +286,10 @@ namespace p4gpc.dungeonloader.Accessors
             foreach (DungeonFloors entry in _dungeonFloors)
             {
                 entry.nameAddress = baseAddress+offsetFromAllocation;
-                _utils.Log(entry.floorName + " at " + entry.nameAddress.ToString());
                 _memory.SafeWriteRaw(baseAddress+offsetFromAllocation, Encoding.ASCII.GetBytes(entry.floorName));
                 offsetFromAllocation += (nuint)entry.floorName.Length;
                 _memory.SafeWrite(baseAddress+offsetFromAllocation, (byte)0);
                 offsetFromAllocation++;
-                
             }
         }
         private void SetupNameHandling(int functionAddress, string pattern)
@@ -306,7 +300,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"mov edx, eax");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
-
         private int GetID(int entryID)
         {
             entryID /= 2;

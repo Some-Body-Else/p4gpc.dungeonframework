@@ -1,0 +1,21 @@
+Replace the current way the game checks if a field is a static, nonstatic or pregenerated floor, currently all based on ID number
+-Need to get the list of functions together and figure out what the replacements for them are.
+--Issue comes from the fact that, since a split path is being attempted, we need to figure out which addresses to jump to and how we get them to properly load into Reloaded-II
+
+Find a way to modify which template is used by the dungeon, based on similar method to above.
+
+All minimap functions are currently ignored, but can't ignore it forever.
+
+Force modloader to check p4g mods folder to see if there are modified json files to run, default to preset templates if no substitutes are found
+
+The above to-dos are the most necessary to get to a public release, anything below this is something to allow for more flexibility
+
+Once all the above is finished, modifications to the dungeon-generating functions, currently expects 3x3 rooms to be the largest possible size, want to see if there's a way to stretch that number
+
+if (roomID-0x28) > 0x13
+	if (roomSubID != 0)
+		break
+	if (roomID-0x3C) > 0x13
+		Jump
+
+Issue is figuring out how to force the jump to go where we want, right now it goes to an unrelated address by taking the value we give it as an offset relative to its current location, rather than an absolute address to hop to

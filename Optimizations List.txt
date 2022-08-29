@@ -3,3 +3,5 @@ Future optimizations:
 -Removing unnecessary libraries will help, but also consider seeing if we can get down to specific library usage instead of calling from a more general location.
 -In instances where multiple floors share the same name, the name is duplicated in RAM. Minimizing duplication would be nice
 -TemplateAccessors is basically held together with glue and paste, does not follow the more orderly structure of its younger sibling classes. Refactor for uniformity purposes.
+-GetFloorName and associated code is currently unused and has no current plans to be used, so a refactor here could save us some space
+Can probably abstract a good portion of the Accessors into a superclass that all of them inherit from, something to look at once everything's in place

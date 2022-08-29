@@ -54,6 +54,7 @@ namespace p4gpc.dungeonloader
         private TemplateAccessors _templates;
         private FloorAccessors _floors;
         private RoomAccessors _rooms;
+        private FieldCompareAccessors _compares;
 
 
         private Utilities _utilities;
@@ -81,6 +82,7 @@ namespace p4gpc.dungeonloader
             _templates = new TemplateAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _floors = new FloorAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _rooms = new RoomAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
+            _compares = new FieldCompareAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _utilities.Log("DungeonLoader set up complete.");
         }
 

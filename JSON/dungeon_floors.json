@@ -19,7 +19,7 @@
         "Byte0A": 0,
         "dungeonScript": 0,
         "usedEnv": 0,
-        "floorName": "It's Working!"
+        "floorName": "Entrance"
     },
     {
         "ID": 21,
@@ -459,7 +459,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease1F"
+        "floorName": "Marukyu Striptease 1F"
     },
     {
         "ID": 42,
@@ -470,7 +470,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease2F"
+        "floorName": "Marukyu Striptease 2F"
     },
     {
         "ID": 62,
@@ -481,7 +481,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 1,
-        "floorName": "Marukyu Striptease3F"
+        "floorName": "Marukyu Striptease 3F"
     },
     {
         "ID": 42,
@@ -492,7 +492,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 1,
-        "floorName": "Marukyu Striptease4F"
+        "floorName": "Marukyu Striptease 4F"
     },
     {
         "ID": 42,
@@ -503,7 +503,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 1,
-        "floorName": "Marukyu Striptease5F"
+        "floorName": "Marukyu Striptease 5F"
     },
     {
         "ID": 42,
@@ -514,7 +514,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 1,
-        "floorName": "Marukyu Striptease6F"
+        "floorName": "Marukyu Striptease 6F"
     },
     {
         "ID": 62,
@@ -525,7 +525,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 2,
-        "floorName": "Marukyu Striptease7F"
+        "floorName": "Marukyu Striptease 7F"
     },
     {
         "ID": 42,
@@ -536,7 +536,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 2,
-        "floorName": "Marukyu Striptease8F"
+        "floorName": "Marukyu Striptease 8F"
     },
     {
         "ID": 42,
@@ -547,7 +547,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 2,
-        "floorName": "Marukyu Striptease9F"
+        "floorName": "Marukyu Striptease 9F"
     },
     {
         "ID": 42,
@@ -558,7 +558,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 2,
-        "floorName": "Marukyu Striptease10F"
+        "floorName": "Marukyu Striptease 10F"
     },
     {
         "ID": 25,
@@ -569,7 +569,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 2,
-        "floorName": "Marukyu Striptease11F"
+        "floorName": "Marukyu Striptease 11F"
     },
     {
         "ID": 42,
@@ -580,7 +580,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease12F"
+        "floorName": "Marukyu Striptease 12F"
     },
     {
         "ID": 42,
@@ -591,7 +591,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease13F"
+        "floorName": "Marukyu Striptease 13F"
     },
     {
         "ID": 42,
@@ -602,7 +602,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease14F"
+        "floorName": "Marukyu Striptease 14F"
     },
     {
         "ID": 42,
@@ -613,7 +613,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease15F"
+        "floorName": "Marukyu Striptease 15F"
     },
     {
         "ID": 42,
@@ -624,7 +624,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease16F"
+        "floorName": "Marukyu Striptease 16F"
     },
     {
         "ID": 42,
@@ -635,7 +635,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease17F"
+        "floorName": "Marukyu Striptease 17F"
     },
     {
         "ID": 42,
@@ -646,7 +646,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease18F"
+        "floorName": "Marukyu Striptease 18F"
     },
     {
         "ID": 42,
@@ -657,7 +657,7 @@
         "Byte0A": 0,
         "dungeonScript": 3,
         "usedEnv": 0,
-        "floorName": "Marukyu Striptease19F"
+        "floorName": "Marukyu Striptease 19F"
     },
     {
         "ID": 26,
@@ -1339,7 +1339,7 @@
         "Byte0A": 0,
         "dungeonScript": 7,
         "usedEnv": 0,
-        "floorName": "Magatsu Inaba"
+        "floorName": "Magatsu Mandala World 1"
     },
     {
         "ID": 66,
@@ -1350,33 +1350,11 @@
         "Byte0A": 0,
         "dungeonScript": 7,
         "usedEnv": 0,
-        "floorName": "Magatsu Inaba"
-    },
-    {
-        "ID": 46,
-        "subID": 0,
-        "Byte04": 0,
-        "floorMin": 60,
-        "floorMax": 80,
-        "Byte0A": 0,
-        "dungeonScript": 7,
-        "usedEnv": 1,
-        "floorName": "Magatsu Mandala World 1"
-    },
-    {
-        "ID": 46,
-        "subID": 0,
-        "Byte04": 0,
-        "floorMin": 60,
-        "floorMax": 80,
-        "Byte0A": 0,
-        "dungeonScript": 7,
-        "usedEnv": 1,
         "floorName": "Magatsu Mandala World 2"
     },
     {
-        "ID": 66,
-        "subID": 2,
+        "ID": 46,
+        "subID": 0,
         "Byte04": 0,
         "floorMin": 60,
         "floorMax": 80,
@@ -1393,8 +1371,19 @@
         "floorMax": 80,
         "Byte0A": 0,
         "dungeonScript": 7,
-        "usedEnv": 2,
+        "usedEnv": 1,
         "floorName": "Magatsu Mandala World 4"
+    },
+    {
+        "ID": 66,
+        "subID": 2,
+        "Byte04": 0,
+        "floorMin": 60,
+        "floorMax": 80,
+        "Byte0A": 0,
+        "dungeonScript": 7,
+        "usedEnv": 1,
+        "floorName": "Magatsu Mandala World 5"
     },
     {
         "ID": 46,
@@ -1405,7 +1394,18 @@
         "Byte0A": 0,
         "dungeonScript": 7,
         "usedEnv": 2,
-        "floorName": "Magatsu Mandala World 5"
+        "floorName": "Magatsu Mandala World 6"
+    },
+    {
+        "ID": 46,
+        "subID": 0,
+        "Byte04": 0,
+        "floorMin": 60,
+        "floorMax": 80,
+        "Byte0A": 0,
+        "dungeonScript": 7,
+        "usedEnv": 2,
+        "floorName": "Magatsu Mandala World 7"
     },
     {
         "ID": 66,
@@ -1416,7 +1416,7 @@
         "Byte0A": 0,
         "dungeonScript": 7,
         "usedEnv": 2,
-        "floorName": "Magatsu Mandala World 6"
+        "floorName": "Magatsu Mandala World 8"
     },
     {
         "ID": 29,

@@ -118,6 +118,7 @@ namespace p4gpc.dungeonloader.Accessors
             List<Task> initialTasks = new List<Task>();
             initialTasks.Add(Task.Run((() => Initialize())));
             Task.WaitAll(initialTasks.ToArray());
+            _utils.Log("Template-adjacent hooks established.");
         }
 
 

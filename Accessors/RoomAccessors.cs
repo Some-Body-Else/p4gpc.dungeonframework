@@ -59,6 +59,7 @@ namespace p4gpc.dungeonloader.Accessors
             List<Task> initialTasks = new List<Task>();
             initialTasks.Add(Task.Run((() => Initialize())));
             Task.WaitAll(initialTasks.ToArray());
+            _utils.Log("Room-adjacent hooks established.");
         }
 
         private void Initialize()
@@ -82,7 +83,7 @@ namespace p4gpc.dungeonloader.Accessors
             SetupRoomRAM((int)address, functions[2], RoomPushType.ADD_COMMANDS_1);
 
 
-            address = _utils.SigScan(functions[3], "SetupRoomRam3");
+            address = _utils.SigScan(functions[3], "SkipLoadInGroupD");
             skipFunction((int)address, functions[3]);
         }
 
