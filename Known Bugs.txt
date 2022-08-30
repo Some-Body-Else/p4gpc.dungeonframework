@@ -1,0 +1,26 @@
+List of known bugs
+-Sometimes a room will not load in properly. Visually, the room will not render and, in at least one instance, the collision was not loaded either. Issue first noticed when implementing MOV command replacements ("8A ?? ?? E[X] 69 9F 00"), issue does not occur with any specific type of room and occurs seemingly at random. As such, this problem cannot be debugged effectively.
+--Also appears to only affect the first floor, but can affect any dungeon
+-Loading Rise's dungeon is unusual, since the load icon freezes during the load. Dungeon ends up loading in fine, but it seems to take more time than usual.
+
+
+24B1A884 - Location of one-off command that may need to be taken care of, is set up in an unorthodox way
+
+Something to worry about for later: RoomStack (AFA558) limitations,
+
+0x27767CE0
+
+0x00660b60 - Definitely modify this, it contains all the information regarding how .arc files are loaded. What we'll do is hijack onto this function's jump and then create a JSON saying which fields are of what type. We'll need to hop onto other similar functions, but this is a good start
+
+May not be necessary, loading the custom dungeon room in without the arc_mod patch works fine.
+
+Custom models for dungeon rooms are a go, texture file just needs 5th byte changed from 4 to 3 (that's it). 
+
+Going to need to replace the table used for Group D/E/F in the room entry, the given table does not account for all possible values that we need
+
+Now room orientation data is handled in the room json file
+
+Can insert rooms beyond the original scope, but should figure out the .hbn file format since that seems to handle a lot of map-related data on its own.
+
+
+Also, once we're ready to tackle on the more vague stuff like reorganizing the system to determine if a floor is a dungeon or not and the minimap checks, ask in the Discord to see if anyone has any ideas for it.'

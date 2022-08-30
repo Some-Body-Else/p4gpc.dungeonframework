@@ -82,6 +82,9 @@
     <None Update="JSON\floor_search.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="JSON\dungeon_template_dict.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="JSON\room_search.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -89,5 +92,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
 
 </Project>

@@ -17,6 +17,7 @@ namespace p4gpc.dungeonloader.JsonClasses
         private List<DungeonFloors> _floors;
         private List<DungeonRooms> _rooms;
         private FieldCompare _fieldCompare;
+        private Dictionary<int, int> _dungeon_template_dict = new Dictionary<int, int>();
         private List<String> _templateSearch;
         private List<String> _floorSearch;
         private List<String> _roomSearch;
@@ -26,6 +27,7 @@ namespace p4gpc.dungeonloader.JsonClasses
         {
             //Debugger.Launch();
             _config = config;
+            Dictionary<string, int> temp;
             StreamReader jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_templates.json");
             string jsonContents = jsonReader.ReadToEnd();
             _utils.LogDebug($"\n"+jsonContents);
@@ -50,6 +52,15 @@ namespace p4gpc.dungeonloader.JsonClasses
             jsonContents = jsonReader.ReadToEnd();
             _utils.LogDebug($"\n" + jsonContents);
             _templateSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
+
+            jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_template_dict.json");
+            jsonContents = jsonReader.ReadToEnd();
+            _utils.LogDebug($"\n" + jsonContents);
+            temp = JsonSerializer.Deserialize<Dictionary<string, int>>(jsonContents)!;
+            foreach (string key in temp.Keys)
+            {
+                _dungeon_template_dict.Add(Int32.Parse(key), temp[key]);
+            }
 
             jsonReader = new StreamReader(config.Json_Folder_Path + "/floor_search.json");
             jsonContents = jsonReader.ReadToEnd();
@@ -104,6 +115,11 @@ namespace p4gpc.dungeonloader.JsonClasses
         public List<String> GetFieldCompareFunctions()
         {
             return _fieldCompareSearch;
+        }
+
+        public Dictionary<int, int> GetDungeonTemplateDictionary()
+        {
+            return _dungeon_template_dict;
         }
     }
 }
