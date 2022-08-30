@@ -6,29 +6,19 @@ namespace p4gpc.dungeonloader.Configuration
     public class Config : Configurable<Config>
     {
         /*
-            User Properties:
-                - Please put all of your configurable properties here.
-        
-            By default, configuration saves as "Config.json" in mod user config folder.    
-            Need more config files/classes? See Configuration.cs
-        
-            Available Attributes:
-            - Category
-            - DisplayName
-            - Description
-            - DefaultValue
-
-            // Technically Supported but not Useful
-            - Browsable
-            - Localizable
-
-            The `DefaultValue` attribute is used as part of the `Reset` button in Reloaded-Launcher.
-        */
-        [DisplayName("Json Folder Path")]
-        [Description("Path that mod expects to find JSON files within.")]
+        [DisplayName("Default Json Folder Path")]
+        [Description("Path that mod expects to find JSON files within, assuming no files are found in the mod directory of P4G.")]
         [DefaultValue("JSON folder within mod's folder")]
-        public string Json_Folder_Path { get; set; } = (System.IO.Directory.GetCurrentDirectory() + "/Mods/p4gpc.dungeonloader/JSON");
+        public string defaultPath { get; set; } = (System.IO.Directory.GetCurrentDirectory() + "/Mods/p4gpc.dungeonloader/JSON");
+         */
 
+
+        [DisplayName("Allow custom searches")]
+        [Description("Allows DungeonLoader to load in user-created JSON files to find code to replace in the game.\nNOTE: Unless the user intends to replace more of the executable's original code with their own, this should be disabled.")]
+        public bool customSearch { get; set; } = false;
+
+        /*
+        
         [DisplayName("Int")]
         [Description("This is an int.")]
         [DefaultValue(42)]
@@ -58,5 +48,6 @@ namespace p4gpc.dungeonloader.Configuration
             IsCool,
             ILoveIt
         }
+         */
     }
 }

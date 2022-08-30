@@ -1,12 +1,16 @@
 Replace the current way the game checks if a field is a static, nonstatic or pregenerated floor, currently all based on ID number
 -Replaced all in current list, but there may be more
 
-Force modloader to check p4g mods folder to see if there are modified json files to run, default to preset templates if no substitutes are found
+Get custom build thing working with dungeonloader folder and Aemulus
 
-Fix .ENV files not being applied properly to dungeons (think its just not loading)
+Fix .ENV files not being applied properly to dungeons (think its just not being loaded)
+
+Fix crash when entering Naoto's dungeon (presumably applies to all dungeons of that template)
 
 The above to-dos are the most necessary to get to a public release, anything below this is something to allow for more flexibility
 
 All minimap functions are currently ignored, but can't ignore it forever.
 
 Once all the above is finished, modifications to the dungeon-generating functions, currently expects 3x3 rooms to be the largest possible size, want to see if there's a way to stretch that number
+
+When we get Aemulus to play nice with our folder, next task is to figure out merging

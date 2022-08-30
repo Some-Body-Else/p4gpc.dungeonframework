@@ -12,6 +12,12 @@ namespace p4gpc.dungeonloader.Exceptions
         {
         }
     }
+    public class InvalidJsonPathException : Exception
+    {
+        public InvalidJsonPathException(string json) : base($"Attempt to load {json} from Persona 4 Golden mod folder failed, defaulting to vanilla {json}")
+        {
+        }
+    }
     public class InvalidAsmInstructionAccessTypeException : Exception
     {
         public InvalidAsmInstructionAccessTypeException(int address) : base($"Instruction at address {address.ToString("X8")} attempting to access invalid template address, contact mod developer.")
@@ -60,4 +66,5 @@ namespace p4gpc.dungeonloader.Exceptions
         {
         }
     }
+
 }

@@ -139,7 +139,7 @@ namespace p4gpc.dungeonloader.Accessors
 
         private void PushRoomToStack(int index, int targetAddress)
         {
-            if (index == 0 || index >= _dungeonRooms.Count)
+            if (index == 0 || index > _dungeonRooms.Count)
             {
                 throw new InvalidRoomIndexException(index);
             }

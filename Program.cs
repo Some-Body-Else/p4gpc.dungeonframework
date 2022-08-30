@@ -10,6 +10,7 @@ using Reloaded.Mod.Interfaces.Internal;
 
 using System;
 using System.Diagnostics;
+using System.IO;
 
 namespace p4gpc.dungeonloader
 {
@@ -75,10 +76,15 @@ namespace p4gpc.dungeonloader
             _memory = new Memory();
             using var currentProc = Process.GetCurrentProcess();
             int baseAddress = currentProc.MainModule.BaseAddress.ToInt32();
+            
+            string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\mods\\dungeonloader"));
+            string defaultPath = Path.GetFullPath(Path.Combine(_modLoader.GetModConfigDirectory(_modConfig.ModId), @"..\\..\\..\\")) + "\\Mods\\p4gpc.dungeonloader\\JSON";
 
             _utilities = new Utilities(_configuration, _logger, baseAddress);
-            _jsonImporter = new JsonImporter(_configuration, _utilities);
-            
+            _jsonImporter = new JsonImporter(_configuration, _utilities, modPath, defaultPath);
+            _utilities.Log("JSON files loaded.");
+
+
             _templates = new TemplateAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _floors = new FloorAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _rooms = new RoomAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);

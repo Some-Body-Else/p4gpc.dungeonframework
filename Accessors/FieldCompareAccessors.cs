@@ -293,7 +293,7 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop esi");
             instruction_list.Add($"cmp eax, 2");
             instruction_list.Add($"je pregen");
-            instruction_list.Add($"cmp eax, 2");
+            instruction_list.Add($"cmp eax, 3");
             instruction_list.Add($"je battle");
             instruction_list.Add($"push 0x24B12D83");
             instruction_list.Add($"ret");

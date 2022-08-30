@@ -48,6 +48,11 @@ namespace p4gpc.dungeonloader
             }
         }
 
+        public void LogWarning(string message)
+        {
+            _logger.WriteLine($"[DungeonLoader] {message}", System.Drawing.Color.Yellow);
+        }
+
         public void LogError(string message, Exception e)
         {
             _logger.WriteLine($"[DungeonLoader] {message}: {e.Message}", System.Drawing.Color.Red);

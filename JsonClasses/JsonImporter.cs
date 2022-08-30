@@ -1,4 +1,5 @@
 ﻿using p4gpc.dungeonloader.Configuration;
+using p4gpc.dungeonloader.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,37 +24,166 @@ namespace p4gpc.dungeonloader.JsonClasses
         private List<String> _roomSearch;
         private List<String> _fieldCompareSearch;
         private Config _config;
-        public JsonImporter(Config config, Utilities _utils)
+        public JsonImporter(Config config, Utilities _utils, string jsonPath = "", string defaultPath="" )
         {
             //Debugger.Launch();
             _config = config;
             Dictionary<string, int> temp;
-            StreamReader jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_templates.json");
+            StreamReader jsonReader;
+            if (File.Exists(jsonPath + "/dungeon_templates.json"))
+            {
+
+                jsonReader = new StreamReader(jsonPath + "/dungeon_templates.json");
+            }
+            else
+            {
+                _utils.LogError("Warning", new InvalidJsonPathException("dungeon_templates.json"));
+                jsonReader = new StreamReader(defaultPath + "/dungeon_templates.json");
+            }
             string jsonContents = jsonReader.ReadToEnd();
             _utils.LogDebug($"\n"+jsonContents);
             _templates = JsonSerializer.Deserialize<List<DungeonTemplates>>(jsonContents)!;
 
-            jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_floors.json");
+            if (File.Exists(jsonPath + "/dungeon_floors.json"))
+            {
+
+                jsonReader = new StreamReader(jsonPath + "/dungeon_floors.json");
+            }
+            else
+            {
+                _utils.LogError("Warning", new InvalidJsonPathException("dungeon_floors.json"));
+                jsonReader = new StreamReader(defaultPath + "/dungeon_floors.json");
+            }
             jsonContents = jsonReader.ReadToEnd();
             _utils.LogDebug($"\n"+jsonContents);
             _floors = JsonSerializer.Deserialize<List<DungeonFloors>>(jsonContents)!;
 
-            jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_rooms.json");
+            if (File.Exists(jsonPath + "/dungeon_rooms.json"))
+            {
+
+                jsonReader = new StreamReader(jsonPath + "/dungeon_rooms.json");
+            }
+            else
+            {
+                _utils.LogError("Warning", new InvalidJsonPathException("dungeon_rooms.json"));
+                jsonReader = new StreamReader(defaultPath + "/dungeon_rooms.json");
+            }
             jsonContents = jsonReader.ReadToEnd();
             _utils.LogDebug($"\n"+jsonContents);
             _rooms = JsonSerializer.Deserialize<List<DungeonRooms>>(jsonContents)!;
 
-            jsonReader = new StreamReader(config.Json_Folder_Path + "/field_compares.json");
+            if (File.Exists(jsonPath + "/field_compares.json"))
+            {
+
+                jsonReader = new StreamReader(jsonPath + "/field_compares.json");
+            }
+            else
+            {
+                _utils.LogError("Warning", new InvalidJsonPathException("field_compares.json"));
+                jsonReader = new StreamReader(defaultPath + "/field_compares.json");
+            }
             jsonContents = jsonReader.ReadToEnd();
             _utils.LogDebug($"\n"+jsonContents);
             _fieldCompare = JsonSerializer.Deserialize<FieldCompare>(jsonContents)!;
 
-            jsonReader = new StreamReader(config.Json_Folder_Path + "/template_search.json");
+            if (File.Exists(jsonPath + "/template_search.json"))
+            {
+                if (!config.customSearch)
+                {
+                    _utils.LogWarning("template_search.json is present in mod's JSON folder, but custom search is not enabled. Loading default template_search.json.");
+                    jsonReader = new StreamReader(defaultPath + "/template_search.json");
+
+                }
+                else
+                {
+                    jsonReader = new StreamReader(jsonPath + "/template_search.json");
+                }
+            }
+            else
+            {
+                _utils.LogError("Warning", new InvalidJsonPathException("template_search.json"));
+                jsonReader = new StreamReader(defaultPath + "/template_search.json");
+            }
             jsonContents = jsonReader.ReadToEnd();
             _utils.LogDebug($"\n" + jsonContents);
             _templateSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
 
-            jsonReader = new StreamReader(config.Json_Folder_Path + "/dungeon_template_dict.json");
+            if (File.Exists(jsonPath + "/floor_search.json"))
+            {
+                if (!config.customSearch)
+                {
+                    _utils.LogWarning("floor_search.json is present in mod's JSON folder, but custom search is not enabled. Loading default floor_search.json.");
+                    jsonReader = new StreamReader(defaultPath + "/floor_search.json");
+
+                }
+                else
+                {
+                    jsonReader = new StreamReader(jsonPath + "/floor_search.json");
+                }
+            }
+            else
+            {
+                _utils.LogError("Warning", new InvalidJsonPathException("floor_search.json"));
+                jsonReader = new StreamReader(defaultPath + "/floor_search.json");
+            }
+            jsonContents = jsonReader.ReadToEnd();
+            _utils.LogDebug($"\n" + jsonContents);
+            _floorSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
+
+            if (File.Exists(jsonPath + "/room_search.json"))
+            {
+                if (!config.customSearch)
+                {
+                    _utils.LogWarning("room_search.json is present in mod's JSON folder, but custom search is not enabled. Loading default room_search.json.");
+                    jsonReader = new StreamReader(defaultPath + "/room_search.json");
+
+                }
+                else
+                {
+                    jsonReader = new StreamReader(jsonPath + "/room_search.json");
+                }
+            }
+            else
+            {
+                _utils.LogError("Warning", new InvalidJsonPathException("room_search.json"));
+                jsonReader = new StreamReader(defaultPath + "/room_search.json");
+            }
+            jsonContents = jsonReader.ReadToEnd();
+            _utils.LogDebug($"\n" + jsonContents);
+            _roomSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
+
+            if (File.Exists(jsonPath + "/compare_search.json"))
+            {
+                if (!config.customSearch)
+                {
+                    _utils.LogWarning("compare_search.json is present in mod's JSON folder, but custom search is not enabled. Loading default compare_search.json.");
+                    jsonReader = new StreamReader(defaultPath + "/compare_search.json");
+
+                }
+                else
+                { 
+                    jsonReader = new StreamReader(jsonPath + "/compare_search.json");
+                }
+            }
+            else
+            {
+                _utils.LogError("Warning", new InvalidJsonPathException("compare_search.json"));
+                jsonReader = new StreamReader(defaultPath + "/compare_search.json");
+            }
+            jsonContents = jsonReader.ReadToEnd();
+            _utils.LogDebug($"\n"+jsonContents);
+            _fieldCompareSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
+
+            if (File.Exists(jsonPath + "/dungeon_template_dict.json"))
+            {
+
+                jsonReader = new StreamReader(jsonPath + "/dungeon_template_dict.json");
+            }
+            else
+            {
+                _utils.LogError("Warning", new InvalidJsonPathException("dungeon_template_dict.json"));
+                jsonReader = new StreamReader(defaultPath + "/dungeon_template_dict.json");
+            }
             jsonContents = jsonReader.ReadToEnd();
             _utils.LogDebug($"\n" + jsonContents);
             temp = JsonSerializer.Deserialize<Dictionary<string, int>>(jsonContents)!;
@@ -62,23 +192,7 @@ namespace p4gpc.dungeonloader.JsonClasses
                 _dungeon_template_dict.Add(Int32.Parse(key), temp[key]);
             }
 
-            jsonReader = new StreamReader(config.Json_Folder_Path + "/floor_search.json");
-            jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n" + jsonContents);
-            _floorSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
-
-            jsonReader = new StreamReader(config.Json_Folder_Path + "/room_search.json");
-            jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n" + jsonContents);
-            _roomSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
-
-            jsonReader = new StreamReader(config.Json_Folder_Path + "/compare_search.json");
-            jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n"+jsonContents);
-            _fieldCompareSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
-
             jsonReader.Close();
-            _utils.Log("JSON files loaded");
         }
         public List<DungeonTemplates> GetTemplates()
         {
