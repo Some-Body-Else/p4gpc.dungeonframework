@@ -33,6 +33,7 @@ namespace p4gpc.dungeonloader.Accessors
         private Config _configuration;
         private JsonImporter _jsonImporter;
         private Dictionary<int, int> _dungeon_template_dict;
+        private List<DungeonFloors> _dungeonFloors;
         private List<IReverseWrapper> _reverseWrapperList;
         private List<IAsmHook> _functionHookList;
         private FieldCompare _fieldCompare;
@@ -49,6 +50,7 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList = new List<IAsmHook>();
             _fieldCompare = _jsonImporter.GetFieldCompare();
             _dungeon_template_dict = _jsonImporter.GetDungeonTemplateDictionary();
+            _dungeonFloors = _jsonImporter.GetFloors();
             _commands = new List<String>();
 
             List<Task> initialTasks = new List<Task>();
@@ -59,7 +61,7 @@ namespace p4gpc.dungeonloader.Accessors
 
         private void Initialize()
         {
-            Debugger.Launch();
+            //Debugger.Launch();
 
             List<String> functions = _jsonImporter.GetFieldCompareFunctions();
             long address;
@@ -67,10 +69,13 @@ namespace p4gpc.dungeonloader.Accessors
 
             IReverseWrapper<AccessRoomTypeTableFunction> reverseWrapperAccessRoomTypeTable = _hooks.CreateReverseWrapper<AccessRoomTypeTableFunction>(AccessRoomTypeTable);
             IReverseWrapper<GetDungeonTemplateIDFunction> reverseWrapperGetDungoenTemplateID = _hooks.CreateReverseWrapper<GetDungeonTemplateIDFunction>(GetDungeonTemplateID);
+            IReverseWrapper<StaticFloorCheckFunction> reverseWrapperStaticFloorCheck = _hooks.CreateReverseWrapper<StaticFloorCheckFunction>(StaticFloorCheck);
             _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(AccessRoomTypeTable, out reverseWrapperAccessRoomTypeTable)}");
             _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(GetDungeonTemplateID, out reverseWrapperGetDungoenTemplateID)}");
+            _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(StaticFloorCheck, out reverseWrapperStaticFloorCheck)}");
             _reverseWrapperList.Add(reverseWrapperAccessRoomTypeTable);
             _reverseWrapperList.Add(reverseWrapperGetDungoenTemplateID);
+            _reverseWrapperList.Add(reverseWrapperStaticFloorCheck);
 
             addressList = _utils.SigScan_FindAll(functions[0], "FieldCompareFunc1");
             foreach (long value in addressList)
@@ -96,8 +101,13 @@ namespace p4gpc.dungeonloader.Accessors
             address =_utils.SigScan(functions[5], "FieldCompareFunc5");
             SetupFieldCompareFive((int)address, functions[5]);
 
+            //Commented part of function needs closer examination, leaving it in
+            //causes a softlock when entering battles, but don't know why.
             address =_utils.SigScan(functions[6], "FieldCompareFunc6");
             SetupFieldCompareSix((int)address, functions[6]);
+
+            address =_utils.SigScan(functions[7], "FieldCompareFunc7");
+            SetupFieldCompareSeven((int)address, functions[7]);
         }
 
         private void SetupFieldCompareOne(int functionAddress, string pattern)
@@ -293,8 +303,10 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop esi");
             instruction_list.Add($"cmp eax, 2");
             instruction_list.Add($"je pregen");
-            instruction_list.Add($"cmp eax, 3");
+            /*
+            instruction_list.Add($"cmp eax, 2"); //Causing some issues when entering a battle, should be set to 3, but causes softlock. Figure out!
             instruction_list.Add($"je battle");
+             */
             instruction_list.Add($"push 0x24B12D83");
             instruction_list.Add($"ret");
 
@@ -304,6 +316,53 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"xor ecx, ecx");
             instruction_list.Add($"mov [ebp-0x4C], ecx");
 
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        private void SetupFieldCompareSeven(int functionAddress, string pattern)
+        {
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use32");
+            instruction_list.Add($"push ecx");
+            instruction_list.Add($"push edx");
+            instruction_list.Add($"{_commands[2]}");
+            instruction_list.Add($"pop edx");
+            instruction_list.Add($"pop ecx");
+            instruction_list.Add($"cmp eax, 1");
+            instruction_list.Add($"jne nonstatic_floor");
+            instruction_list.Add($"push 0x247EFECD");
+            instruction_list.Add($"ret");
+
+            instruction_list.Add($"label nonstatic_floor");
+            instruction_list.Add($"mov edx, 0x00AFA558");
+
+            instruction_list.Add($"push esi");
+            instruction_list.Add($"mov esi, ecx");
+            instruction_list.Add($"push ecx");
+            instruction_list.Add($"push edx");
+            instruction_list.Add($"{_commands[0]}");
+            instruction_list.Add($"pop edx");
+            instruction_list.Add($"pop ecx");
+            instruction_list.Add($"pop esi");
+            instruction_list.Add($"cmp eax, 1");
+            instruction_list.Add($"jne pregen_check");
+
+            instruction_list.Add($"push esi");
+            instruction_list.Add($"mov esi, [edx+4]");
+            instruction_list.Add($"cmp esi, 0");
+            instruction_list.Add($"pop esi");
+            instruction_list.Add($"je end_of_func");
+
+            instruction_list.Add($"label pregen_check");
+            instruction_list.Add($"cmp eax, 2");
+            instruction_list.Add($"jne not_pregen");
+            instruction_list.Add($"jmp end_of_func");
+
+            instruction_list.Add($"label not_pregen");
+            instruction_list.Add($"push 0x247EFECD");
+            instruction_list.Add($"ret");
+
+            instruction_list.Add($"label end_of_func");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
@@ -318,6 +377,19 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop ecx");
             instruction_list.Add($"lea eax, [eax*2 + eax]");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        private int StaticFloorCheck(int floorID)
+        {
+            if (!_dungeonFloors.Any(floor => floor.ID == floorID))
+            {
+                return 1; 
+            }
+            if (_fieldCompare.fieldArray[floorID] == 0)
+            {
+                return 1;
+            }
+            return 0;
         }
 
         private RoomLoadType AccessRoomTypeTable(int value)
@@ -336,5 +408,10 @@ namespace p4gpc.dungeonloader.Accessors
         [Function(Register.ecx, Register.eax, StackCleanup.Callee)]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int GetDungeonTemplateIDFunction(int ecx);
+
+
+        [Function(Register.ecx, Register.eax, StackCleanup.Callee)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int StaticFloorCheckFunction(int ecx);
     }
 }

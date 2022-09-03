@@ -14,8 +14,19 @@ namespace p4gpc.dungeonloader.Configuration
 
 
         [DisplayName("Allow custom searches")]
-        [Description("Allows DungeonLoader to load in user-created JSON files to find code to replace in the game.\nNOTE: Unless the user intends to replace more of the executable's original code with their own, this should be disabled.")]
+        [Description("Allows DungeonLoader to load in user-created JSON files to find code to replace in the game.\n"+
+                     "NOTE: Unless the user intends to replace more of the executable's original code with their own, this should be disabled."
+                     )]
         public bool customSearch { get; set; } = false;
+
+        [DisplayName("Suppress default warning/error text")]
+        [Description("DungeonLoader will present warning/error text in the Reloaded-II log when it cannot find a custom JSON to load.\n" +
+                     "After displaying the text, it will load in a default JSON in place of the missing one that replicates vanilla dungeon behavior.\n" + 
+                     "Setting this to true will disable the warning/error text from being logged when a default file is used instead of an expected custom file."
+                    )]
+        public bool suppressDefault { get; set; } = false;
+
+
 
         /*
         

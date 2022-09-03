@@ -337,7 +337,6 @@ namespace p4gpc.dungeonloader.Accessors
         }
         private int GetEnvID(int entryID)
         {
-            entryID /= 2;
             return _dungeonFloors[entryID].usedEnv;
         }
         private string GetFloorName(int entryID)

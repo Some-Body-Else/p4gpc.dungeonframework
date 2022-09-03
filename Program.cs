@@ -97,7 +97,7 @@ namespace p4gpc.dungeonloader
             _configuration = (Config)obj;
             _logger.WriteLine($"[{_modConfig.ModId}] Config Updated: Applying");
 
-            _templates._configuration = _configuration;
+            //_templates._configuration = _configuration;
         }
 
         /* Mod loader actions. */

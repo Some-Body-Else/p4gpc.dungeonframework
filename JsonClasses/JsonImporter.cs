@@ -30,6 +30,8 @@ namespace p4gpc.dungeonloader.JsonClasses
             _config = config;
             Dictionary<string, int> temp;
             StreamReader jsonReader;
+            bool hasCustom = Directory.Exists(jsonPath);
+
             if (File.Exists(jsonPath + "/dungeon_templates.json"))
             {
 
@@ -37,7 +39,10 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                _utils.LogError("Warning", new InvalidJsonPathException("dungeon_templates.json"));
+                if (hasCustom && !config.suppressDefault)
+                {
+                    _utils.LogError("Warning", new InvalidJsonPathException("dungeon_templates.json"));
+                }
                 jsonReader = new StreamReader(defaultPath + "/dungeon_templates.json");
             }
             string jsonContents = jsonReader.ReadToEnd();
@@ -51,7 +56,11 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                _utils.LogError("Warning", new InvalidJsonPathException("dungeon_floors.json"));
+
+                if (hasCustom && !config.suppressDefault)
+                {
+                    _utils.LogError("Warning", new InvalidJsonPathException("dungeon_floors.json"));
+                }
                 jsonReader = new StreamReader(defaultPath + "/dungeon_floors.json");
             }
             jsonContents = jsonReader.ReadToEnd();
@@ -65,7 +74,10 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                _utils.LogError("Warning", new InvalidJsonPathException("dungeon_rooms.json"));
+                if (hasCustom && !config.suppressDefault)
+                {
+                    _utils.LogError("Warning", new InvalidJsonPathException("dungeon_rooms.json"));
+                }
                 jsonReader = new StreamReader(defaultPath + "/dungeon_rooms.json");
             }
             jsonContents = jsonReader.ReadToEnd();
@@ -79,7 +91,10 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                _utils.LogError("Warning", new InvalidJsonPathException("field_compares.json"));
+                if (hasCustom && !config.suppressDefault)
+                {
+                    _utils.LogError("Warning", new InvalidJsonPathException("field_compares.json"));
+                }
                 jsonReader = new StreamReader(defaultPath + "/field_compares.json");
             }
             jsonContents = jsonReader.ReadToEnd();
@@ -101,7 +116,10 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                _utils.LogError("Warning", new InvalidJsonPathException("template_search.json"));
+                if (hasCustom && !config.suppressDefault && !config.customSearch)
+                {
+                    _utils.LogError("Warning", new InvalidJsonPathException("template_search.json"));
+                }
                 jsonReader = new StreamReader(defaultPath + "/template_search.json");
             }
             jsonContents = jsonReader.ReadToEnd();
@@ -123,7 +141,10 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                _utils.LogError("Warning", new InvalidJsonPathException("floor_search.json"));
+                if (hasCustom && !config.suppressDefault && !config.customSearch)
+                {
+                    _utils.LogError("Warning", new InvalidJsonPathException("floor_search.json"));
+                }
                 jsonReader = new StreamReader(defaultPath + "/floor_search.json");
             }
             jsonContents = jsonReader.ReadToEnd();
@@ -145,7 +166,10 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                _utils.LogError("Warning", new InvalidJsonPathException("room_search.json"));
+                if (hasCustom && !config.suppressDefault && !config.customSearch)
+                {
+                    _utils.LogError("Warning", new InvalidJsonPathException("room_search.json"));
+                }
                 jsonReader = new StreamReader(defaultPath + "/room_search.json");
             }
             jsonContents = jsonReader.ReadToEnd();
@@ -161,13 +185,16 @@ namespace p4gpc.dungeonloader.JsonClasses
 
                 }
                 else
-                { 
+                {
                     jsonReader = new StreamReader(jsonPath + "/compare_search.json");
                 }
             }
             else
             {
-                _utils.LogError("Warning", new InvalidJsonPathException("compare_search.json"));
+                if (hasCustom && !config.suppressDefault && !config.customSearch) 
+                { 
+                    _utils.LogError("Warning", new InvalidJsonPathException("compare_search.json"));
+                }
                 jsonReader = new StreamReader(defaultPath + "/compare_search.json");
             }
             jsonContents = jsonReader.ReadToEnd();
@@ -181,7 +208,10 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                _utils.LogError("Warning", new InvalidJsonPathException("dungeon_template_dict.json"));
+                if (hasCustom && !config.suppressDefault)
+                {
+                    _utils.LogError("Warning", new InvalidJsonPathException("dungeon_template_dict.json"));
+                }
                 jsonReader = new StreamReader(defaultPath + "/dungeon_template_dict.json");
             }
             jsonContents = jsonReader.ReadToEnd();

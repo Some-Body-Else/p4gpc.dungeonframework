@@ -188,25 +188,6 @@ namespace p4gpc.dungeonloader.Accessors
             counter++;
 
             writeConnectionValues(index, targetAddress, counter);
-            /*
-            for (int i = 0; i < 36; i++)
-            {
-                _memory.SafeWrite(targetAddress+counter, (byte)0);
-                counter++;
-            }
-
-
-            foreach (List<int> row in _dungeonRooms[index].connectionValues)
-            {
-                foreach (int value in row)
-                {
-
-                    _memory.SafeWrite(targetAddress+counter, value);
-                    counter+=4;
-                }
-            }
-
-             */
         }
 
         private void writeConnectionValues(int index, int targetAddress, int counter)
