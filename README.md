@@ -173,4 +173,4 @@ treated as pregenerated floors under the presumption that the tutorial is relate
 ## Thanks
 
 Just want to give a thank you to the members of the [Persona modding Discord](https://discord.gg/naoto) for lending a hand whenever I had a question. Thanks goes out in particular to Pixelgun, Tekka, pioziomgames, and rudiger, who helped me find the answers to my questions when I got stuck in the dark.<br><br>
-Also want to give a special thanks to AnimatedSwine37, whose Reloaded-II mods were essential for me to get a grasp on how to write a Reloaded-II mod myself and who helped with.
+Also want to give a special thanks to AnimatedSwine37, whose Reloaded-II mods were essential for me to get a grasp on how to write a Reloaded-II mod myself and who helped with the fork of Aemulus.
