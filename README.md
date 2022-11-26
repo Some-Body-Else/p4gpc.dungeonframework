@@ -17,7 +17,9 @@ Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and mak
   + [Dungeon Room](#dungeon-room)
   + [Dungeon Template](#dungeon-template)
   + [Dungeon Floor](#dungeon-floor)
+  + [Minimap](#minimap)
   + [Field Compares](#field-compares)
+  + [Room Compares](#room-compares)
 - [Thanks](#thanks)
 
 ## Mod Details
@@ -29,12 +31,12 @@ Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and mak
 - Allows for the addition of more dungeon floors to the game.<br>
 - Allows for the addition of custom dungeon templates to the game.<br>
 - Allows for the addition of custom dungeon rooms to the game **(not quite practical yet)**.<br>
+    + Custom rooms can now have their own minimap tiles!
 - Tie dungeon floor names to the .json, allowing them to be easily modified.<br>
 - Not crash the game ~~(probably)~~.<br>
 
 ### What it Currently Does Not Do
 
-- Touch any of the minimap code. From my time with [this mod](https://gamebanana.com/mods/386894), I learned that the game does a check with the file containing the minimap tiles  before it gets to the animated intro and will crash unless everything is in order. Just need some more time to figure our what to do with the check and the actual minimap functions.<br>
 - Allow for bigger rooms. The game natively hard-caps the biggest types of individual rooms to be 3x3, which is originally used for 2x2 rooms and their entrances. Expanding the cap to allow for bigger rooms seems doable, but need to figure out how.<br>
 - Make the map bigger. Not even sure if it's possible, but it would be funny if you could.<br>
 
@@ -43,10 +45,10 @@ Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and mak
 
 - For some reason, some dungeons have the loading icon freeze while loading and also appear to take longer to load. This doesn't
  seem to affect anything on a gameplay level, but it is not ideal. Appears to affect all dungeons that follow template 0.<br><br>
- - Sometimes a room on the first floor does not load in properly. The room will appear as a blank space and have it's collision <br>
-act as a completely flat tile **with no walls**. This does mean you can walk out of bounds and subsequently crash the game.<br>
+ - Sometimes a room on the first floor does not load in properly. The room will appear as a blank space and have it's collision 
+act as a completely flat tile **with no walls**. This does mean you can walk out of bounds and subsequently crash the game.
 Entering a battle will cause the room to be loaded in properly.<br><br>
-- Presumed to be connected to the above bug, sometimes a room of the same time as the glitched room will visually<br> 
+- Presumed to be connected to the above bug, sometimes a room of the same time as the glitched room will visually
 appear out of the designated map area. Attempting to access it via the wall-less glitched room will crash the game.<br> 
 ![Pain](https://user-images.githubusercontent.com/86819277/188294387-aeab8801-14f3-462b-b7e1-a3c8fee4cacc.jpg "Example of the glitched rooms")
 
@@ -54,7 +56,6 @@ appear out of the designated map area. Attempting to access it via the wall-less
 ### Laundry List
 
 Order is roughly from top of the list to the bottom, but not necessarily an indicator of how things will be done.<br>
-- Account for minimap code.<br>
 - Figure out the details behind dungeon generation more.<br>
 - Create tools to enable others to create their own .json files to load in, making the creation of custom dungeons more streamlined.<br>
 - Fix known bugs.<br>
@@ -73,21 +74,23 @@ That being said, there is one configuration options I wish to make note of: if t
 
 ### Modders
 DungeonLoader expects to load in a set of .json files with the following names:
-- __compare_search.json__
 - dungeon_floors.json
+- dungeon_minimap.json
 - dungeon_rooms.json
 - dungeon_template_dict.json
 - dungeon_templates.json
+- __field_compare_search.json__
 - field_compares.json
 - __floor_search.json__
+- __minimap_search.json__
+- __room_compare_search.json__
 - __room_search.json__
 - __template_search.json__<br>
 
 Bolded file names indicate that custom variants of these files will not be loaded by DungeonLoader unless the Reloaded-II configuration option to allow custom searches is enabled. Since the search list exists to tell DungeonLoader where to hook into the game, replacing these should be unnecessary, but in case it is not, the option will remain.<br><br>
 To get started with creating custom .jsons, go into the Reloaded-II Mods folder and go into "p4gpc.dungeonloader", copy the contents of the "JSON" folder to a seperate location, then modify the moved .jsons as you see fit. **DO NOT MODIFY THE .json FILES IN THE "JSON" FOLDER**, these are the files DungeonLoader default to presuming no custom files are found and are meant to match up with the vanilla game.
 
-When it comes to loading custom .json files, you must create a folder named "dungeonloader" in your mod directory (not the package, the one near the executable) and put all custom .json files in it. I do have a branch of Aemulus that loads the "dungeonloader" folder from a package, but you would have to build it yourself and mind the fact that in the event that more than one mod uses custom 
-
+When it comes to loading custom .json files, you must create a folder named "dungeonloader" in your mod directory (not the package, the mod folder near the executable) and put all custom .json files in it. I do have a branch of Aemulus that loads the "dungeonloader" folder from a package, but you would have to build it yourself and mind the fact that in the event that more than one mod uses custom rooms it is currently not equipped to handle the situation.
 
 
 ## The Big Explanation Bit
@@ -154,7 +157,11 @@ In addition to this, each template has two sizes to work with, with the first si
 
 ### Dungeon Floor
 A dungeon floor mostly refers to an entry in the file **dungeon.bin**, located at init_free.bin/field/table/dungeon.bin. It is a list of fields and properties to be leveraged when they are loaded, including which dungeon script to use and some parameters that are known to be used in dungeon generation, but whose direct purpose is currently unknown.<br><br>
-The only portion of floor data not directly linked to dungeon.bin is the name of the floor, which is hardcoded into the game's executable.
+The only portion of floor data not directly linked to dungeon.bin is the name of the floor, which is normally hardcoded into the game's executable.
+
+
+### Minimap
+Much of the minimap still remains unknown for the moment, but what is known is where the textures are (**init_free.bin/field/smap.bin**) and the location of some functions that<br> handle some form of transformation on the texture. The game loads all of the textures in at launch and then internally keeps tabs on their information through a table. The textures themselves are modified after being loaded in, leading to searches for the texture based on its file contents to turn up dust. 
 
 ### Field Compares
 Previously unmentioned because there's no real good place to bring it up, but Persona 4 Golden checks field type based on their ID.<br>
@@ -169,6 +176,9 @@ Since this sort of rigid structure is not quite conducive to modding a game to h
 by having a 256 entry array in field_compare.json handle the job of identifying field types. One issue with this solution<br>
 is that I'm not certain about the properties fields whose IDs are in the grey space between 80 and 199, which leads them to being
 treated as pregenerated floors under the presumption that the tutorial is related to the field, but this could be incorrect.
+
+### Room Compares
+Most of these are found in regards to the minimap functions, there are times where the game makes decisions based on the ID of the room. The functions most of these are <br>found around seem to be transformation functions, which makes sense considering the data the game has at hand during execution at that time lacks some potentially <br>critical information, such as the size of the room. The plan is for DungeonLoader to have the properties that these rooms are seperated on be stored as variables and make jumps based on what value that variable holds.
 
 ## Thanks
 
