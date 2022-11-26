@@ -1,0 +1,146 @@
+[
+  {
+    "roomID": 1,
+    "multipleNames": false,
+    "name": "smap01.tmx",
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+  },
+  {
+    "roomID": 2,
+    "multipleNames": true,
+    "name": "smap02.tmx",
+    "names": [
+      "smap02_01.tmx",
+      "smap02_02.tmx"
+    ],
+    "uVarsSingle": [ 0, 1, 0, 0, 3],
+    "uVarsMulti": [
+      [0, 1, 1, 0],
+      [0, 1, 2, 0]
+    ]
+  },
+  {
+    "roomID": 3,
+    "multipleNames": false,
+    "name": "smap03.tmx",
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+  },
+  {
+    "roomID": 4,
+    "multipleNames": false,
+    "name": "smap04.tmx",
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+  },
+  {
+    "roomID": 5,
+    "multipleNames": false,
+    "name": "smap05.tmx",
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+  },
+  {
+    "roomID": 6,
+    "multipleNames": false,
+    "name": "smap06.tmx",
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+  },
+  {
+    "roomID": 7,
+    "multipleNames": false,
+    "name": "smap07.tmx",
+    "uVarsSingle": [ 0, 2, 3, 0, 1 ]
+  },
+  {
+    "roomID": 8,
+    "multipleNames": false,
+    "name": "smap08.tmx",
+    "uVarsSingle": [ 0, 2, 3, 0, 1 ]
+  },
+  {
+    "roomID": 9,
+    "multipleNames": true,
+    "name": "smap09.tmx",
+    "names": [
+      "smap09_01.tmx",
+      "smap09_02.tmx"
+    ],
+    "uVarsSingle": [ 1, 1, 0, 1, 2 ],
+    "uVarsMulti": [
+      [ 1, 1, 0, 1 ],
+      [ 1, 1, 4, 1 ]
+    ]
+  },
+  {
+    "roomID": 10,
+    "multipleNames": true,
+    "name": "smap10.tmx",
+    "names": [
+      "smap10_01.tmx",
+      "smap10_02.tmx"
+    ],
+    "uVarsSingle": [ 1, 1, 0, 1, 2 ],
+    "uVarsMulti": [
+      [ 1, 1, 0, 1 ],
+      [ 1, 1, 4, 1 ]
+    ]
+  },
+  {
+    "roomID": 11,
+    "multipleNames": true,
+    "name": "smap11.tmx",
+    "names": [
+      "smap11_01.tmx",
+      "smap11_02.tmx"
+    ],
+    "uVarsSingle": [ 2, 1, 0, 2, 2 ],
+    "uVarsMulti": [
+      [ 2, 1, 5, 2 ],
+      [ 2, 1, 4, 2 ]
+    ]
+  },
+  {
+    "roomID": 12,
+    "multipleNames": true,
+    "name": "smap12.tmx",
+    "names": [
+      "smap12_01.tmx",
+      "smap12_02.tmx"
+    ],
+    "uVarsSingle": [ 2, 1, 0, 2, 2 ],
+    "uVarsMulti": [
+      [ 2, 1, 5, 2 ],
+      [ 2, 1, 4, 2 ]
+    ]
+  },
+  {
+    "roomID": 13,
+    "multipleNames": true,
+    "name": "smap13.tmx",
+    "names": [
+      "smap13_01.tmx",
+      "smap13_02.tmx",
+      "smap13_03.tmx"
+    ],
+    "uVarsSingle": [ 3, 0, 0, 3, 2 ],
+    "uVarsMulti": [
+      [ 3, 0, 0, 3 ],
+      [ 3, 0, 6, 3 ],
+      [ 3, 0, 0, 3 ]
+    ]
+  },
+  {
+    "roomID": 14,
+    "multipleNames": true,
+    "name": "smap14.tmx",
+    "names": [
+      "smap14_01.tmx",
+      "smap14_02.tmx",
+      "smap14_03.tmx"
+    ],
+    "uVarsSingle": [ 3, 0, 0, 3, 2 ],
+    "uVarsMulti": [
+      [ 3, 0, 0, 3 ],
+      [ 3, 0, 6, 3 ],
+      [ 3, 0, 0, 3 ]
+    ]
+  }
+]

@@ -11,6 +11,8 @@ namespace p4gpc.dungeonloader.JsonClasses
         public byte ID { get; set; }
         public byte sizeX { get; set; }
         public byte sizeY { get; set; }
+        public bool isExit { get; set; }
+        public bool hasDoor { get; set; }
         public List<List<byte>> connectionPointers { get; set; }
         public List<List<byte>> revealProperties { get; set; }
         public List<byte> unknownMasks { get; set; }

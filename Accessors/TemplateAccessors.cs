@@ -127,7 +127,7 @@ namespace p4gpc.dungeonloader.Accessors
                 {
                     twoByteID = false;
                     threeByteID = false;
-                    _utils.LogDebug($"Function found at: {address.ToString("X8")}");
+                    //_utils.LogDebug($"Function found at: {address.ToString("X8")}");
                     _memory.SafeRead((nuint)(address), out idByte);
                     if (idByte == 0x0F || idByte == 0x40)
                     {
@@ -159,12 +159,12 @@ namespace p4gpc.dungeonloader.Accessors
                             }
                             else
                             {
-                                throw new InvalidAsmInstructionTypeException(_functionAddress);
+                                throw new InvalidAsmInstructionTypeException(_functionAddress, _utils);
                             }
                         }
                         else
                         {
-                            throw new InvalidAsmInstructionTypeException(_functionAddress);
+                            throw new InvalidAsmInstructionTypeException(_functionAddress, _utils);
                         }
                     }
                     else if (threeByteID)
@@ -182,17 +182,17 @@ namespace p4gpc.dungeonloader.Accessors
                                 }
                                 else
                                 {
-                                    throw new InvalidAsmInstructionTypeException(_functionAddress);
+                                    throw new InvalidAsmInstructionTypeException(_functionAddress, _utils);
                                 }
                             }
                             else
                             {
-                                throw new InvalidAsmInstructionTypeException(_functionAddress);
+                                throw new InvalidAsmInstructionTypeException(_functionAddress, _utils);
                             }
                         }
                         else
                         {
-                            throw new InvalidAsmInstructionTypeException(_functionAddress);
+                            throw new InvalidAsmInstructionTypeException(_functionAddress, _utils);
                         }
                     }
                     else
@@ -214,7 +214,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                         else
                         {
-                            throw new InvalidAsmInstructionTypeException(_functionAddress);
+                            throw new InvalidAsmInstructionTypeException(_functionAddress, _utils);
                         }
                         _memory.SafeRead((nuint)(address + 3), out accessedAddress);
                         _memory.SafeRead((nuint)(address + 1), out R_M_BYTE);
@@ -246,7 +246,7 @@ namespace p4gpc.dungeonloader.Accessors
                             }
                         default:
                             {
-                                throw new InvalidTemplateAccessorAddressException(0x7FFFFFFF);
+                                throw new InvalidTemplateAccessorAddressException(accessedAddress, _utils);
                             }
                     }
                     switch (currentInstruction)
@@ -262,7 +262,7 @@ namespace p4gpc.dungeonloader.Accessors
                             SetupAsm_Cmp(currentInstruction, accessType);
                             break;
                         default:
-                            throw new InvalidAsmInstructionTypeException(_functionAddress);
+                            throw new InvalidAsmInstructionTypeException(_functionAddress, _utils);
                     };
                 }
 
@@ -323,7 +323,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                         }
                 }
 
@@ -337,7 +337,7 @@ namespace p4gpc.dungeonloader.Accessors
                 }
                 else
                 {
-                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress);
+                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress, _utils);
                 }
 
                 switch (reg_out)
@@ -386,7 +386,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                         }
                 }
 
@@ -475,7 +475,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                         }
                 }
 
@@ -527,7 +527,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                         }
                 }
                 if (flipAD)
@@ -564,7 +564,7 @@ namespace p4gpc.dungeonloader.Accessors
                 }
                 else
                 {
-                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress);
+                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress, _utils);
                 }
 
                 
@@ -614,7 +614,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                         }
                 }
                 if (eax_out)
@@ -645,7 +645,7 @@ namespace p4gpc.dungeonloader.Accessors
             }
             else
             {
-                throw new InvalidAsmInstructionModValueException(_functionAddress);
+                throw new InvalidAsmInstructionModValueException(_functionAddress, _utils);
             }
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), _functionAddress, AsmHookBehaviour.DoNotExecuteOriginal).Activate());
         }
@@ -709,7 +709,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                         }
                 }
 
@@ -723,7 +723,7 @@ namespace p4gpc.dungeonloader.Accessors
                 }
                 else
                 {
-                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress);
+                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress, _utils);
                 }
 
                 if (currentInstruction == instructionType.CMP_CONST)
@@ -796,7 +796,7 @@ namespace p4gpc.dungeonloader.Accessors
                             }
                         default:
                             {
-                                throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                                throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                             }
                     }
                 }
@@ -878,7 +878,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                         }
                 }
 
@@ -930,7 +930,7 @@ namespace p4gpc.dungeonloader.Accessors
                         }
                     default:
                         {
-                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                            throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                         }
                 }
                 if (flipAD)
@@ -967,7 +967,7 @@ namespace p4gpc.dungeonloader.Accessors
                 }
                 else
                 {
-                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress);
+                    throw new InvalidAsmInstructionModAccessCombinationException(_functionAddress, _utils);
                 }
                 if (currentInstruction == instructionType.CMP_CONST)
                 {
@@ -1039,7 +1039,7 @@ namespace p4gpc.dungeonloader.Accessors
                             }
                         default:
                             {
-                                throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress);
+                                throw new InvalidAsmInstructionRegisterReferenceException(_functionAddress, _utils);
                             }
                     }
                 }
@@ -1066,7 +1066,7 @@ namespace p4gpc.dungeonloader.Accessors
             }
             else
             {
-                throw new InvalidAsmInstructionModValueException(_functionAddress);
+                throw new InvalidAsmInstructionModValueException(_functionAddress, _utils);
             }
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), _functionAddress, AsmHookBehaviour.DoNotExecuteOriginal).Activate());
         }

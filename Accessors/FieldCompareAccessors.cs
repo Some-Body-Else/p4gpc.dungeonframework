@@ -56,7 +56,7 @@ namespace p4gpc.dungeonloader.Accessors
             List<Task> initialTasks = new List<Task>();
             initialTasks.Add(Task.Run((() => Initialize())));
             Task.WaitAll(initialTasks.ToArray());
-            _utils.Log("Field compare-adjacent hooks established.");
+            _utils.Log("Field compare hooks established.");
         }
 
         private void Initialize()
@@ -101,8 +101,6 @@ namespace p4gpc.dungeonloader.Accessors
             address =_utils.SigScan(functions[5], "FieldCompareFunc5");
             SetupFieldCompareFive((int)address, functions[5]);
 
-            //Commented part of function needs closer examination, leaving it in
-            //causes a softlock when entering battles, but don't know why.
             address =_utils.SigScan(functions[6], "FieldCompareFunc6");
             SetupFieldCompareSix((int)address, functions[6]);
 
@@ -303,10 +301,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop esi");
             instruction_list.Add($"cmp eax, 2");
             instruction_list.Add($"je pregen");
-            /*
-            instruction_list.Add($"cmp eax, 2"); //Causing some issues when entering a battle, should be set to 3, but causes softlock. Figure out!
-            instruction_list.Add($"je battle");
-             */
             instruction_list.Add($"push 0x24B12D83");
             instruction_list.Add($"ret");
 

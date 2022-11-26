@@ -24,7 +24,21 @@ namespace p4gpc.dungeonloader.Configuration
                      "After displaying the text, it will load in a default JSON in place of the missing one that replicates vanilla dungeon behavior.\n" + 
                      "Setting this to true will disable the warning/error text from being logged when a default file is used instead of an expected custom file."
                     )]
-        public bool suppressDefault { get; set; } = false;
+        public bool suppressWarnErr { get; set; } = false;
+
+        [DisplayName("Allow debug logs")]
+        [Description("Will allow DungeonLoader to log debug information to the Reloaded-II console.\n"+
+                     "Information logged includes addresses of files in RAM, among other program details.\n"+
+                     "This information not required for usage, so it is disabled by default."
+                     )]
+        public bool logDebug { get; set; } = true;
+
+        [DisplayName("Allow debug logs")]
+        [Description("Will allow DungeonLoader to log debug information to the Reloaded-II console.\n"+
+                     "Information logged includes addresses of files in RAM, among other program details.\n"+
+                     "This information not required for usage, so it is disabled by default."
+                     )]
+        public bool noteSizeDiscrepency { get; set; } = true;
 
 
 

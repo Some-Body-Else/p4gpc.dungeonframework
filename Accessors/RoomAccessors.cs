@@ -141,7 +141,7 @@ namespace p4gpc.dungeonloader.Accessors
         {
             if (index == 0 || index > _dungeonRooms.Count)
             {
-                throw new InvalidRoomIndexException(index);
+                throw new InvalidRoomIndexException(index, _utils);
             }
             short counter = 0;
             index--;    //Need to decrement since 0 is never a room possibility (dummy entry)

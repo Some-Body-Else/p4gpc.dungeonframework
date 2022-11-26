@@ -17,12 +17,15 @@ namespace p4gpc.dungeonloader.JsonClasses
         private List<DungeonTemplates> _templates;
         private List<DungeonFloors> _floors;
         private List<DungeonRooms> _rooms;
+        private List<DungeonMinimap> _minimap;
         private FieldCompare _fieldCompare;
         private Dictionary<int, int> _dungeon_template_dict = new Dictionary<int, int>();
         private List<String> _templateSearch;
         private List<String> _floorSearch;
         private List<String> _roomSearch;
+        private List<String> _minimapSearch;
         private List<String> _fieldCompareSearch;
+        private List<String> _roomCompareSearch;
         private Config _config;
         public JsonImporter(Config config, Utilities _utils, string jsonPath = "", string defaultPath="" )
         {
@@ -39,14 +42,13 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressDefault)
+                if (hasCustom && !config.suppressWarnErr)
                 {
-                    _utils.LogError("Warning", new InvalidJsonPathException("dungeon_templates.json"));
+                    _utils.LogError($"Attempt to load dungeon_templates.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_templates.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/dungeon_templates.json");
             }
             string jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n"+jsonContents);
             _templates = JsonSerializer.Deserialize<List<DungeonTemplates>>(jsonContents)!;
 
             if (File.Exists(jsonPath + "/dungeon_floors.json"))
@@ -57,14 +59,13 @@ namespace p4gpc.dungeonloader.JsonClasses
             else
             {
 
-                if (hasCustom && !config.suppressDefault)
+                if (hasCustom && !config.suppressWarnErr)
                 {
-                    _utils.LogError("Warning", new InvalidJsonPathException("dungeon_floors.json"));
+                    _utils.LogError($"Attempt to load dungeon_floors.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_floors.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/dungeon_floors.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n"+jsonContents);
             _floors = JsonSerializer.Deserialize<List<DungeonFloors>>(jsonContents)!;
 
             if (File.Exists(jsonPath + "/dungeon_rooms.json"))
@@ -74,15 +75,30 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressDefault)
+                if (hasCustom && !config.suppressWarnErr)
                 {
-                    _utils.LogError("Warning", new InvalidJsonPathException("dungeon_rooms.json"));
+                    _utils.LogError($"Attempt to load dungeon_minimap.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_rooms.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/dungeon_rooms.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n"+jsonContents);
             _rooms = JsonSerializer.Deserialize<List<DungeonRooms>>(jsonContents)!;
+
+            if (File.Exists(jsonPath + "/dungeon_minimap.json"))
+            {
+
+                jsonReader = new StreamReader(jsonPath + "/dungeon_minimap.json");
+            }
+            else
+            {
+                if (hasCustom && !config.suppressWarnErr)
+                {
+                    _utils.LogError($"Attempt to load dungeon_minimap.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_minimap.json");
+                }
+                jsonReader = new StreamReader(defaultPath + "/dungeon_minimap.json");
+            }
+            jsonContents = jsonReader.ReadToEnd();
+            _minimap = JsonSerializer.Deserialize<List<DungeonMinimap>>(jsonContents)!;
 
             if (File.Exists(jsonPath + "/field_compares.json"))
             {
@@ -91,15 +107,16 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressDefault)
+                if (hasCustom && !config.suppressWarnErr)
                 {
-                    _utils.LogError("Warning", new InvalidJsonPathException("field_compares.json"));
+                    _utils.LogError($"Attempt to load field_compares.json from Persona 4 Golden mod folder failed, defaulting to vanilla field_compares.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/field_compares.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n"+jsonContents);
             _fieldCompare = JsonSerializer.Deserialize<FieldCompare>(jsonContents)!;
+
+
 
             if (File.Exists(jsonPath + "/template_search.json"))
             {
@@ -116,14 +133,13 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressDefault && !config.customSearch)
+                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
                 {
-                    _utils.LogError("Warning", new InvalidJsonPathException("template_search.json"));
+                    _utils.LogError($"Attempt to load template_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla template_search.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/template_search.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n" + jsonContents);
             _templateSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
 
             if (File.Exists(jsonPath + "/floor_search.json"))
@@ -141,15 +157,38 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressDefault && !config.customSearch)
+                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
                 {
-                    _utils.LogError("Warning", new InvalidJsonPathException("floor_search.json"));
+                    _utils.LogError($"Attempt to load floor_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla floor_search.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/floor_search.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n" + jsonContents);
             _floorSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
+
+            if (File.Exists(jsonPath + "/minimap_search.json"))
+            {
+                if (!config.customSearch)
+                {
+                    _utils.LogWarning("minimap_search.json is present in mod's JSON folder, but custom search is not enabled. Loading default room_search.json.");
+                    jsonReader = new StreamReader(defaultPath + "/minimap_search.json");
+
+                }
+                else
+                {
+                    jsonReader = new StreamReader(jsonPath + "/minimap_search.json");
+                }
+            }
+            else
+            {
+                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
+                {
+                    _utils.LogError($"Attempt to load minimap_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla minimap_search.json");
+                }
+                jsonReader = new StreamReader(defaultPath + "/minimap_search.json");
+            }
+            jsonContents = jsonReader.ReadToEnd();
+            _minimapSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
 
             if (File.Exists(jsonPath + "/room_search.json"))
             {
@@ -166,40 +205,63 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressDefault && !config.customSearch)
+                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
                 {
-                    _utils.LogError("Warning", new InvalidJsonPathException("room_search.json"));
+                    _utils.LogError($"Attempt to load room_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla room_search.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/room_search.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n" + jsonContents);
             _roomSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
 
-            if (File.Exists(jsonPath + "/compare_search.json"))
+            if (File.Exists(jsonPath + "/field_compare_search.json"))
             {
                 if (!config.customSearch)
                 {
-                    _utils.LogWarning("compare_search.json is present in mod's JSON folder, but custom search is not enabled. Loading default compare_search.json.");
-                    jsonReader = new StreamReader(defaultPath + "/compare_search.json");
+                    _utils.LogWarning("field_compare_search.json is present in mod's JSON folder, but custom search is not enabled. Loading default field_compare_search.json.");
+                    jsonReader = new StreamReader(defaultPath + "/field_compare_search.json");
 
                 }
                 else
                 {
-                    jsonReader = new StreamReader(jsonPath + "/compare_search.json");
+                    jsonReader = new StreamReader(jsonPath + "/field_compare_search.json");
                 }
             }
             else
             {
-                if (hasCustom && !config.suppressDefault && !config.customSearch) 
-                { 
-                    _utils.LogError("Warning", new InvalidJsonPathException("compare_search.json"));
+                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
+                {
+                    _utils.LogError($"Attempt to load field_compare_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla field_compare_search.json");
                 }
-                jsonReader = new StreamReader(defaultPath + "/compare_search.json");
+                jsonReader = new StreamReader(defaultPath + "/field_compare_search.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n"+jsonContents);
             _fieldCompareSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
+
+
+            if (File.Exists(jsonPath + "/room_compare_search.json"))
+            {
+                if (!config.customSearch)
+                {
+                    _utils.LogWarning("room_compare_search.json is present in mod's JSON folder, but custom search is not enabled. Loading default room_compare_search.json.");
+                    jsonReader = new StreamReader(defaultPath + "/room_compare_search.json");
+
+                }
+                else
+                {
+                    jsonReader = new StreamReader(jsonPath + "/room_compare_search.json");
+                }
+            }
+            else
+            {
+                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
+                {
+                    _utils.LogError($"Attempt to load room_compare_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla room_compare_search.json");
+                }
+                jsonReader = new StreamReader(defaultPath + "/room_compare_search.json");
+            }
+            jsonContents = jsonReader.ReadToEnd();
+            _roomCompareSearch = JsonSerializer.Deserialize<List<String>>(jsonContents)!;
 
             if (File.Exists(jsonPath + "/dungeon_template_dict.json"))
             {
@@ -208,14 +270,13 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressDefault)
+                if (hasCustom && !config.suppressWarnErr)
                 {
-                    _utils.LogError("Warning", new InvalidJsonPathException("dungeon_template_dict.json"));
+                    _utils.LogError($"Attempt to load dungeon_template_dict.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_template_dict.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/dungeon_template_dict.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _utils.LogDebug($"\n" + jsonContents);
             temp = JsonSerializer.Deserialize<Dictionary<string, int>>(jsonContents)!;
             foreach (string key in temp.Keys)
             {
@@ -252,6 +313,16 @@ namespace p4gpc.dungeonloader.JsonClasses
             return _roomSearch;
         }
 
+        public List<DungeonMinimap> GetMinimap()
+        {
+            return _minimap;
+        }
+
+        public List<String> GetMinimapFunctions()
+        {
+            return _minimapSearch;
+        }
+
         public FieldCompare GetFieldCompare()
         {
             return _fieldCompare;
@@ -259,6 +330,11 @@ namespace p4gpc.dungeonloader.JsonClasses
         public List<String> GetFieldCompareFunctions()
         {
             return _fieldCompareSearch;
+        }
+
+        public List<String> GetRoomCompareFunctions()
+        {
+            return _roomCompareSearch;
         }
 
         public Dictionary<int, int> GetDungeonTemplateDictionary()

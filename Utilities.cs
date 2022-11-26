@@ -20,6 +20,7 @@ namespace p4gpc.dungeonloader
     /// The entirety of this file is stolen from AnimatedSwine37, specifically their XP Share mod for P4G.
     /// Link here: https://github.com/AnimatedSwine37/Persona-4-Golden-Xp-Share/blob/main/p4gpc.xpshare/XpShare.cs
     /// Names are slightly different because it was copied by hand to get a better understanding as to how it should be used.
+    /// Possibly subject to change as the project moves forward.
     /// </summary>
     public class Utilities
     {
@@ -39,23 +40,28 @@ namespace p4gpc.dungeonloader
             _logger.WriteLine($"[DungeonLoader] {message}");
         }
 
-        public void LogDebug(string message)
+        public void LogDebug(string message, byte debugLevel = 0)
         {
             //Should give a proper debug condition later
-            if (1 == 0)
+            if (Configuration.logDebug)
             {
-                _logger.WriteLine($"[DungeonLoader] {message}");
+                _logger.WriteLine($"[DungeonLoader] {message}", System.Drawing.Color.BlueViolet);
             }
         }
 
         public void LogWarning(string message)
         {
-            _logger.WriteLine($"[DungeonLoader] {message}", System.Drawing.Color.Yellow);
+            _logger.WriteLine($"[DungeonLoader] Warning: {message}", System.Drawing.Color.Yellow);
         }
 
-        public void LogError(string message, Exception e)
+        public void LogError(string message)
         {
-            _logger.WriteLine($"[DungeonLoader] {message}: {e.Message}", System.Drawing.Color.Red);
+            _logger.WriteLine($"[DungeonLoader] Error: {message}", System.Drawing.Color.Red);
+        }
+
+        public void LogThrownException(string message)
+        {
+            _logger.WriteLine($"[DungeonLoader] {message}", System.Drawing.Color.DarkRed);
         }
 
         /// <summary>
@@ -79,7 +85,7 @@ namespace p4gpc.dungeonloader
             }
             catch (Exception ex)
             {
-                LogError($"Error when searching for address of {funcName}", ex);
+                LogError($"Error when searching for address of {funcName} : {ex.Message}");
                 return -1;
             }
         }
@@ -116,7 +122,7 @@ namespace p4gpc.dungeonloader
                 }
                 catch (Exception ex)
                 {
-                    LogError($"Error when searching for address of {funcName}", ex);
+                    LogError($"Error when searching for address of {funcName} : {ex.Message}");
                 }
             }
             return return_list;
@@ -154,7 +160,7 @@ namespace p4gpc.dungeonloader
                 }
                 catch (Exception ex)
                 {
-                    LogError($"Error when searching for address of {funcName}", ex);
+                    LogError($"Error when searching for address of {funcName} : {ex.Message}");
                     break;
                 }
             }
