@@ -137,7 +137,6 @@ namespace p4gpc.dungeonloader.Accessors
             address = _utils.SigScan(functions[2], "TableEndComapre");
             TableEndComapre((int)address, functions[2]);
             _utils.LogDebug($"TableEndComapre address: {address.ToString("X8")}");
-            
 
             address = _utils.SigScan(functions[3], "MinimapTileCheck_PreLoop");
             MinimapTileCheck_PreLoop((int)address, functions[3]);
@@ -151,11 +150,6 @@ namespace p4gpc.dungeonloader.Accessors
             MinimapTileCheck_LoopCheck((int)address, functions[5]);
             _utils.LogDebug($"MinimapTileCheck_LoopCheck address: {address.ToString("X8")}");
 
-
-            // Changes here result in minimap screwups, like the blue square
-            // or overlapping tiles. On the list to figure out why.
-            // We know that there is a function call for all of these when getting some info, only thing that
-            // comes to mind that could be causing an issue.
             address = _utils.SigScan(functions[6], "SetupMinimapPathLoad");
             SetupMinimapPathLoad((int)address, functions[6]);
             _utils.LogDebug($"SetupMinimapPathLoad address: {address.ToString("X8")}");
@@ -274,6 +268,7 @@ namespace p4gpc.dungeonloader.Accessors
         // Command 0
         private int GetTileMapIndexStart(int eax)
         {
+            // Can probably remove this one, but on the fence about it atm.
             int ebx;
             String tileName = "smap" + eax.ToString().PadLeft(2, '0') + ".tmx";
             int index = _minimap_names.IndexOf(tileName);
@@ -295,6 +290,7 @@ namespace p4gpc.dungeonloader.Accessors
             _memory.SafeRead((nuint)ecx, out fileCount);
             if (fileCount != _minimap_names.Count() && _configuration.noteSizeDiscrepency && discrepencyNoted)
             {
+                // Only want to log the discrepency once, since otherwise we flood the log with redundant data
                 _utils.LogWarning($"Size discrepency between smap.bin and dungeon_minimap.json detected!");
                 _utils.LogWarning($"smap.bin contains {fileCount} files, dungeon_minimap.json expects {_minimap_names.Count()} files");
                 discrepencyNoted = true;
@@ -338,7 +334,9 @@ namespace p4gpc.dungeonloader.Accessors
 
               I'm certain that I've lost some number of weeks in my lifespan from this.
 
-              The workaround for this asinine affair is that I've replaced 
+              The workaround for this asinine affair is that I've replaced the texture data for the existing but unused tile textures with data from the
+              texture actually loaded in. As such, the previously-unused files are now loaded in, but their data is the content the game typically draws from
+              the other file.
              */
             byte eax;
             byte ecx;
@@ -360,12 +358,6 @@ namespace p4gpc.dungeonloader.Accessors
                 else
                 { 
                     tileName = _minimap[eax-1].names[ecx-1];
-
-                    //Just for debugging atm
-                    if (eax == 13 && ecx != 2)
-                    {
-                        tileName = "smap09_01.tmx";
-                    }
 
                 }
             }

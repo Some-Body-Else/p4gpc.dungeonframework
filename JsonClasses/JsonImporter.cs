@@ -133,7 +133,7 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
+                if (hasCustom && !config.suppressWarnErr && config.customSearch)
                 {
                     _utils.LogError($"Attempt to load template_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla template_search.json");
                 }
@@ -157,7 +157,7 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
+                if (hasCustom && !config.suppressWarnErr && config.customSearch)
                 {
                     _utils.LogError($"Attempt to load floor_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla floor_search.json");
                 }
@@ -181,7 +181,7 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
+                if (hasCustom && !config.suppressWarnErr && config.customSearch)
                 {
                     _utils.LogError($"Attempt to load minimap_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla minimap_search.json");
                 }
@@ -205,7 +205,7 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
+                if (hasCustom && !config.suppressWarnErr && config.customSearch)
                 {
                     _utils.LogError($"Attempt to load room_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla room_search.json");
                 }
@@ -229,7 +229,7 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
+                if (hasCustom && !config.suppressWarnErr && config.customSearch)
                 {
                     _utils.LogError($"Attempt to load field_compare_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla field_compare_search.json");
                 }
@@ -254,7 +254,7 @@ namespace p4gpc.dungeonloader.JsonClasses
             }
             else
             {
-                if (hasCustom && !config.suppressWarnErr && !config.customSearch)
+                if (hasCustom && !config.suppressWarnErr && config.customSearch)
                 {
                     _utils.LogError($"Attempt to load room_compare_search.json from Persona 4 Golden mod folder failed, defaulting to vanilla room_compare_search.json");
                 }

@@ -42,7 +42,6 @@ namespace p4gpc.dungeonloader
 
         public void LogDebug(string message, byte debugLevel = 0)
         {
-            //Should give a proper debug condition later
             if (Configuration.logDebug)
             {
                 _logger.WriteLine($"[DungeonLoader] {message}", System.Drawing.Color.BlueViolet);
@@ -178,9 +177,24 @@ namespace p4gpc.dungeonloader
             return pattern.Length/2;
         }
 
-        public int AccountForBaseAddress(int address)
+        /// <summary>
+        /// Returns a value that adds the base address of the P4G process to the value.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public long AccountForBaseAddress(long address)
         {
             return address + _processBaseAddress;
+        }
+
+        /// <summary>
+        /// Returns a value that removes the base address of the P4G process from the value.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public long StripBaseAddress(long address)
+        {
+            return address - _processBaseAddress;
         }
     }
 }

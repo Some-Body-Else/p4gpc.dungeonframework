@@ -77,7 +77,7 @@ namespace p4gpc.dungeonloader.Accessors
             _reverseWrapperList.Add(reverseWrapperGetDungoenTemplateID);
             _reverseWrapperList.Add(reverseWrapperStaticFloorCheck);
 
-            addressList = _utils.SigScan_FindAll(functions[0], "FieldCompareFunc1");
+            addressList = _utils.SigScan_FindAll(functions[0], "FieldCompareFunc0");
             foreach (long value in addressList)
             {
                 SetupFieldCompareOne((int)value, functions[0]);

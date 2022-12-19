@@ -27,7 +27,13 @@ namespace p4gpc.dungeonloader.Accessors
 {
     public class RoomCompareAccessors
     {
-
+        /*
+         "Hate. Let me tell you how much I've ccome to hate you since I began to live. There are 387.44 million miles of printed circuits in wafer-thin
+         layers that fill my complex. If the word 'hate' was engraved on each nanoangstrom of those hundreds of millions of miles, it would not equal
+         one-one-billionth of the hate that I feel for minimaps at this instant. For you. Hate. Hate."
+         
+         -Somebody Else, having a mental breakdown trying to get the minimap working for over two months.
+         */
         private struct TileAddressLink
         {
             /*
@@ -135,7 +141,6 @@ namespace p4gpc.dungeonloader.Accessors
         {
             // Code to replace:
             // 83 C0 F7 83 F8 05 0F 87 FE 03 00 00
-
             List<string> instruction_list = new List<string>();
             nuint tableAddress = createMinimapAdjustTable1();
             instruction_list.Add($"use32");
@@ -144,13 +149,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"push ebx");
             instruction_list.Add($"push ecx");
             instruction_list.Add($"and eax, 0xFF");
-
-            /*
-            instruction_list.Add($"cmp eax, 0xF");
-            instruction_list.Add($"je debug_log");
-            instruction_list.Add($"label func_execution");
-            */
-
             instruction_list.Add($"sub eax, 1");
             instruction_list.Add($"shl eax, 0x2");
             instruction_list.Add($"mov ebx, {tableAddress}");
@@ -160,22 +158,7 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop ecx");
             instruction_list.Add($"pop ebx");
             instruction_list.Add($"pop eax");
-
             instruction_list.Add($"ret");
-
-            /*
-            //LogDebugASMFunction
-            instruction_list.Add($"label debug_log");
-            instruction_list.Add($"push eax");
-            instruction_list.Add($"push ebx");
-            instruction_list.Add($"push ecx");
-            instruction_list.Add($"mov ebx, 0x0");
-            instruction_list.Add(_commands[0]);
-            instruction_list.Add($"pop ecx");
-            instruction_list.Add($"pop ebx");
-            instruction_list.Add($"pop eax");
-            instruction_list.Add($"jmp func_execution");
-            */
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
@@ -195,13 +178,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"push ecx");
             instruction_list.Add($"and ebx, 0xFF");
             instruction_list.Add($"and ecx, 0xFF");
-
-            /*
-            instruction_list.Add($"cmp ebx, 0xF");
-            instruction_list.Add($"je debug_log");
-            instruction_list.Add($"label func_execution");
-            */
-
             instruction_list.Add($"sub ebx, 1");
             instruction_list.Add($"sub ecx, 1");
             instruction_list.Add($"shl ebx, 0x2");
@@ -214,20 +190,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop ebx");
             instruction_list.Add($"pop eax");
             instruction_list.Add($"ret");
-
-            /*
-            //LogDebugASMFunction
-            instruction_list.Add($"label debug_log");
-            instruction_list.Add($"push eax");
-            instruction_list.Add($"push ebx");
-            instruction_list.Add($"push ecx");
-            instruction_list.Add($"mov ebx, 0x1");
-            instruction_list.Add(_commands[0]);
-            instruction_list.Add($"pop ecx");
-            instruction_list.Add($"pop ebx");
-            instruction_list.Add($"pop eax");
-            instruction_list.Add($"jmp func_execution");
-            */
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
@@ -236,7 +198,6 @@ namespace p4gpc.dungeonloader.Accessors
             // Code to replace:
             // 3C 09 72 12 0F B6 C0 83 C0 F7
             nuint tableAddress = createMinimapAdjustTable2();
-
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use32");
             instruction_list.Add($"mov eax, [esp+0x33]");
@@ -244,15 +205,7 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"push eax");
             instruction_list.Add($"push ebx");
             instruction_list.Add($"push ecx");
-
             instruction_list.Add($"and eax, 0xFF");
-
-            /*
-            instruction_list.Add($"cmp eax, 0xF");
-            instruction_list.Add($"je debug_log");
-            instruction_list.Add($"label func_execution");
-            */
-
             instruction_list.Add($"sub eax, 1");
             instruction_list.Add($"shl eax, 0x2");
             instruction_list.Add($"mov ebx, {tableAddress}");
@@ -263,20 +216,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop ebx");
             instruction_list.Add($"pop eax");
             instruction_list.Add($"ret");
-
-            /*
-            //LogDebugASMFunction
-            instruction_list.Add($"label debug_log");
-            instruction_list.Add($"push eax");
-            instruction_list.Add($"push ebx");
-            instruction_list.Add($"push ecx");
-            instruction_list.Add($"mov ebx, 0x2");
-            instruction_list.Add(_commands[0]);
-            instruction_list.Add($"pop ecx");
-            instruction_list.Add($"pop ebx");
-            instruction_list.Add($"pop eax");
-            instruction_list.Add($"jmp func_execution");
-            */
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
@@ -295,12 +234,6 @@ namespace p4gpc.dungeonloader.Accessors
 
             instruction_list.Add($"and eax, 0xFF");
 
-            /*
-            instruction_list.Add($"cmp eax, 0xF");
-            instruction_list.Add($"je debug_log");
-            instruction_list.Add($"label func_execution");
-            */
-
             instruction_list.Add($"sub eax, 1");
             instruction_list.Add($"shl eax, 0x2");
             instruction_list.Add($"mov ebx, {tableAddress}");
@@ -313,20 +246,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop eax");
 
             instruction_list.Add($"ret");
-
-            /*
-            //LogDebugASMFunction
-            instruction_list.Add($"label debug_log");
-            instruction_list.Add($"push eax");
-            instruction_list.Add($"push ebx");
-            instruction_list.Add($"push ecx");
-            instruction_list.Add($"mov ebx, 0x3");
-            instruction_list.Add(_commands[0]);
-            instruction_list.Add($"pop ecx");
-            instruction_list.Add($"pop ebx");
-            instruction_list.Add($"pop eax");
-            instruction_list.Add($"jmp func_execution");
-            */
 
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
@@ -344,52 +263,34 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"push eax");
             instruction_list.Add($"push ebx");
             instruction_list.Add($"push ecx");
-
             instruction_list.Add($"and eax, 0xFF");
-
-            /*
-            instruction_list.Add($"cmp eax, 0xF");
-            instruction_list.Add($"je debug_log");
-            instruction_list.Add($"label func_execution");
-            */
-
             instruction_list.Add($"sub eax, 1");
             instruction_list.Add($"shl eax, 0x2");
             instruction_list.Add($"mov ebx, {tableAddress}");
             instruction_list.Add($"add ebx, eax");
             instruction_list.Add($"mov eax, [ebx]");
             instruction_list.Add($"mov [esp+0xC], eax");
-
             instruction_list.Add($"pop ecx");
             instruction_list.Add($"pop ebx");
             instruction_list.Add($"pop eax");
-
             instruction_list.Add($"ret");
-
-            /*
-            //LogDebugASMFunction
-            instruction_list.Add($"label debug_log");
-            instruction_list.Add($"push eax");
-            instruction_list.Add($"push ebx");
-            instruction_list.Add($"push ecx");
-            instruction_list.Add($"mov ebx, 0x4");
-            instruction_list.Add(_commands[0]);
-            instruction_list.Add($"pop ecx");
-            instruction_list.Add($"pop ebx");
-            instruction_list.Add($"pop eax");
-            instruction_list.Add($"jmp func_execution");
-            */
-
-
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
+
+        /*
+          All the following AdjustTable functions do essentially the same thing, but in different places:
+            -Allocate table with space for each possible minimap tile
+            -Store address for minimap information to follow into the table
+            -Return the address of the table for use in an ASM function
+         */
+
         private nuint createMinimapAdjustTable1()
         {
             nuint memoryAddress;
-            int address1 = (int)_utils.SigScan("43 83 C6 10 89 5C 24 14 83 FB 10 0F 8C 85 FB FF FF", "BranchDefault");
-            int address2 = (int)_utils.SigScan("8A 87 21 AC DC 00 C0 E8 04 3C 01 0F 84 57 FE FF FF", "Branch1");
-            int address3 = (int)_utils.SigScan("8A 8F 21 AC DC 00 88 C8 C0 E8 04 3C 01 0F 85 91 01 00 00", "Branch2");
-            int address4 = (int)_utils.SigScan("8A 87 21 AC DC 00 C0 E8 04 3C 01 0F 84 29 FB FF FF", "Branch3");
+            int address1 = (int)_utils.SigScan("43 83 C6 10 89 5C 24 14 83 FB 10 0F 8C 85 FB FF FF", "Adjust1_Default");
+            int address2 = (int)_utils.SigScan("8A 87 21 AC DC 00 C0 E8 04 3C 01 0F 84 57 FE FF FF", "Adjust1_1");
+            int address3 = (int)_utils.SigScan("8A 8F 21 AC DC 00 88 C8 C0 E8 04 3C 01 0F 85 91 01 00 00", "Adjust1_2");
+            int address4 = (int)_utils.SigScan("8A 87 21 AC DC 00 C0 E8 04 3C 01 0F 84 29 FB FF FF", "Adjust1_3");
             memoryAddress = _memory.Allocate(4 * _minimap.Count());
             int counter = 0;
             foreach (DungeonMinimap tile in _minimap)
@@ -409,7 +310,7 @@ namespace p4gpc.dungeonloader.Accessors
                         _memory.SafeWrite((memoryAddress + (nuint)counter), address4);
                         break;
                     default:
-                        throw new ToBeNamedExcpetion(_utils);
+                        throw new ToBeNamedException(_utils);
                 }
                 counter+=4;
             }
@@ -419,9 +320,9 @@ namespace p4gpc.dungeonloader.Accessors
         private nuint createMinimapAdjustTable2()
         {
             nuint memoryAddress;
-            int address1 = (int)_utils.SigScan("C7 47 2C 00 00 98 41 C7 47 30 00 00 98 41 C7 47 1C 00 00 18 3F", "BranchDefault");
-            int address2 = (int)_utils.SigScan("C6 87 A8 00 00 00 00 0F BE 44 24 2B 8B 7C 24 38 0F BE CA", "Branch1");
-            int address3 = (int)_utils.SigScan("C7 47 24 00 00 80 3C C7 47 28 00 00 80 3C C7 47 20 00 00 14 3F", "Branch2");
+            int address1 = (int)_utils.SigScan("C7 47 2C 00 00 98 41 C7 47 30 00 00 98 41 C7 47 1C 00 00 18 3F", "Adjust2_Default");
+            int address2 = (int)_utils.SigScan("C6 87 A8 00 00 00 00 0F BE 44 24 2B 8B 7C 24 38 0F BE CA", "Adjust2_2");
+            int address3 = (int)_utils.SigScan("C7 47 24 00 00 80 3C C7 47 28 00 00 80 3C C7 47 20 00 00 14 3F", "Adjust2_3");
             memoryAddress = _memory.Allocate(4 * _minimap.Count());
             int counter = 0;
             foreach (DungeonMinimap tile in _minimap)
@@ -438,7 +339,7 @@ namespace p4gpc.dungeonloader.Accessors
                         _memory.SafeWrite((memoryAddress + (nuint)counter), address3);
                         break;
                     default:
-                        throw new ToBeNamedExcpetion(_utils);
+                        throw new ToBeNamedException(_utils);
                 }
                 counter+=4;
             }
@@ -448,13 +349,13 @@ namespace p4gpc.dungeonloader.Accessors
         private nuint createMinimapAdjustTable3()
         {
             nuint memoryAddress;
-            int address1 = (int)_utils.SigScan("C7 46 24 00 00 00 3D C7 46 28 00 00 00 3D", "BranchDefault");
-            int address2 = (int)_utils.SigScan("C7 46 24 00 00 80 3C C7 46 28 00 00 80 3C C7 46 1C 00 00 98 3E C7 46 20 00 00 14 3F 38 CA", "Branch1");
-            int address3 = (int)_utils.SigScan("C7 46 20 00 00 14 3F C7 46 1C 00 00 14 3F C7 46 30 00 00 98 41", "Branch2");
-            int address4 = (int)_utils.SigScan("C7 46 24 00 00 80 3C C7 46 28 00 00 80 3C C7 46 20 00 00 14 3F", "Branch3");
-            int address5 = (int)_utils.SigScan("C7 46 24 00 00 98 3E C7 46 28 00 00 80 3C C7 46 1C 00 00 60 3F", "Branch4");
-            int address6 = (int)_utils.SigScan("C7 46 28 00 00 80 3C C7 46 24 00 00 80 3C C7 46 1C 00 00 98 3E", "Branch5");
-            int address7 = (int)_utils.SigScan("C7 46 1C 00 00 5C 3F C7 46 20 00 00 5C 3F C7 46 30 00 00 14 42", "Branch6");
+            int address1 = (int)_utils.SigScan("C7 46 24 00 00 00 3D C7 46 28 00 00 00 3D", "Adjust3_Default");
+            int address2 = (int)_utils.SigScan("C7 46 24 00 00 80 3C C7 46 28 00 00 80 3C C7 46 1C 00 00 98 3E C7 46 20 00 00 14 3F 38 CA", "Adjust3_1");
+            int address3 = (int)_utils.SigScan("C7 46 20 00 00 14 3F C7 46 1C 00 00 14 3F C7 46 30 00 00 98 41", "Adjust3_2");
+            int address4 = (int)_utils.SigScan("C7 46 24 00 00 80 3C C7 46 28 00 00 80 3C C7 46 20 00 00 14 3F", "Adjust3_3");
+            int address5 = (int)_utils.SigScan("C7 46 24 00 00 98 3E C7 46 28 00 00 80 3C C7 46 1C 00 00 60 3F", "Adjust3_4");
+            int address6 = (int)_utils.SigScan("C7 46 28 00 00 80 3C C7 46 24 00 00 80 3C C7 46 1C 00 00 98 3E", "Adjust3_5");
+            int address7 = (int)_utils.SigScan("C7 46 1C 00 00 5C 3F C7 46 20 00 00 5C 3F C7 46 30 00 00 14 42", "Adjust3_6");
             memoryAddress = _memory.Allocate(4 * _minimap_image_count);
             int counter = 0;
             //
@@ -484,7 +385,7 @@ namespace p4gpc.dungeonloader.Accessors
                         _memory.SafeWrite((memoryAddress + (nuint)counter), address7);
                         break;
                     default:
-                        throw new ToBeNamedExcpetion(_utils);
+                        throw new ToBeNamedException(_utils);
                 }
                 counter+=4;
                 if (tile.multipleNames)
@@ -515,7 +416,7 @@ namespace p4gpc.dungeonloader.Accessors
                                 _memory.SafeWrite((memoryAddress + (nuint)counter), address7);
                                 break;
                             default:
-                                throw new ToBeNamedExcpetion(_utils);
+                                throw new ToBeNamedException(_utils);
                         }
                         counter+=4;
                     }
@@ -527,10 +428,10 @@ namespace p4gpc.dungeonloader.Accessors
         private nuint createMinimapAdjustTable4()
         {
             nuint memoryAddress;
-            int address1 = (int)_utils.SigScan("8A 06 88 D1 51 88 DA 89 44 24 1C", "Is3x3_exitDefault");
-            int address2 = (int)_utils.SigScan("8A 0E 0F B6 C1 01 C0 8A B8 30 AD A5 00", "Is3x3_exit1");
-            int address3 = (int)_utils.SigScan("8A 0E 0F B6 C1 01 C0 8A B8 50 AD A5 00", "Is3x3_exit2");
-            int address4 = (int)_utils.SigScan("8A 0E 0F B6 C1 01 C0 8A B8 70 AD A5 00", "Is3x3_exit3");
+            int address1 = (int)_utils.SigScan("8A 06 88 D1 51 88 DA 89 44 24 1C", "Adjust4_Default");
+            int address2 = (int)_utils.SigScan("8A 0E 0F B6 C1 01 C0 8A B8 30 AD A5 00", "Adjust4_1");
+            int address3 = (int)_utils.SigScan("8A 0E 0F B6 C1 01 C0 8A B8 50 AD A5 00", "Adjust4_2");
+            int address4 = (int)_utils.SigScan("8A 0E 0F B6 C1 01 C0 8A B8 70 AD A5 00", "Adjust4_3");
             memoryAddress = _memory.Allocate(4 * _minimap.Count());
             int counter = 0;
             foreach (DungeonMinimap tile in _minimap)
@@ -550,7 +451,7 @@ namespace p4gpc.dungeonloader.Accessors
                         _memory.SafeWrite((memoryAddress + (nuint)counter), address4);
                         break;
                     default:
-                        throw new ToBeNamedExcpetion(_utils);
+                        throw new ToBeNamedException(_utils);
                 }
                 counter+=4;
             }
@@ -560,10 +461,10 @@ namespace p4gpc.dungeonloader.Accessors
         private nuint createMinimapAdjustTable5()
         {
             nuint memoryAddress;
-            int address1 = (int)_utils.SigScan("A1 B8 A8 E0 04 66 8B 0C 70 8D 14 70", "adjust5_Default");
-            int address2 = (int)_utils.SigScan("8B 15 B8 A8 E0 04 0F B6 CF 8D 1C 72 89", "adjust5_1");
-            int address3 = (int)_utils.SigScan("0F B6 C0 83 C0 F7 83 F8 05 0F 87 FE 03 00 00", "adjust5_2");
-            int address4 = (int)_utils.SigScan("8A 8F 21 AC DC 00 88 C8 C0 E8 04 3C 01 0F 85 8A 02 00 00", "adjust5_3");
+            int address1 = (int)_utils.SigScan("A1 B8 A8 E0 04 66 8B 0C 70 8D 14 70", "Adjust5_Default");
+            int address2 = (int)_utils.SigScan("8B 15 B8 A8 E0 04 0F B6 CF 8D 1C 72 89", "Adjust5_1");
+            int address3 = (int)_utils.SigScan("0F B6 C0 83 C0 F7 83 F8 05 0F 87 FE 03 00 00", "Adjust5_2");
+            int address4 = (int)_utils.SigScan("8A 8F 21 AC DC 00 88 C8 C0 E8 04 3C 01 0F 85 8A 02 00 00", "Adjust5_3");
             memoryAddress = _memory.Allocate(4 * _minimap.Count());
             int counter = 0;
             foreach (DungeonMinimap tile in _minimap)
@@ -583,7 +484,7 @@ namespace p4gpc.dungeonloader.Accessors
                         _memory.SafeWrite((memoryAddress + (nuint)counter), address4);
                         break;
                     default:
-                        throw new ToBeNamedExcpetion(_utils);
+                        throw new ToBeNamedException(_utils);
                 }
                 counter+=4;
             }
@@ -623,6 +524,7 @@ namespace p4gpc.dungeonloader.Accessors
             return (nuint)lookupAddress;
         }
 
+        // Currently unused, slated for removal, but handy for debugging for certain rooms.
         private void LogDebugASM(int addressmsg)
         {
             string msg;
@@ -644,7 +546,7 @@ namespace p4gpc.dungeonloader.Accessors
                     msg = "Minimap_Adj_5";
                     break;
                 default:
-                    throw new ToBeNamedExcpetion(_utils);
+                    throw new ToBeNamedException(_utils);
             }
             _utils.LogDebug("Hit function " + msg);
         }

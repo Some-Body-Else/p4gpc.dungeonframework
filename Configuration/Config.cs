@@ -33,10 +33,10 @@ namespace p4gpc.dungeonloader.Configuration
                      )]
         public bool logDebug { get; set; } = true;
 
-        [DisplayName("Allow debug logs")]
-        [Description("Will allow DungeonLoader to log debug information to the Reloaded-II console.\n"+
-                     "Information logged includes addresses of files in RAM, among other program details.\n"+
-                     "This information not required for usage, so it is disabled by default."
+        [DisplayName("Warn of size discrepency")]
+        [Description("In the event that the number of minimap textures in smap.bin is less than the expected number of textures, a \n" +
+                     "warning will appear in the logs. It is made here as an option due to the possibility that you could have two rooms\n" +
+                     "referencing the same texture, which some mod developers may want to do."
                      )]
         public bool noteSizeDiscrepency { get; set; } = true;
 

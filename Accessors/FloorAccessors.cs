@@ -42,7 +42,6 @@ namespace p4gpc.dungeonloader.Accessors
          * minimizing the amount of code changes needed. Going to keep moving with the command replacement because its already
          * started and because it might give insight into other parts of the code we may need to change for something like
          * dungeon gen or dungeon room data
-         *
          */
         public FloorAccessors(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)
         {
@@ -261,9 +260,7 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"mov edx, ecx");
             instruction_list.Add($"sub edx, 0x21EB4AA0");
             instruction_list.Add($"shr edx, 4");
-            //instruction_list.Add($"push ecx");
             instruction_list.Add(_commands[7]);
-            //instruction_list.Add($"pop ecx");
             instruction_list.Add($"pop edx");
             instruction_list.Add($"pop edi");
             instruction_list.Add($"pop esi");
@@ -299,6 +296,25 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"{_commands[9]}");
             instruction_list.Add($"mov edx, eax");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+        private nuint allocateTable()
+        {
+            nuint tableAddress;
+            // Need 16 bytes per entry
+            tableAddress = _memory.Allocate(0x8 * _dungeonFloors.Count());
+            for (int i = 0; i < _dungeonFloors.Count(); i++)
+            {
+                _memory.SafeWrite(tableAddress + (nuint)(i*9), _dungeonFloors[i].ID);
+                _memory.SafeWrite(tableAddress + (nuint)(i*9 + 1), _dungeonFloors[i].ID);
+                _memory.SafeWrite(tableAddress + (nuint)(i*9 + 2), _dungeonFloors[i].subID);
+                _memory.SafeWrite(tableAddress + (nuint)(i*9 + 3), _dungeonFloors[i].Byte04);
+                _memory.SafeWrite(tableAddress + (nuint)(i*9 + 4), _dungeonFloors[i].floorMin);
+                _memory.SafeWrite(tableAddress + (nuint)(i*9 + 5), _dungeonFloors[i].floorMax);
+                _memory.SafeWrite(tableAddress + (nuint)(i*9 + 6), _dungeonFloors[i].Byte0A);
+                _memory.SafeWrite(tableAddress + (nuint)(i*9 + 7), _dungeonFloors[i].dungeonScript);
+                _memory.SafeWrite(tableAddress + (nuint)(i*9 + 8), _dungeonFloors[i].usedEnv);
+            }
+            return tableAddress;
         }
         private int GetID(int entryID)
         {

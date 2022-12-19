@@ -11,6 +11,7 @@ using Reloaded.Mod.Interfaces.Internal;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace p4gpc.dungeonloader
 {
@@ -19,7 +20,7 @@ namespace p4gpc.dungeonloader
         /// <summary>
         /// Not quite sure, I'm stealing this from Swine
         /// </summary>
-        private const string MyModId = "p4gpc.dungeonloader";
+        private const string MyModId = "p4gpc64.dungeonloader";
 
         /// <summary>
         /// Used for writing text to the Reloaded log.
@@ -52,6 +53,9 @@ namespace p4gpc.dungeonloader
 
         private JsonImporter _jsonImporter;
 
+        /*
+        Old accessors used for 32-bit DungeonLoader, 64-bit versions uses a different system 
+
         private TemplateAccessors _templates;
         private FloorAccessors _floors;
         private RoomAccessors _rooms;
@@ -59,6 +63,9 @@ namespace p4gpc.dungeonloader
         private FieldCompareAccessors _compares_field;
         private RoomCompareAccessors _compares_room;
 
+        */
+
+        private Accessor[] _accessors;
 
         private Utilities _utilities;
 
@@ -85,15 +92,17 @@ namespace p4gpc.dungeonloader
             _utilities = new Utilities(_configuration, _logger, baseAddress);
             _jsonImporter = new JsonImporter(_configuration, _utilities, modPath, defaultPath);
             _utilities.Log("JSON files loaded.");
+            _accessors.Append(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
 
-
+            /*
             _templates = new TemplateAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _floors = new FloorAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _rooms = new RoomAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _minimap = new MinimapAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _compares_field = new FieldCompareAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _compares_room = new RoomCompareAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
-            _utilities.Log("DungeonLoader set up complete.");
+            */
+            _utilities.Log("DungeonLoader set up complete!");
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)

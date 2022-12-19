@@ -15,9 +15,9 @@ namespace p4gpc.dungeonloader.Exceptions
             _utils.LogThrownException(msg);
         }
     }
-    public class ToBeNamedExcpetion : CustomException
+    public class ToBeNamedException : CustomException
     {
-        public ToBeNamedExcpetion(Utilities _utils) : base($"This is definitely a problem, but I don't know what to call it yet :/", _utils)
+        public ToBeNamedException(Utilities _utils) : base($"This is definitely a problem, but I don't know what to call it yet :/", _utils)
         {
 
         }
