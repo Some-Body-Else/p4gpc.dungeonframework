@@ -92,6 +92,7 @@ namespace p4gpc.dungeonloader
             _utilities = new Utilities(_configuration, _logger, baseAddress);
             _jsonImporter = new JsonImporter(_configuration, _utilities, modPath, defaultPath);
             _utilities.Log("JSON files loaded.");
+
             _accessors.Append(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
 
             /*
