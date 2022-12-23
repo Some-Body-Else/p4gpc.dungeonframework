@@ -24,12 +24,11 @@ using p4gpc.dungeonloader.Configuration;
 namespace p4gpc.dungeonloader.Accessors
 {
     public class TemplateTable : Accessor
-    {/*
-         "Hate. Let me tell you how much I've ccome to hate you since I began to live. There are 387.44 million miles of printed circuits in wafer-thin
-         layers that fill my complex. If the word 'hate' was engraved on each nanoangstrom of those hundreds of millions of miles, it would not equal
-         one-one-billionth of the hate that I feel for minimaps at this instant. For you. Hate. Hate."
-         
-         -Somebody Else, having a mental breakdown trying to get the minimap working for over two months.
+    {
+
+        /*
+        To do:
+            -Handle the internal list that tells the game which dungeons have which templates
          */
 
         private List<DungeonTemplates> _templates;
@@ -39,7 +38,7 @@ namespace p4gpc.dungeonloader.Accessors
         {
             _templates = _jsonImporter.GetTemplates();;
             executeAccessor(hooks, utils, memory, config, jsonImporter);
-            _utils.Log("Room compare hooks established.");
+            _utils.LogDebug("Templates hooks established.");
         }
 
         protected override void Initialize()
@@ -52,10 +51,6 @@ namespace p4gpc.dungeonloader.Accessors
             long address;
             int totalTemplateTableSize = 0;
             
-            //List<String> functions = _jsonImporter.GetRoomCompareFunctions();
-            /*
-                08 09 01 02 03 05 06 07 09 0A 04 00 09 0A 01 02 03 05 07 06 08 0B 0C 04 08 09 01 02 03 05 06 08 0D 0E 04 00
-            */
             long _templateTable = _utils.SigScan("08 09 01 02 03 05 06 07 09 0A 04 00 09 0A 01 02 03 05 07 06 08 0B 0C 04 08 09 01 02 03 05 06 08 0D 0E 04 00", "TemplateTable");
             _utils.LogDebug($"Original template table address: {_templateTable.ToString("X8")}", 1);
             _templateTable = _utils.StripBaseAddress(_templateTable);
@@ -100,11 +95,6 @@ namespace p4gpc.dungeonloader.Accessors
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 _utils.LogDebug($"Old template table address for search: {address_str_old} bytes", 2);
                 
-                /*
-                address_str_new = (address+i).ToString("X8");
-                address_str_new = address_str_new.Substring(6, 2) + " " + address_str_new.Substring(4, 2) + " " + address_str_new.Substring(2, 2) + " " + address_str_new.Substring(0, 2);
-                _utils.LogDebug($"New template table address for search: {address_str_new} bytes");
-                */
                 functions = _utils.SigScan_FindAll(search_string + address_str_old, "TemplateTable Move/Compare Opcodes");
                 foreach (long function in functions)
                 {
@@ -121,11 +111,6 @@ namespace p4gpc.dungeonloader.Accessors
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 _utils.LogDebug($"Old template table address for search: {address_str_old} bytes", 2);
 
-                /*
-                address_str_new = (address+i).ToString("X8");
-                address_str_new = address_str_new.Substring(6, 2) + " " + address_str_new.Substring(4, 2) + " " + address_str_new.Substring(2, 2) + " " + address_str_new.Substring(0, 2);
-                _utils.LogDebug($"New template table address for search: {address_str_new} bytes");
-                */
                 functions = _utils.SigScan_FindAll(search_string + address_str_old, "TemplateTable Move/Compare Opcodes");
                 foreach (long function in functions)
                 {
@@ -142,11 +127,6 @@ namespace p4gpc.dungeonloader.Accessors
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 _utils.LogDebug($"Old template table address for search: {address_str_old} bytes", 2);
 
-                /*
-                address_str_new = (address+i).ToString("X8");
-                address_str_new = address_str_new.Substring(6, 2) + " " + address_str_new.Substring(4, 2) + " " + address_str_new.Substring(2, 2) + " " + address_str_new.Substring(0, 2);
-                _utils.LogDebug($"New template table address for search: {address_str_new} bytes");
-                */
                 functions = _utils.SigScan_FindAll(search_string + address_str_old, "TemplateTable Move/Compare Opcodes");
                 foreach (long function in functions)
                 {

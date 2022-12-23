@@ -33,7 +33,7 @@ namespace p4gpc.dungeonloader.Accessors
         private Config _configuration;
         private JsonImporter _jsonImporter;
         private Dictionary<int, int> _dungeon_template_dict;
-        private List<DungeonFloors> _dungeonFloors;
+        private List<DungeonFloor> _dungeonFloors;
         private List<IReverseWrapper> _reverseWrapperList;
         private List<IAsmHook> _functionHookList;
         private FieldCompare _fieldCompare;

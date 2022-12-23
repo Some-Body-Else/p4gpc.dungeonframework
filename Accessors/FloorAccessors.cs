@@ -33,7 +33,7 @@ namespace p4gpc.dungeonloader.Accessors
         private JsonImporter _jsonImporter;
         private List<IReverseWrapper> _reverseWrapperList;
         private List<IAsmHook> _functionHookList;
-        private List<DungeonFloors> _dungeonFloors;
+        private List<DungeonFloor> _dungeonFloors;
         private List<String> _commands;
         private List<nuint> _nameAddresses;
         /**
@@ -274,13 +274,13 @@ namespace p4gpc.dungeonloader.Accessors
         {
             int nameSize = 0;
             nuint offsetFromAllocation = 0;
-            foreach (DungeonFloors entry in _dungeonFloors)
+            foreach (DungeonFloor entry in _dungeonFloors)
             {
                 nameSize++;
                 nameSize += entry.floorName.Length;
             }
             nuint baseAddress = _memory.Allocate(nameSize);
-            foreach (DungeonFloors entry in _dungeonFloors)
+            foreach (DungeonFloor entry in _dungeonFloors)
             {
                 entry.nameAddress = baseAddress+offsetFromAllocation;
                 _memory.SafeWriteRaw(baseAddress+offsetFromAllocation, Encoding.ASCII.GetBytes(entry.floorName));

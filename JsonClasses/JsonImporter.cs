@@ -15,8 +15,8 @@ namespace p4gpc.dungeonloader.JsonClasses
     public class JsonImporter
     {
         private List<DungeonTemplates> _templates;
-        private List<DungeonFloors> _floors;
-        private List<DungeonRooms> _rooms;
+        private List<DungeonFloor> _floors;
+        private List<DungeonRoom> _rooms;
         private List<DungeonMinimap> _minimap;
         private FieldCompare _fieldCompare;
         private Dictionary<int, int> _dungeon_template_dict = new Dictionary<int, int>();
@@ -66,7 +66,7 @@ namespace p4gpc.dungeonloader.JsonClasses
                 jsonReader = new StreamReader(defaultPath + "/dungeon_floors.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _floors = JsonSerializer.Deserialize<List<DungeonFloors>>(jsonContents)!;
+            _floors = JsonSerializer.Deserialize<List<DungeonFloor>>(jsonContents)!;
 
             if (File.Exists(jsonPath + "/dungeon_rooms.json"))
             {
@@ -82,7 +82,7 @@ namespace p4gpc.dungeonloader.JsonClasses
                 jsonReader = new StreamReader(defaultPath + "/dungeon_rooms.json");
             }
             jsonContents = jsonReader.ReadToEnd();
-            _rooms = JsonSerializer.Deserialize<List<DungeonRooms>>(jsonContents)!;
+            _rooms = JsonSerializer.Deserialize<List<DungeonRoom>>(jsonContents)!;
 
             if (File.Exists(jsonPath + "/dungeon_minimap.json"))
             {
@@ -294,7 +294,7 @@ namespace p4gpc.dungeonloader.JsonClasses
         {
             return _templateSearch;
         }
-        public List<DungeonFloors> GetFloors()
+        public List<DungeonFloor> GetFloors()
         {
             return _floors;
         }
@@ -303,7 +303,7 @@ namespace p4gpc.dungeonloader.JsonClasses
         {
             return _floorSearch;
         }
-        public List<DungeonRooms> GetRooms()
+        public List<DungeonRoom> GetRooms()
         {
             return _rooms;
         }

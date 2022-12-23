@@ -94,6 +94,8 @@ namespace p4gpc.dungeonloader
             _utilities.Log("JSON files loaded.");
 
             _accessors.Append(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Append(new FloorTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Append(new RoomTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
 
             /*
             _templates = new TemplateAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);

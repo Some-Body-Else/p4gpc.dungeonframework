@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace p4gpc.dungeonloader.JsonClasses
 {
-    public class DungeonRooms
+    public class DungeonRoom
     {
         public byte ID { get; set; }
         public byte sizeX { get; set; }

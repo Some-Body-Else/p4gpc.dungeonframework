@@ -17,8 +17,10 @@ using System.Security.Cryptography;
 namespace p4gpc.dungeonloader
 {
     /// <summary>
-    /// The entirety of this file is stolen from AnimatedSwine37, specifically their XP Share mod for P4G.
+    /// The entirety of this file is stolen from AnimatedSwine37, specifically their XP Share mod for P4G
+    /// <br></br>
     /// Link here: https://github.com/AnimatedSwine37/Persona-4-Golden-Xp-Share/blob/main/p4gpc.xpshare/XpShare.cs
+    /// <br></br>
     /// Names are slightly different because it was copied by hand to get a better understanding as to how it should be used.
     /// Possibly subject to change as the project moves forward.
     /// </summary>
