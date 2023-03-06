@@ -10,6 +10,7 @@ namespace p4gpc.dungeonloader.JsonClasses
     {
         public int roomCount { get; set; }
         public int roomExCount { get; set; }
-        public List<int> rooms { get; set; }
+        public int exitNum { get; set; }
+        public List<byte> rooms { get; set; }
     }
 }

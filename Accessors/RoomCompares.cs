@@ -42,8 +42,7 @@ namespace p4gpc.dungeonloader.Accessors
 
         public RoomCompares(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
-
-            _rooms = _jsonImporter.GetRooms(); ;
+            _rooms = jsonImporter.GetRooms();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
             _utils.LogDebug("Room compare hooks established.");
         }

@@ -37,8 +37,7 @@ namespace p4gpc.dungeonloader.Accessors
 
         public FloorTable(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
-
-            _floors = _jsonImporter.GetFloors(); ;
+            _floors = jsonImporter.GetFloors();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
             _utils.LogDebug("Floor hooks established.");
         }
@@ -46,7 +45,7 @@ namespace p4gpc.dungeonloader.Accessors
         protected override void Initialize()
         {
             Debugger.Launch();
-            List<long> functions;
+            List<Int64> functions;
             long address;
             int totalTemplateTableSize = 0;
 
@@ -89,28 +88,41 @@ namespace p4gpc.dungeonloader.Accessors
             functions = _utils.SigScan_FindAll("44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0 E8", "FloorTable Access (Wave 1)");
             foreach (long function in functions)
             {
-                address =  ((long)_newFloorTable - function);
-                if (address > Int32.MaxValue || Int32.MinValue > address)
-                {
-                    throw new ToBeNamedException(_utils);
-                }
-                _memory.SafeWriteRaw((nuint)function+8, BitConverter.GetBytes(address));
+                byte addValue;
+                _memory.SafeRead((nuint)(function + 4), out addValue);
+                FloorTableWave1(function, "44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0 E8", addValue);
+                //_memory.SafeWriteRaw((nuint)function+8, BitConverter.GetBytes(address));
             }
             _utils.LogDebug($"First search target replaced", 2);
 
 
-            functions = _utils.SigScan_FindAll("00 48 8D 05 ?? ?? ?? ?? 48 89 46 30", "FloorTable Access (Wave 2)");
-            foreach (long function in functions)
-            {
-                address =  ((long)_newFloorTable - function);
-                if (address > Int32.MaxValue || Int32.MinValue > address)
-                {
-                    throw new ToBeNamedException(_utils);
-                }
-                _memory.SafeWriteRaw((nuint)function+4, BitConverter.GetBytes(address));
-            }
+            address = _utils.SigScan("81 7E 04 9F 00 00 00 48 8D 05 ?? ?? ?? ?? 48 89 46 30 74 67", "FloorTable Access (Wave 2)");
+            FloorTableWave2(address, "44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0 E8");
             _utils.LogDebug($"Second search target replaced", 2);
         }
 
+        private void FloorTableWave1(Int64 functionAddress, string pattern, byte offsetSize)
+        {
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use64");
+            instruction_list.Add($"mov r8, [rsi + {offsetSize}]");
+            instruction_list.Add($"lea ecx, [{_newFloorTable}]");
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        private void FloorTableWave2(Int64 functionAddress, string pattern)
+        {
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use64");
+            instruction_list.Add($"lea eax, [{_newFloorTable}]");
+            instruction_list.Add($"mov [rsi+0x30], eax");
+            instruction_list.Add($"cmp [rsi+4], 0x0000009F");
+            instruction_list.Add($"jne end");
+            instruction_list.Add($"push {functionAddress+0x7A}");
+            instruction_list.Add($"ret");
+            instruction_list.Add($"label end");
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
     }
 }

@@ -36,15 +36,14 @@ namespace p4gpc.dungeonloader.Accessors
             Coming back to this one later, figure that handling rooms is more important than fields at the moment
          */
 
-        private List<DungeonRoom> _rooms;
-        private nuint _newRoomTable;
+        private FieldCompare _fieldCompareTable;
+        private nuint _fieldCompareAddress;
 
         public FieldCompares(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
-
-            _rooms = _jsonImporter.GetRooms(); ;
+            _fieldCompareTable = jsonImporter.GetFieldCompare();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
-            _utils.LogDebug("Room hooks established.");
+            _utils.LogDebug("Field compare hooks established.");
         }
 
         protected override void Initialize()

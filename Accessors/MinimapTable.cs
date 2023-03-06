@@ -41,8 +41,7 @@ namespace p4gpc.dungeonloader.Accessors
 
         public MinimapTable(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
-
-            _minimaps = _jsonImporter.GetMinimap(); ;
+            _minimaps = jsonImporter.GetMinimap();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
             _utils.LogDebug("Minimap hooks established.");
         }
