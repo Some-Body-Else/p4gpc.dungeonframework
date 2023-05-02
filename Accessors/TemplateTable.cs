@@ -22,6 +22,7 @@ using p4gpc.dungeonloader.JsonClasses;
 using p4gpc.dungeonloader.Configuration;
 using static System.Formats.Asn1.AsnWriter;
 using System.Xml.Serialization;
+// using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 
 namespace p4gpc.dungeonloader.Accessors
 {
@@ -37,6 +38,10 @@ namespace p4gpc.dungeonloader.Accessors
         private List<DungeonTemplates> _templates;
         private nuint _templateLookupTable;
         private nuint _templateExitLookupTable;
+        private nuint _debugInfoAddress;
+
+        private IReverseWrapper<DebugLogFunc> _debugLogWrapper;
+        private string _debugLogCallMnemonic;
 
         private byte mod;
         private byte scale;
@@ -65,6 +70,8 @@ namespace p4gpc.dungeonloader.Accessors
         public TemplateTable(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
             _templates = jsonImporter.GetTemplates();
+
+
             executeAccessor(hooks, utils, memory, config, jsonImporter);
             _utils.LogDebug("Templates hooks established.");
         }
@@ -90,10 +97,19 @@ namespace p4gpc.dungeonloader.Accessors
             byte sibByte;
             bool hasREX;
 
+            _debugLogWrapper = _hooks.CreateReverseWrapper<DebugLogFunc>(DebugLog);
+            _debugLogCallMnemonic = _hooks.Utilities.GetAbsoluteCallMnemonics(DebugLog, out _debugLogWrapper);
+
+
+
             long _templateTable = _utils.SigScan("08 09 01 02 03 05 06 07 09 0A 04 00 09 0A 01 02 03 05 07 06 08 0B 0C 04 08 09 01 02 03 05 06 08 0D 0E 04 00", "TemplateTable");
             _utils.LogDebug($"Original template table address: {_templateTable.ToString("X8")}", 1);
             _templateTable = _utils.StripBaseAddress(_templateTable);
             _utils.LogDebug($"Accounting for base address: {_templateTable.ToString("X8")}", 1);
+
+
+            _debugInfoAddress = _memory.Allocate(40);
+            _utils.LogDebug($"DebugAddress : {_debugInfoAddress.ToString("X8")}", 1);
 
             _templateLookupTable = _memory.Allocate(_templates.Count() * DOUBLEWORD);
             _utils.LogDebug($"Template lookup table address: {_templateLookupTable.ToString("X8")}", 1);
@@ -378,7 +394,7 @@ namespace p4gpc.dungeonloader.Accessors
 ;
             _utils.LogDebug($"Third search target replaced", 2);
 
-            /*
+
             // The 0xBC maybe should be a wildcard, but that requires effort I'm simply not going to put in right now
             // Doesn't make a difference with searches now, but maybe will in the future (doubtful)
             for (int i = 0; i < 3; i++)
@@ -440,7 +456,8 @@ namespace p4gpc.dungeonloader.Accessors
                 }
                 else
                 {
-                    search_string = "48 8D ?? ?? ?? 80 BC ?? " + address_str_old;
+                    /*
+                     search_string = "48 8D ?? ?? ?? 80 BC ?? " + address_str_old;
                     functions = _utils.SigScan_FindAll(search_string, "TemplateTable Move/Compare Opcodes");
                     _utils.LogDebug($"Function count: {functions.Count()}", 3);
                     foreach (long function in functions)
@@ -497,16 +514,15 @@ namespace p4gpc.dungeonloader.Accessors
                         _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {(0xBC).ToString("X8")}, mod: 2, SIB: {sibByte.ToString("X8")}, scale: {scale},  IN: {inReg}, BASE: {baseReg}, IMM: {temp}", 3);
                         ReplaceCompareInstruction(function, search_string, (TemplateAccessType)i, temp, false);
                     }
+                     */
                 }
             }
             _utils.LogDebug($"Fourth search target replaced", 2);
-            */
-            
+
             // Might want a better search for this one
             // 8D ?? [ADDRESS] ?? 8D ?? ??
             // [ADDRESS = 0x00A7B37A
             // _utils.LogDebug($"Old template table address for search: {search_string} bytes", 2);
-            /*
             hasREX = false;
             address_str_old = (_templateTable+2).ToString("X8");
             address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
@@ -567,7 +583,6 @@ namespace p4gpc.dungeonloader.Accessors
             _utils.LogDebug($"Location: {function_single.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale}, IN: {inReg}, OUT: {outReg}", 3);
             ReplaceAddressSetupA(function_single, search_string, hasREX);
             _utils.LogDebug($"Fifth search target replaced\n", 2);
-            */
 
             // EVERYTHING HERE IS LEFTOVERS PENDING FOR DELETION
 
@@ -609,6 +624,7 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
 
+            instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {baseReg}");
 
@@ -660,6 +676,16 @@ namespace p4gpc.dungeonloader.Accessors
             {
                 throw new InvalidAsmInstructionModValueException(functionAddress, _utils);
             }
+
+            if (inReg == outReg)
+            {
+                instruction_list.Add($"add rsp, 8");
+            }
+            else
+            {
+                instruction_list.Add($"pop {inReg}");
+            }
+
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress-1, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)+1).Activate());
         }
 
@@ -738,7 +764,7 @@ namespace p4gpc.dungeonloader.Accessors
                 instruction_list.Add($"pop {inReg}");
             }
 
-            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), hasREX ? functionAddress-1: functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, hasREX ? _utils.GetPatternLength(pattern)+1 : _utils.GetPatternLength(pattern)).Activate());
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), hasREX ? functionAddress-1 : functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, hasREX ? _utils.GetPatternLength(pattern)+1 : _utils.GetPatternLength(pattern)).Activate());
         }
 
         private void ReplaceMoveInstruction(Int64 functionAddress, string pattern, TemplateAccessType accessType, bool hasREX)
@@ -748,6 +774,10 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
 
+            //IReverseWrapper<GetIdFunction> reverseWrapperID = _hooks.CreateReverseWrapper<GetIdFunction>(GetID);
+
+            // _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(DebugLog, out _debugLogWrapper)}");
+
             /*
              inReg - 0x00, 0x03, or 0x06
              baseReg - 0x0140000000
@@ -755,7 +785,18 @@ namespace p4gpc.dungeonloader.Accessors
             1402DD5F0
              outReg - output of calculation
             */
+            // Debug info, notes the last function that was used before program crashed
 
+            instruction_list.Add($"push {inReg}");
+
+
+            /*
+             
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"{_debugLogCallMnemonic}");
+            instruction_list.Add($"pop rax");
+             */
 
             instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {baseReg}");
@@ -839,7 +880,7 @@ namespace p4gpc.dungeonloader.Accessors
                         break;
 
                     case TemplateAccessType.ROOM_ID:
-                        instruction_list.Add($"movzx {outReg}, byte [{inReg}+{baseReg}]");
+                        instruction_list.Add($"movzx {outReg}, byte [{inReg}+{baseReg}+2]");
                         // instruction_list.Add($"and {outReg}, 255");
 
                         break;
@@ -852,10 +893,25 @@ namespace p4gpc.dungeonloader.Accessors
             {
                 throw new InvalidAsmInstructionModValueException(functionAddress, _utils);
             }
+
+            /*
+                So, in the event that the in register contents are not modified since they are passed into our function, we need to reset
+                then in case they're used again later on. If inReg is outReg, we ignore this but still need to change the value of the stack
+
+
+             */
+            if (inReg == outReg)
+            {
+                instruction_list.Add($"add rsp, 8");
+            }
+            else
+            {
+                instruction_list.Add($"pop {inReg}");
+            }
+
+
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), hasREX ? functionAddress-1 : functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, hasREX ? _utils.GetPatternLength(pattern)+1 : _utils.GetPatternLength(pattern)).Activate());
         }
-
-
 
         private void ReplaceCompareInstruction(Int64 functionAddress, string pattern, TemplateAccessType accessType, byte compare, bool hasREX)
         {
@@ -870,6 +926,14 @@ namespace p4gpc.dungeonloader.Accessors
              */
 
             instruction_list.Add($"use64");
+            instruction_list.Add($"push {inReg}");
+
+
+            instruction_list.Add($"push {inReg}");
+            instruction_list.Add($"mov {inReg}, {_debugInfoAddress}");
+            instruction_list.Add($"mov [{inReg}], dword {functionAddress & 0xFFFFFFFF}");
+            instruction_list.Add($"pop {inReg}");
+
             instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {baseReg}");
 
@@ -953,6 +1017,7 @@ namespace p4gpc.dungeonloader.Accessors
             {
                 throw new InvalidAsmInstructionModValueException(functionAddress, _utils);
             }
+            instruction_list.Add($"pop {inReg}");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), hasREX ? functionAddress-1 : functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, hasREX ? _utils.GetPatternLength(pattern)+2 : _utils.GetPatternLength(pattern)+1).Activate());
         }
 
@@ -962,7 +1027,13 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
-            instruction_list.Add($"and {inReg}, 255");
+            instruction_list.Add($"push {inReg}");
+
+
+            instruction_list.Add($"push {inReg}");
+            instruction_list.Add($"mov {inReg}, {_debugInfoAddress}");
+            instruction_list.Add($"mov [{inReg}], dword {functionAddress & 0xFFFFFFFF}");
+            instruction_list.Add($"pop {inReg}");
 
             if (inReg != AccessorRegister.rax && outReg != AccessorRegister.rax && baseReg != AccessorRegister.rax)
             {
@@ -1003,6 +1074,14 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"xor {outReg}, {outReg}");
             instruction_list.Add($"mov {outReg}, {inReg}");
             instruction_list.Add($"add {outReg}, 2");
+            if (inReg == outReg)
+            {
+                instruction_list.Add($"add rsp, 8");
+            }
+            else
+            {
+                instruction_list.Add($"pop {inReg}");
+            }
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), hasREX ? functionAddress-1 : functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, hasREX ? _utils.GetPatternLength(pattern)+1 : _utils.GetPatternLength(pattern)).Activate());
         }
 
@@ -1078,7 +1157,6 @@ namespace p4gpc.dungeonloader.Accessors
                 pushReg2 = AccessorRegister.rcx;
             }
 
-
             functionList.Add($"push {pushReg}");
             functionList.Add($"push {pushReg2}");
 
@@ -1103,5 +1181,13 @@ namespace p4gpc.dungeonloader.Accessors
             functionList.Add($"pop {pushReg2}");
             functionList.Add($"pop {pushReg}");
         }
+        private void DebugLog(Int64 address)
+        {
+            address++;
+            // _utils.LogDebug($"ACCESSED FUNCTION: {address.ToString("X8")}", 1);
+        }
+        [Function( Register.rax, Register.rax, false)]
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void DebugLogFunc(Int64 rax);
     }
 }
