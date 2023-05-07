@@ -44,7 +44,7 @@ namespace p4gpc.dungeonloader.Accessors
 
         protected override void Initialize()
         {
-            Debugger.Launch();
+            // Debugger.Launch();
             List<Int64> functions;
             long address;
             int totalTemplateTableSize = 0;
@@ -58,7 +58,7 @@ namespace p4gpc.dungeonloader.Accessors
 
             _newFloorTable = _memory.Allocate(totalTemplateTableSize);
             _utils.LogDebug($"New floor table address: {_newFloorTable.ToString("X8")}", 1);
-            _utils.LogDebug($"New floor table size: {_newFloorTable.ToString("X8")} bytes", 1);
+            _utils.LogDebug($"New floor table size: {totalTemplateTableSize.ToString("X8")} bytes", 1);
 
             totalTemplateTableSize = 0;
             foreach (DungeonFloor floor in _floors)
@@ -90,14 +90,15 @@ namespace p4gpc.dungeonloader.Accessors
             {
                 byte addValue;
                 _memory.SafeRead((nuint)(function + 4), out addValue);
-                FloorTableWave1(function, "44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0 E8", addValue);
+                FloorTableWave1(function, "44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0", addValue);
                 //_memory.SafeWriteRaw((nuint)function+8, BitConverter.GetBytes(address));
             }
             _utils.LogDebug($"First search target replaced", 2);
 
 
-            address = _utils.SigScan("81 7E 04 9F 00 00 00 48 8D 05 ?? ?? ?? ?? 48 89 46 30 74 67", "FloorTable Access (Wave 2)");
-            FloorTableWave2(address, "44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0 E8");
+            // Old search: 81 7E 04 9F 00 00 00 48 8D 05 ?? ?? ?? ?? 48 89 46 30 74 67
+            address = _utils.SigScan("81 ?? ?? 9F 00 00 00 ?? ?? 05 ?? ?? ?? ??", "FloorTable Access (Wave 2)");
+            FloorTableWave2(address, "81 ?? ?? 9F 00 00 00 ?? ?? 05 ?? ?? ?? ??");
             _utils.LogDebug($"Second search target replaced", 2);
         }
 
@@ -105,8 +106,9 @@ namespace p4gpc.dungeonloader.Accessors
         {
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
-            instruction_list.Add($"mov r8, [rsi + {offsetSize}]");
-            instruction_list.Add($"lea ecx, [{_newFloorTable}]");
+            instruction_list.Add($"mov r8d, [rsp + {offsetSize}]");
+            instruction_list.Add($"mov rcx, {_newFloorTable}");
+            instruction_list.Add($"mov rdx, rax");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
@@ -114,6 +116,10 @@ namespace p4gpc.dungeonloader.Accessors
         {
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+            instruction_list.Add($"cmp [rsi+4], byte 0x9F");
+            instruction_list.Add($"mov rax, {_newFloorTable}");
+            /*
+             
             instruction_list.Add($"lea eax, [{_newFloorTable}]");
             instruction_list.Add($"mov [rsi+0x30], eax");
             instruction_list.Add($"cmp [rsi+4], 0x0000009F");
@@ -121,6 +127,7 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"push {functionAddress+0x7A}");
             instruction_list.Add($"ret");
             instruction_list.Add($"label end");
+             */
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
