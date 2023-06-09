@@ -87,7 +87,7 @@ namespace p4gpc.dungeonloader
             using var currentProc = Process.GetCurrentProcess();
             Int64 baseAddress = currentProc.MainModule.BaseAddress.ToInt64();
             
-            string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\mods\\dungeonloader"));
+            string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\dungeonloader"));
             string defaultPath = Path.GetFullPath(Path.Combine(_modLoader.GetModConfigDirectory(_modConfig.ModId), @"..\\..\\..\\")) + "\\Mods\\p4gpc.dungeonloader\\JSON";
 
             _utilities = new Utilities(_configuration, _logger, baseAddress);
@@ -98,11 +98,15 @@ namespace p4gpc.dungeonloader
             _accessors.Append(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new FloorTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new RoomTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            // _accessors.Append(new RoomCompares(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            // _accessors.Append(new FieldCompares(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            // _accessors.Append(new MinimapTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
 
             /*
             _templates = new TemplateAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _floors = new FloorAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _rooms = new RoomAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
+
             _minimap = new MinimapAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _compares_field = new FieldCompareAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
             _compares_room = new RoomCompareAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);

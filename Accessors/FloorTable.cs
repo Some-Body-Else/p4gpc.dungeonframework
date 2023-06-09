@@ -91,6 +91,7 @@ namespace p4gpc.dungeonloader.Accessors
                 byte addValue;
                 _memory.SafeRead((nuint)(function + 4), out addValue);
                 FloorTableWave1(function, "44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0", addValue);
+                _utils.LogDebug($"Replaced Wave1 target at: {function.ToString("X8")}", 5);
                 //_memory.SafeWriteRaw((nuint)function+8, BitConverter.GetBytes(address));
             }
             _utils.LogDebug($"First search target replaced", 2);
@@ -99,6 +100,7 @@ namespace p4gpc.dungeonloader.Accessors
             // Old search: 81 7E 04 9F 00 00 00 48 8D 05 ?? ?? ?? ?? 48 89 46 30 74 67
             address = _utils.SigScan("81 ?? ?? 9F 00 00 00 ?? ?? 05 ?? ?? ?? ??", "FloorTable Access (Wave 2)");
             FloorTableWave2(address, "81 ?? ?? 9F 00 00 00 ?? ?? 05 ?? ?? ?? ??");
+            _utils.LogDebug($"Replaced Wave1 target at: {address.ToString("X8")}", 5);
             _utils.LogDebug($"Second search target replaced", 2);
         }
 

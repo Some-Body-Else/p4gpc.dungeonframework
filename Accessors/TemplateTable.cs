@@ -39,6 +39,10 @@ namespace p4gpc.dungeonloader.Accessors
         private nuint _templateLookupTable;
         private nuint _templateExitLookupTable;
         private nuint _debugInfoAddress;
+
+        // TODO: See if we can easily use this to circumvent code replacements elegantly
+        private nuint _currentTemplate;
+
         private long _templateTable;
 
 
@@ -73,8 +77,6 @@ namespace p4gpc.dungeonloader.Accessors
         public TemplateTable(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
             _templates = jsonImporter.GetTemplates();
-
-
             executeAccessor(hooks, utils, memory, config, jsonImporter);
             _utils.LogDebug("Templates hooks established.");
         }
@@ -103,7 +105,7 @@ namespace p4gpc.dungeonloader.Accessors
             _debugLogWrapper = _hooks.CreateReverseWrapper<DebugLogFunc>(DebugLog);
             _debugLogCallMnemonic = _hooks.Utilities.GetAbsoluteCallMnemonics(DebugLog, out _debugLogWrapper);
 
-
+            _currentTemplate = _memory.Allocate(sizeof(byte));
 
             _templateTable = _utils.SigScan("08 09 01 02 03 05 06 07 09 0A 04 00 09 0A 01 02 03 05 07 06 08 0B 0C 04 08 09 01 02 03 05 06 08 0D 0E 04 00", "TemplateTable");
             _utils.LogDebug($"Original template table address: {_templateTable.ToString("X8")}", 1);
@@ -607,16 +609,47 @@ namespace p4gpc.dungeonloader.Accessors
              These definitely need to be replaced, however I'm holding off because OddballReplace2 involves some tricky manuvering to get
              a room ID from the table, and it occurred to me that working on some of the other parts of this may lead to a overhaul that makes it
              easier/more flexible (Think current system still has hard room cap of 10 per entry, need to figure how to get entries to be variable length)
-             
-            search_string = "48 8D 64 24 08 49 8D 08 44 8A 21";
+            */
+
+            /*
+             Obsolete, another replace we have planned will eliminate the need for this one
+                        search_string = "48 8D 64 24 08 49 8D 08 44 8A 21";
             function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
             _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
             OddballReplace2(function_single, search_string);
+            */
+
+            /*
+            
+
+
+            4D 89 B1 60 01 00 00 41 56 49 F7 D6 4C 21 34 24 4C 8B 34 24 48 8D 64 24 08 4D 03 B1 00 02 00 00
+             
+             49 33 81 00 02 00 00 49 89 81 E8 00 00 00 50 48 F7 D0
+             
+             4C 89 F9 41 5E 44 0A 30 41 C1 CE 08 41 C1 EE 18
+             */
+
             search_string = "4C 89 F9 41 5E 44 0A 30";
             function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
             _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
             OddballReplace3(function_single, search_string);
-             */
+
+            search_string = "48 8D 64 24 F8 48 2B 04 24 48 01 14 24 48 03 04 24 48 8D 64 24 08 49 89 81 10 01 00 00";
+            function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
+            _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
+            OddballReplace4(function_single, search_string);
+
+            search_string = "4D 89 B1 60 01 00 00 41 56 49 F7 D6 4C 21 34 24 4C 8B 34 24 48 8D 64 24 08 4D 03 B1 00 02 00 00";
+            function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
+            _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
+            OddballReplace5(function_single, search_string);
+
+            search_string = "49 33 81 00 02 00 00 49 89 81 E8 00 00 00 50 48 F7 D0";
+            function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
+            _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
+            OddballReplace6(function_single, search_string);
+
 
             _utils.LogDebug($"Sixth search target replaced\n", 2);
 
@@ -1029,7 +1062,6 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
-
         private void ReplaceCompareInstruction(Int64 functionAddress, string pattern, TemplateAccessType accessType, byte compare, bool hasREX)
         {
             AccessorRegister pushReg;
@@ -1264,25 +1296,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop rsi");
             
             instruction_list.Add($"or rsi, [ rbp + 0x3C5DF11C ]");
-            instruction_list.Add($"sub rsi, {_templateTable}");
-            instruction_list.Add($"and rsi, 0xFF");
-            instruction_list.Add($"shr rsi, 2");
-
-            instruction_list.Add($"push rax");
-            instruction_list.Add($"mov rax, rsi");  
-            instruction_list.Add($"push rcx");
-            instruction_list.Add($"mov rcx, 3");
-            instruction_list.Add($"push rdx");
-            instruction_list.Add($"mov rdx, 0");
-            instruction_list.Add($"div rcx");
-            instruction_list.Add($"pop rdx");
-            instruction_list.Add($"pop rcx");
-            instruction_list.Add($"mov rsi, rax");
-            instruction_list.Add($"pop rax");
-
-            GetTemplateEntryAddress(instruction_list, AccessorRegister.rsi);
-            // Might get some funky here, it's moving the lower part of RSI
-            // into the lower part of RDI
             instruction_list.Add($"mov dil, [rsi]");
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
@@ -1373,6 +1386,91 @@ namespace p4gpc.dungeonloader.Accessors
             // 
             instruction_list.Add($"pop r14");
             instruction_list.Add($"or r14l, [rax+1]");
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        private void OddballReplace4(Int64 functionAddress, string pattern)
+        {
+            AccessorRegister pushReg;
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rsi");
+            instruction_list.Add($"mov rsi, {_debugInfoAddress}");
+            instruction_list.Add($"mov [rsi], dword {functionAddress & 0xFFFFFFFF}");
+            instruction_list.Add($"pop rsi");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"and rax, 0xFF");
+            instruction_list.Add($"shr rax, 2");
+
+            instruction_list.Add($"push rcx");
+            instruction_list.Add($"mov rcx, 3");
+            instruction_list.Add($"push rdx");
+            instruction_list.Add($"mov rdx, 0");
+            instruction_list.Add($"div rcx");
+            instruction_list.Add($"pop rdx");
+            instruction_list.Add($"pop rcx");
+
+            instruction_list.Add($"push rcx");
+            instruction_list.Add($"mov rcx, {_currentTemplate}");
+            instruction_list.Add($"mov [rcx], rax");
+            instruction_list.Add($"pop rcx");
+            GetTemplateEntryAddress(instruction_list, AccessorRegister.rax);
+            instruction_list.Add($"mov [r9 + 0x110], rax");
+            instruction_list.Add($"pop rax");
+            // instruction_list.Add($"lea rsp, [rsp+0x8]");
+
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+
+        private void OddballReplace5(Int64 functionAddress, string pattern)
+        {
+            AccessorRegister pushReg;
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use64");
+            instruction_list.Add($"push rsi");
+            instruction_list.Add($"mov rsi, {_debugInfoAddress}");
+            instruction_list.Add($"mov [rsi], dword {functionAddress & 0xFFFFFFFF}");
+            instruction_list.Add($"pop rsi");
+            /*
+             Need to figure a way to determine to use roomcount or roomcountex
+             */
+            instruction_list.Add($"mov r14, {_currentTemplate}");
+            instruction_list.Add($"mov r14, [r14]");
+            GetTemplateEntryAddress(instruction_list, AccessorRegister.r14);
+            // With this, it will always pick RoomCount
+            // Count is a bit strange here, it's one higher than it should be
+            instruction_list.Add($"movzx r14, byte [r14]");
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.ExecuteFirst, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        private void OddballReplace6(Int64 functionAddress, string pattern)
+        {
+            AccessorRegister pushReg;
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rsi");
+            instruction_list.Add($"mov rsi, {_debugInfoAddress}");
+            instruction_list.Add($"mov [rsi], dword {functionAddress & 0xFFFFFFFF}");
+            instruction_list.Add($"pop rsi");
+
+            instruction_list.Add($"mov rax, {_currentTemplate}");
+            instruction_list.Add($"mov rax, [rax]");
+            GetTemplateEntryAddress(instruction_list, AccessorRegister.rax);
+            // With this, it will always pick RoomCountEx
+            instruction_list.Add($"add rax, 2");
+            instruction_list.Add($"mov [r9 + 0xe8], rax");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"not rax");
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
