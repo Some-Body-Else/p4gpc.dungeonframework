@@ -36,13 +36,14 @@ namespace p4gpc.dungeonloader.Accessors
          */
 
         private List<DungeonTemplates> _templates;
+        private Dictionary<byte, byte> _dungeon_template_dict;
         private nuint _templateLookupTable;
         private nuint _templateExitLookupTable;
         private nuint _debugInfoAddress;
 
         // TODO: See if we can easily use this to circumvent code replacements elegantly
         private nuint _currentTemplate;
-
+        private nuint _templateTypeTable;
         private long _templateTable;
 
 
@@ -77,6 +78,7 @@ namespace p4gpc.dungeonloader.Accessors
         public TemplateTable(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
             _templates = jsonImporter.GetTemplates();
+            _dungeon_template_dict = jsonImporter.GetDungeonTemplateDictionary();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
             _utils.LogDebug("Templates hooks established.");
         }
@@ -107,6 +109,7 @@ namespace p4gpc.dungeonloader.Accessors
 
             _currentTemplate = _memory.Allocate(sizeof(byte));
 
+
             _templateTable = _utils.SigScan("08 09 01 02 03 05 06 07 09 0A 04 00 09 0A 01 02 03 05 07 06 08 0B 0C 04 08 09 01 02 03 05 06 08 0D 0E 04 00", "TemplateTable");
             _utils.LogDebug($"Original template table address: {_templateTable.ToString("X8")}", 1);
             _templateTable = _utils.StripBaseAddress(_templateTable);
@@ -119,6 +122,19 @@ namespace p4gpc.dungeonloader.Accessors
             _templateLookupTable = _memory.Allocate(_templates.Count() * DOUBLEWORD);
             _utils.LogDebug($"Template lookup table address: {_templateLookupTable.ToString("X8")}", 1);
             _templateExitLookupTable = _memory.Allocate(_templates.Count());
+
+            _templateTypeTable = _memory.Allocate(sizeof(byte)*256);
+            _utils.LogDebug($"TemplateType address: {_templateTypeTable.ToString("X8")}", 1); for (int i = 0; i <= 255; i++)
+            {
+                if (_dungeon_template_dict.TryGetValue((byte)i, out idByte1))
+                {
+                    _memory.SafeWrite(_templateTypeTable+(nuint)i, _dungeon_template_dict[(byte)i]);
+                }
+                else
+                {
+                    _memory.SafeWrite(_templateTypeTable+(nuint)i, 0xFF);
+                }
+            }
             /*
             4? opcode indicates that we're using extended opcodes 
             */
@@ -596,39 +612,141 @@ namespace p4gpc.dungeonloader.Accessors
             ReplaceAddressSetupA(function_single, search_string, hasREX);
             _utils.LogDebug($"Fifth search target replaced\n", 2);
 
+            
+            search_string = "0F ?? ?? ?? 80 FE 90 00";
+            functions = _utils.SigScan_FindAll(search_string, "TemplateTable Move/Compare Opcodes");
+            _utils.LogDebug($"Function count: {functions.Count()}", 3);
+            foreach (long function in functions)
+            {
+                hasREX = true;
+                _memory.SafeRead((nuint)(function-1), out prefixREX);
+                _memory.SafeRead((nuint)(function+1), out idByte1);
+                
+                _utils.LogDebug($"Opcode type: {instruction_type}", 4);
+                _memory.SafeRead((nuint)(function+2), out rmByte);
+                _memory.SafeRead((nuint)(function+3), out sibByte);
+                mod = (byte)(rmByte >> 6);
+                scale = (byte)(sibByte >> 6);
+                outReg = (AccessorRegister)((rmByte >> 3) & 0x7);           //Reg_Out   rm.REG
+                inReg = (AccessorRegister)((sibByte >> 3) & 0x7);           //Reg_In    sib.INDEX
+                baseReg = (AccessorRegister)(sibByte & 0x7);                //Reg_Base  sib.BASE
 
-            // Oddball use cases here, not sure of a good way to replace besides this hardcoded
-            // search, probably the most breakable part of this
+                if (prefixREX >0x4F || prefixREX < 0x40)
+                {
+                    _utils.LogDebug("No REX prefix", 5);
+                }
+                else
+                {
+                    baseReg += (prefixREX & 0x1) << 3;
+                    inReg += (prefixREX & 0x2) << 2;
+                    outReg += ((prefixREX & 0x4)) << 1;
+                    hasREX = true;
+                }
 
-             
+                if ((prefixREX & 0x8) != 0)
+                {
+                    _utils.LogDebug("Output to 64-bit register", 5);
+                }
+                _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+                ReplaceTemplateTypeAccessA(function, search_string, hasREX);
+            }
+            
+
+            search_string = "48 ?? ?? 00 00 00 00 ?? ?? ?? 80 FE 90 00 49 ?? ?? 08 01 00 00";
+            function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
+            _memory.SafeRead((nuint)(function_single), out prefixREX);
+            _memory.SafeRead((nuint)(function_single+1), out idByte1);
+            
+            //_utils.LogDebug($"Opcode type: {instruction_type}", 4);
+            _memory.SafeRead((nuint)(function_single+2), out rmByte);
+            _memory.SafeRead((nuint)(function_single+3), out sibByte);
+            mod = (byte)(rmByte >> 6);
+            scale = (byte)(sibByte >> 6);
+            inReg = (AccessorRegister)((sibByte >> 3) & 0x7);       //Reg_In    sib.INDEX
+            baseReg = (AccessorRegister)(sibByte & 0x7);            //Reg_Base  sib.BASE
+            outReg = (AccessorRegister)((rmByte >> 3) & 0x7);       //Reg_Out
+            if (prefixREX >0x4F || prefixREX < 0x40)
+            {
+                _utils.LogDebug("No REX prefix for lea", 5);
+            }
+            else
+            {
+                baseReg += (prefixREX & 0x1) << 3;
+                inReg += (prefixREX & 0x2) << 2;
+                outReg += ((prefixREX & 0x4)) << 1;
+            }
+            _utils.LogDebug($"Location: {function_single.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+            ReplaceTemplateTypeAccessB(function_single, search_string);
+
+            search_string = "4D ?? ?? 80 FE 90 00 ?? ?? ?? 08 01 00 00";
+            function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
+            _memory.SafeRead((nuint)(function_single), out prefixREX);
+            _memory.SafeRead((nuint)(function_single+1), out idByte1);
+
+            //_utils.LogDebug($"Opcode type: {instruction_type}", 4);
+            _memory.SafeRead((nuint)(function_single+2), out rmByte);
+            _memory.SafeRead((nuint)(function_single+3), out sibByte);
+            mod = (byte)(rmByte >> 6);
+            scale = (byte)(sibByte >> 6);
+            inReg = (AccessorRegister)((sibByte >> 3) & 0x7);       //Reg_In    sib.INDEX
+            baseReg = (AccessorRegister)(sibByte & 0x7);            //Reg_Base  sib.BASE
+            outReg = (AccessorRegister)((rmByte >> 3) & 0x7);       //Reg_Out
+            if (prefixREX >0x4F || prefixREX < 0x40)
+            {
+                _utils.LogDebug("No REX prefix for lea", 5);
+            }
+            else
+            {
+                baseReg += (prefixREX & 0x1) << 3;
+                inReg += (prefixREX & 0x2) << 2;
+                outReg += ((prefixREX & 0x4)) << 1;
+            }
+            _utils.LogDebug($"Location: {function_single.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+
+            ReplaceTemplateTypeAccessB(function_single, search_string);
+
+
+            search_string = "49 ?? ?? F6 A5 23 C5 41 ??";
+            function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
+            _memory.SafeRead((nuint)(function_single), out prefixREX);
+            _memory.SafeRead((nuint)(function_single+1), out idByte1);
+            _memory.SafeRead((nuint)(function_single+8), out rmByte);
+            _memory.SafeRead((nuint)(function_single+2), out sibByte);
+            mod = (byte)(rmByte >> 6);
+            scale = (byte)(sibByte >> 6);
+            inReg = (AccessorRegister)((sibByte >> 3) & 0x7);       //Reg_In    sib.INDEX
+            baseReg = (AccessorRegister)(sibByte & 0x7);            //Reg_Base  sib.BASE
+            outReg = (AccessorRegister)(rmByte & 0x7);       //Reg_Out
+            if (prefixREX >0x4F || prefixREX < 0x40)
+            {
+                _utils.LogDebug("No REX prefix for lea", 5);
+            }
+            else
+            {
+                baseReg += (prefixREX & 0x1) << 3;
+                inReg += (prefixREX & 0x2) << 2;
+
+                _memory.SafeRead((nuint)(function_single+7), out prefixREX);
+                if (prefixREX >0x4F || prefixREX < 0x40)
+                {
+                    _utils.LogDebug("No REX prefix for lea", 5);
+                }
+                else
+                {
+                    outReg += ((prefixREX & 0x1)) << 3;
+                }
+            }
+            _utils.LogDebug($"Location: {function_single.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+
+            ReplaceTemplateTypeAccessC(function_single, search_string);
+ 
+            _utils.LogDebug($"Sixth search target replaced\n", 2);
+
+
             search_string = "48 0B B5 1C F1 5D 3C 40 8A 3E";
             function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
             _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
             OddballReplace1(function_single, search_string);
-            /*
-             These definitely need to be replaced, however I'm holding off because OddballReplace2 involves some tricky manuvering to get
-             a room ID from the table, and it occurred to me that working on some of the other parts of this may lead to a overhaul that makes it
-             easier/more flexible (Think current system still has hard room cap of 10 per entry, need to figure how to get entries to be variable length)
-            */
-
-            /*
-             Obsolete, another replace we have planned will eliminate the need for this one
-                        search_string = "48 8D 64 24 08 49 8D 08 44 8A 21";
-            function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
-            OddballReplace2(function_single, search_string);
-            */
-
-            /*
-            
-
-
-            4D 89 B1 60 01 00 00 41 56 49 F7 D6 4C 21 34 24 4C 8B 34 24 48 8D 64 24 08 4D 03 B1 00 02 00 00
-             
-             49 33 81 00 02 00 00 49 89 81 E8 00 00 00 50 48 F7 D0
-             
-             4C 89 F9 41 5E 44 0A 30 41 C1 CE 08 41 C1 EE 18
-             */
 
             search_string = "4C 89 F9 41 5E 44 0A 30";
             function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
@@ -651,7 +769,7 @@ namespace p4gpc.dungeonloader.Accessors
             OddballReplace6(function_single, search_string);
 
 
-            _utils.LogDebug($"Sixth search target replaced\n", 2);
+            _utils.LogDebug($"Seventh search target replaced\n", 2);
 
 
         }
@@ -1280,6 +1398,67 @@ namespace p4gpc.dungeonloader.Accessors
             GetTemplateEntryAddress(instruction_list, inReg);
             instruction_list.Add($"sub {outReg}, 8");
             instruction_list.Add($"mov [{outReg}], {inReg}");
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        // Used for mov
+        private void ReplaceTemplateTypeAccessA(Int64 functionAddress, string pattern, bool hasREX)
+        {
+            AccessorRegister pushReg;
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use64");
+
+            // basereg
+            instruction_list.Add($"mov {outReg}, [{baseReg} + {_templateTypeTable}]");
+            instruction_list.Add($"and {outReg}, 0xFF");
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), hasREX ? functionAddress-1 : functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, hasREX ? _utils.GetPatternLength(pattern)+1 : _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        // Used for lea
+        private void ReplaceTemplateTypeAccessB(Int64 functionAddress, string pattern)
+        {
+            AccessorRegister pushReg;
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use64");
+
+            //basereg
+            instruction_list.Add($"mov {outReg}, {_templateTypeTable}");
+
+            instruction_list.Add($"mov [r9 + 0x108], {outReg}");
+            /*
+             instruction_list.Add($"push r9");
+            instruction_list.Add($"add r9, 0x0108");
+            instruction_list.Add($"mov [r9], {outReg}");
+            instruction_list.Add($"pop r9");
+             */
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+        // Essentially part 2 of lea
+        private void ReplaceTemplateTypeAccessC(Int64 functionAddress, string pattern)
+        {
+            AccessorRegister pushReg;
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use64");
+
+            //basereg
+            instruction_list.Add($"xor {inReg}, [{baseReg} - 0x3ADC5A0A]");
+
+
+            instruction_list.Add($"and {outReg}, 255");
+
+            instruction_list.Add($"push {outReg}");
+            /*
+             instruction_list.Add($"push r9");
+            instruction_list.Add($"add r9, 0x0108");
+            instruction_list.Add($"mov [r9], {outReg}");
+            instruction_list.Add($"pop r9");
+             */
+
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
