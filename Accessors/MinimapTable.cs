@@ -109,7 +109,6 @@ namespace p4gpc.dungeonloader.Accessors
 
             _newMinimapTable = _memory.Allocate(totalMinimapTableSize);
             _newMinimapLookupTable = _memory.Allocate(minimapCounter*16);
-            //_newMinimapNameLookupTable = _memory.Allocate(minimapCounter*8);
 
             offset = 0;
             for (int i = 0; i < _minimaps.Count; i++)

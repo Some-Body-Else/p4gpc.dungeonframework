@@ -48,8 +48,8 @@ namespace p4gpc.dungeonloader.Accessors
 
         protected override void Initialize()
         {
-            
-
+            //
+            // 
         }
 
     }
