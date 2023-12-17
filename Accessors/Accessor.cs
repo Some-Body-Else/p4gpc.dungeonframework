@@ -27,6 +27,9 @@ namespace p4gpc.dungeonloader.Accessors
 {
     public class Accessor
     {
+
+        protected static nuint _newMinimapLookupTable;
+        protected static nuint _newMinimapPathLookupTable;
         protected IReloadedHooks? _hooks;
         protected Utilities? _utils;
         protected IMemory _memory;
