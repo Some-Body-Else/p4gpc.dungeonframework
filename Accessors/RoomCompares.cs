@@ -97,12 +97,15 @@ namespace p4gpc.dungeonloader.Accessors
             ReplaceStartupSearchA(function, jump_offset, search_string);
             _utils.LogDebug($"Location: {function.ToString("X8")}", 3);
 
+            /*
+             
             search_string = "40 80 FF 09 0F 82 ?? ?? ?? ?? 40 0F B6 ?? 83 C0 F7 83 F8 05 0F 87 ?? ?? ?? ??";
             function = _utils.SigScan(search_string, $"RoomCompareB");
             _memory.Read((nuint)(function+6), out jump_offset);
             //LogOpcodeRunsC(function, search_string);
             ReplaceStartupSearchB(function, jump_offset, search_string);
             _utils.LogDebug($"Location: {function.ToString("X8")}", 3);
+             */
 
             search_string = "80 F9 09 72 51 0F B6 ?? 4C 8D 1D ?? ?? ?? ?? 83 C0 F7 83 F8 05 0F 87 ?? ?? ?? ??";
             function = _utils.SigScan(search_string, $"RoomCompareC");
@@ -245,14 +248,6 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
 
             instruction_list.Add($"use64");
-
-            instruction_list.Add("cmp rax, 0xF");
-            instruction_list.Add("jne noDebug");
-            instruction_list.Add($"push rax");
-            instruction_list.Add($"mov rax, {functionAddress}");
-            instruction_list.Add($"{_debugLogCallMnemonic}");
-            instruction_list.Add($"pop rax");
-            instruction_list.Add("label noDebug");
 
             instruction_list.Add($"cmp {AccessorRegister.rax}, 2");
             instruction_list.Add($"je continue");

@@ -3,7 +3,13 @@
     "roomID": 1,
     "multipleNames": false,
     "name": "smap01.tmx",
-    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ],
+    "texCoordSingle": [
+      [ 0.03125, 0.03125 ],
+      [ 0.59375, 0.59375 ]
+    ],
+    "texScaleSingle": [ 19.0, 19.0 ],
+    "singleOrientBased": false
   },
   {
     "roomID": 2,
@@ -13,47 +19,107 @@
       "smap02_01.tmx",
       "smap02_02.tmx"
     ],
-    "uVarsSingle": [ 0, 1, 0, 0, 3],
+    "uVarsSingle": [ 0, 1, 0, 0, 3 ],
     "uVarsMulti": [
-      [0, 1, 1, 0],
-      [0, 1, 2, 0]
+      [ 0, 1, 1, 0 ],
+      [ 0, 1, 2, 0 ]
+    ],
+    "texCoordSingle": [
+      [ 0.0, 0.0 ],
+      [ 1.0, 1.0 ]
+    ],
+    "texCoordMulti": [
+      [
+        [ 0.015625, 0.015625 ],
+        [ 0.296875, 0.578125 ]
+      ],
+      [
+        [ 0.296875, 0.296875 ],
+        [ 0.578125, 0.578125 ]
+      ]
+    ],
+    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleMulti": [
+      [ 37.0, 19.0 ],
+      [ 19.0, 19.0 ]
+    ],
+    "singleOrientBased": false,
+    "multiOrientBased": [
+      true,
+      false
     ]
   },
   {
     "roomID": 3,
     "multipleNames": false,
     "name": "smap03.tmx",
-    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ],
+    "texCoordSingle": [
+      [ 0.03125, 0.03125 ],
+      [ 0.59375, 0.59375 ]
+    ],
+    "texScaleSingle": [ 19.0, 19.0 ],
+    "singleOrientBased": false
   },
   {
     "roomID": 4,
     "multipleNames": false,
     "name": "smap04.tmx",
-    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ],
+    "texCoordSingle": [
+      [ 0.03125, 0.03125 ],
+      [ 0.59375, 0.59375 ]
+    ],
+    "texScaleSingle": [ 19.0, 19.0 ],
+    "singleOrientBased": false
   },
   {
     "roomID": 5,
     "multipleNames": false,
     "name": "smap05.tmx",
-    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ],
+    "texCoordSingle": [
+      [ 0.03125, 0.03125 ],
+      [ 0.59375, 0.59375 ]
+    ],
+    "texScaleSingle": [ 19.0, 19.0 ],
+    "singleOrientBased": false
   },
   {
     "roomID": 6,
     "multipleNames": false,
     "name": "smap06.tmx",
-    "uVarsSingle": [ 0, 0, 0, 0, 0 ]
+    "uVarsSingle": [ 0, 0, 0, 0, 0 ],
+    "texCoordSingle": [
+      [ 0.03125, 0.03125 ],
+      [ 0.59375, 0.59375 ]
+    ],
+    "texScaleSingle": [ 19.0, 19.0 ],
+    "singleOrientBased": false
   },
   {
     "roomID": 7,
     "multipleNames": false,
     "name": "smap07.tmx",
-    "uVarsSingle": [ 0, 2, 3, 0, 1 ]
+    "uVarsSingle": [ 0, 2, 3, 0, 1 ],
+    "texCoordSingle": [
+      [ 0.015625, 0.015625 ],
+      [ 0.578125, 0.578125 ]
+    ],
+    "texScaleSingle": [ 37.0, 37.0 ],
+    "singleOrientBased": false
   },
   {
     "roomID": 8,
     "multipleNames": false,
     "name": "smap08.tmx",
-    "uVarsSingle": [ 0, 2, 3, 0, 1 ]
+    "uVarsSingle": [ 0, 2, 3, 0, 1 ],
+    "texCoordSingle": [
+      [ 0.015625, 0.015625 ],
+      [ 0.578125, 0.578125 ]
+    ],
+    "texScaleSingle": [ 37.0, 37.0 ],
+    "singleOrientBased": false
   },
   {
     "roomID": 9,
@@ -67,6 +133,30 @@
     "uVarsMulti": [
       [ 1, 1, 0, 1 ],
       [ 1, 1, 4, 1 ]
+    ],
+    "texCoordSingle": [
+      [ 0.0, 0.0 ],
+      [ 1.0, 1.0 ]
+    ],
+    "texCoordMulti": [
+      [
+        [ 0.03125, 0.03125 ],
+        [ 0.59375, 0.59375 ]
+      ],
+      [
+        [ 0.296875, 0.015625 ],
+        [ 0.875, 0.59375 ]
+      ]
+    ],
+    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleMulti": [
+      [ 19.0, 19.0 ],
+      [ 37.0, 37.0 ]
+    ],
+    "singleOrientBased": false,
+    "multiOrientBased": [
+      false,
+      false
     ]
   },
   {
@@ -81,6 +171,30 @@
     "uVarsMulti": [
       [ 1, 1, 0, 1 ],
       [ 1, 1, 4, 1 ]
+    ],
+    "texCoordSingle": [
+      [ 0.0, 0.0 ],
+      [ 1.0, 1.0 ]
+    ],
+    "texCoordMulti": [
+      [
+        [ 0.03125, 0.03125 ],
+        [ 0.59375, 0.59375 ]
+      ],
+      [
+        [ 0.296875, 0.015625 ],
+        [ 0.875, 0.59375 ]
+      ]
+    ],
+    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleMulti": [
+      [ 19.0, 19.0 ],
+      [ 37.0, 37.0 ]
+    ],
+    "singleOrientBased": false,
+    "multiOrientBased": [
+      false,
+      false
     ]
   },
   {
@@ -95,6 +209,30 @@
     "uVarsMulti": [
       [ 2, 1, 5, 2 ],
       [ 2, 1, 4, 2 ]
+    ],
+    "texCoordSingle": [
+      [ 0.0, 0.0 ],
+      [ 1.0, 1.0 ]
+    ],
+    "texCoordMulti": [
+      [
+        [ 0.015625, 0.015625 ],
+        [ 0.296875, 0.859375 ]
+      ],
+      [
+        [ 0.296875, 0.015625 ],
+        [ 0.875, 0.59375 ]
+      ]
+    ],
+    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleMulti": [
+      [ 55.0, 19.0 ],
+      [ 37.0, 37.0 ]
+    ],
+    "singleOrientBased": false,
+    "multiOrientBased": [
+      false,
+      false
     ]
   },
   {
@@ -109,6 +247,30 @@
     "uVarsMulti": [
       [ 2, 1, 5, 2 ],
       [ 2, 1, 4, 2 ]
+    ],
+    "texCoordSingle": [
+      [ 0.0, 0.0 ],
+      [ 1.0, 1.0 ]
+    ],
+    "texCoordMulti": [
+      [
+        [ 0.015625, 0.015625 ],
+        [ 0.296875, 0.859375 ]
+      ],
+      [
+        [ 0.296875, 0.015625 ],
+        [ 0.875, 0.59375 ]
+      ]
+    ],
+    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleMulti": [
+      [ 55.0, 19.0 ],
+      [ 37.0, 37.0 ]
+    ],
+    "singleOrientBased": false,
+    "multiOrientBased": [
+      true,
+      false
     ]
   },
   {
@@ -125,6 +287,36 @@
       [ 3, 0, 0, 3 ],
       [ 3, 0, 6, 3 ],
       [ 3, 0, 0, 3 ]
+    ],
+    "texCoordSingle": [
+      [ 0.0, 0.0 ],
+      [ 1.0, 1.0 ]
+    ],
+    "texCoordMulti": [
+      [
+        [ 0.03125, 0.03125 ],
+        [ 0.59375, 0.59375 ]
+      ],
+      [
+        [ 0.296875, 0.296875 ],
+        [ 0.859375, 0.859375 ]
+      ],
+      [
+        [ 0.03125, 0.03125 ],
+        [ 0.59375, 0.59375 ]
+      ]
+    ],
+    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleMulti": [
+      [ 19.0, 19.0 ],
+      [ 37.0, 37.0 ],
+      [ 19.0, 19.0 ]
+    ],
+    "singleOrientBased": false,
+    "multiOrientBased": [
+      false,
+      false,
+      false
     ]
   },
   {
@@ -141,6 +333,36 @@
       [ 3, 0, 0, 3 ],
       [ 3, 0, 6, 3 ],
       [ 3, 0, 0, 3 ]
+    ],
+    "texCoordSingle": [
+      [ 0.0, 0.0 ],
+      [ 1.0, 1.0 ]
+    ],
+    "texCoordMulti": [
+      [
+        [ 0.03125, 0.03125 ],
+        [ 0.59375, 0.59375 ]
+      ],
+      [
+        [ 0.296875, 0.296875 ],
+        [ 0.859375, 0.859375 ]
+      ],
+      [
+        [ 0.03125, 0.03125 ],
+        [ 0.59375, 0.59375 ]
+      ]
+    ],
+    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleMulti": [
+      [ 19.0, 19.0 ],
+      [ 37.0, 37.0 ],
+      [ 19.0, 19.0 ]
+    ],
+    "singleOrientBased": false,
+    "multiOrientBased": [
+      false,
+      false,
+      false
     ]
   }
 ]

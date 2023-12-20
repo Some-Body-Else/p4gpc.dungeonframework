@@ -51,6 +51,37 @@ namespace p4gpc.dungeonloader.Accessors
         // to run out of space for any additional rooms, and I need to modify this section anyways
         // because it checks from the number of minimap textures, which is normally hardcoded
         private nuint _minimapUnknownPerTextureTable;
+        /*
+         * Each of the textures have a set of coordinate textures to dictate what part of the image is actually rendered
+         * Stored as a pair of 4-btye floatsm with each texture having 2 pairs of texture coordinates (Top-left and bottom-right)
+         */
+        private nuint _minimapTextureCoordinateTable;
+        private nuint _minimapTextureCoordinateLookupTable;
+        
+        /*
+         * Each of the textures also have what I can only think of as a "scale" value for x and y, dictating how many pixels the selected image takes up.
+         * For some reason it appears to be half the number of pixels encapsulated by the texture coordinates, unsure why.
+         * Stored as a pair of 4-btye floats (x scale and y scale)
+         */
+        private nuint _minimapTextureScaleTable;
+        private nuint _minimapTextureScaleLookupTable;
+        
+        /*
+         * One part of one texture has its scale values switched depending on how it is rotated in-game, so this accounts for that and any
+         * custom textures that may want to do the same.
+         * Stored as a single byte per texture, although since these are just binary values there's probably a better way to store/access them
+         */
+        private nuint _minimapTextureOrientTable;
+        private nuint _minimapTextureOrientLookupTable;
+
+        /*
+         * In a given table that accounts for multiple textures, if you put all the variants of stuff together 
+         * (Textures for rooms with 1 texture, textures for rooms with multiple textures, dummy textures)
+         * You end up with a very wonky indexing for each of the rooms. Using this as a way to keep track of the relative
+         * indices for each room
+         */
+        private nuint _minimapIndexLookupTable;
+
         private int minimapCounter = 0;
 
 
@@ -170,29 +201,97 @@ namespace p4gpc.dungeonloader.Accessors
             }
 
 
+            _minimapIndexLookupTable = _memory.Allocate(_minimaps.Count);
             _roomHasMultipleTexturesTable = _memory.Allocate(_minimaps.Count);
             _minimapTextureOffsetTableLookupTable = _memory.Allocate(8*_minimaps.Count);
+
             Int32 offsetLookup = 0;
 
             for (int i = 0; i < _minimaps.Count; i++)
             {
-                _memory.SafeWrite(_minimapTextureOffsetTableLookupTable + (nuint)i*4, (Int32)offsetLookup);
+                _memory.SafeWrite(_minimapTextureOffsetTableLookupTable + (nuint)i*4, (Int32)offsetLookup*8);
 
                 if (_minimaps[i].multipleNames)
                 {
                     _memory.SafeWrite(_roomHasMultipleTexturesTable + (nuint)i, (byte)1);
                     for (int j = 0; j < _minimaps[i].names.Count; j++)
                     {
-                        offsetLookup += 8;
+                        offsetLookup++;
                     }
                 }
                 else
                 {
                     _memory.SafeWrite(_roomHasMultipleTexturesTable + (nuint)i, (byte)0);
                 }
-                offsetLookup += 8;
+                offsetLookup++;
 
             }
+
+            offsetLookup = 0;
+
+            // 2 pair of 4-byte float coordinates per texture
+            _minimapTextureCoordinateTable = _memory.Allocate(minimapCounter*4*4*4);
+            // 1 pair of 4-byte float per texture 
+            _minimapTextureScaleTable = _memory.Allocate(minimapCounter*4*2);
+            // 1 byte per texture
+            _minimapTextureOrientTable = _memory.Allocate(minimapCounter);
+
+            _minimapTextureCoordinateLookupTable = _memory.Allocate(minimapCounter*8);
+            _minimapTextureScaleLookupTable = _memory.Allocate(minimapCounter*8);
+            // Since it's just increment, might not need this
+            _minimapTextureOrientLookupTable = _memory.Allocate(minimapCounter*8);
+
+            offset = 0;
+            for (int i = 0; i < _minimaps.Count; i++)
+            {
+                _memory.SafeWrite(_minimapIndexLookupTable + (nuint)i, (byte)offsetLookup);
+
+                if (_minimaps[i].multipleNames)
+                {
+                    for (int j = 0; j < _minimaps[i].names.Count; j++)
+                    {
+                        _memory.SafeWrite((_minimapTextureCoordinateTable+(nuint)(i+offset)*16), _minimaps[i].texCoordMulti[j][0][0]);
+                        _memory.SafeWrite((_minimapTextureCoordinateTable+(nuint)(i+offset)*16+4), _minimaps[i].texCoordMulti[j][0][1]);
+                        _memory.SafeWrite((_minimapTextureCoordinateTable+(nuint)(i+offset)*16+8), _minimaps[i].texCoordMulti[j][1][0]);
+                        _memory.SafeWrite((_minimapTextureCoordinateTable+(nuint)(i+offset)*16+12), _minimaps[i].texCoordMulti[j][1][1]);
+
+                        _memory.SafeWrite((_minimapTextureScaleTable+(nuint)(i+offset)*8), _minimaps[i].texScaleMulti[j][0]);
+                        _memory.SafeWrite((_minimapTextureScaleTable+(nuint)(i+offset)*8+4), _minimaps[i].texScaleMulti[j][1]);
+                        if (_minimaps[i].multiOrientBased[j])
+                        {
+                            _memory.SafeWrite((_minimapTextureOrientTable+(nuint)(i+offset)), (byte)1);
+                        }
+                        else
+                        {
+                            _memory.SafeWrite((_minimapTextureOrientTable+(nuint)(i+offset)), (byte)0);
+                        }
+                        offset++;
+                        offsetLookup++;
+                    }
+                    // Decrement to counterbalance the natural increment of i
+                    offset--;
+                }   
+                else
+                {
+
+                    _memory.SafeWrite((_minimapTextureCoordinateTable+(nuint)(i+offset)*16), _minimaps[i].texCoordSingle[0][0]);
+                    _memory.SafeWrite((_minimapTextureCoordinateTable+(nuint)(i+offset)*16+4), _minimaps[i].texCoordSingle[0][1]);
+                    _memory.SafeWrite((_minimapTextureCoordinateTable+(nuint)(i+offset)*16+8), _minimaps[i].texCoordSingle[1][0]);
+                    _memory.SafeWrite((_minimapTextureCoordinateTable+(nuint)(i+offset)*16+12), _minimaps[i].texCoordSingle[1][1]);
+
+                    _memory.SafeWrite((_minimapTextureScaleTable+(nuint)(i+offset)*8), _minimaps[i].texScaleSingle[0]);
+                    _memory.SafeWrite((_minimapTextureScaleTable+(nuint)(i+offset)*8+4), _minimaps[i].texScaleSingle[1]);
+                    if (_minimaps[i].singleOrientBased)
+                    {
+                        _memory.SafeWrite((_minimapTextureOrientTable+(nuint)(i+offset)), (byte)1);
+                    }
+                    else
+                    {
+                        _memory.SafeWrite((_minimapTextureOrientTable+(nuint)(i+offset)), (byte)0);
+                    }
+                    offsetLookup++;
+                }
+            }    
 
             // "48 8D 3D ?? ?? ?? ?? 48 8B F3 48 2B F7 48 8D 2D ?? ?? ?? ?? 0F 1F 00"
             // This is the search target for the code that touches the startup table
@@ -213,6 +312,11 @@ namespace p4gpc.dungeonloader.Accessors
             ReplaceMinimapPathSearch(func, offset, search_string);
             _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
 
+            search_string = "40 80 FF 09 0F 82 ?? ?? ?? ?? 40 0F B6 ?? 83 C0 F7 83 F8 05 0F 87 ?? ?? ?? ??";
+            func = _utils.SigScan(search_string, $"ReplaceMinimapTextureMapping");
+            _memory.Read((nuint)(func+22), out offset);
+            ReplaceMinimapTextureMapping(func, offset, search_string);
+            _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
 
             // 4C 8D 15 1D 19 4E 00 44 8B CD
             search_string = "4C 8D 15 1D 19 4E 00 44 8B CD";
@@ -233,7 +337,7 @@ namespace p4gpc.dungeonloader.Accessors
             _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
         }
 
-            void ReplaceStartupSearch(Int64 functionAddress, int length)
+        void ReplaceStartupSearch(Int64 functionAddress, int length)
         {
             AccessorRegister pushReg;
             List<AccessorRegister> usedRegs;
@@ -313,7 +417,129 @@ namespace p4gpc.dungeonloader.Accessors
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
+        void ReplaceMinimapTextureMapping(Int64 functionAddress, int jump_offset, string pattern)
+        {
+            AccessorRegister pushReg;
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            Int64 jump_point = functionAddress + 26 + jump_offset;
+            /*
+             Input:
+                rax - Some value used specifically when dealing with room 2, has something to do with how part of the room is orientated
+                    
+                rbx - address for room ID
+                    == Unsure of a good name, but all the mapping details are written to here
+                rdx - room sub-ID
+                    == This is the value that dictates which part of a room texture is used for multi-piece rooms like rooms 9-13
+                rdi - room ID
 
+                rcx is replaced during the original operations
+             */
+            
+            instruction_list.Add($"use64");
+            /*
+            instruction_list.Add($"push rsi");
+            instruction_list.Add($"push rcx");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rdx");
+            instruction_list.Add($"push rbx");
+             */
+
+
+            instruction_list.Add($"push rdi");
+            instruction_list.Add($"push rsi");
+            instruction_list.Add($"push rdx");
+
+            instruction_list.Add($"sub rdi, 1");
+            instruction_list.Add($"xor rcx, rcx");
+            instruction_list.Add($"mov cl, [{_minimapIndexLookupTable} + rdi]");
+            // Account for the potential room sub-ID
+            instruction_list.Add($"add rcx, rdx");
+            // But then we get off by 1, so we adjust
+            instruction_list.Add($"sub rcx, 1");
+            instruction_list.Add($"mov rsi, rcx");
+            instruction_list.Add($"imul cx, 0x10");
+
+
+            instruction_list.Add($"mov edi, [{_minimapTextureCoordinateTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x28], edi");
+            instruction_list.Add($"add rcx, 4");
+
+            instruction_list.Add($"mov edi, [{_minimapTextureCoordinateTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x2C], edi");
+            instruction_list.Add($"add rcx, 4");
+
+            instruction_list.Add($"mov edi, [{_minimapTextureCoordinateTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x20], edi");
+            instruction_list.Add($"add rcx, 4");
+
+            instruction_list.Add($"mov edi, [{_minimapTextureCoordinateTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x24], edi");
+
+
+            instruction_list.Add($"mov rcx, rsi");
+            instruction_list.Add($"imul rcx, 0x8");
+
+            // Next section gets a bit weird, something regarding how a room is oriented on the map and
+            // how that changes where scale values get placed, but only part of room 2 and rooms 11/12
+            //uses it. Worth experimenting with.
+            instruction_list.Add($"mov dil, [{_minimapTextureOrientTable} + rsi]");
+            instruction_list.Add($"cmp dil, 1");
+            /*
+             
+            instruction_list.Add($"cmp al, dl");
+            instruction_list.Add($"je defaultScale");
+            instruction_list.Add($"cmp al, 03");
+            instruction_list.Add($"je defaultScale");
+             */
+
+            instruction_list.Add($"jne defaultScale");
+            instruction_list.Add($"mov [rbx+0xA2], dl");
+            instruction_list.Add($"and dx, 1");
+            instruction_list.Add($"cmp dx, 1");
+            instruction_list.Add($"je defaultScale");
+
+            instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x30], edi");
+            instruction_list.Add($"add rcx, 4");
+
+            instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x34], edi");
+            instruction_list.Add($"jmp endOfFunc");
+            /*
+            // Gotta check orientation for scale reasons
+            
+             
+            instruction_list.Add($"cmp al, 2");
+            instruction_list.Add($"jne endOfFunc");
+            instruction_list.Add($"mov [rbx+0xA2], dl");
+             */
+
+
+
+            instruction_list.Add($"label defaultScale");
+            // Gotta check orientation for scale reasons
+            instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x34], edi");
+            instruction_list.Add($"add rcx, 4");
+            instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x30], edi");
+
+
+            instruction_list.Add($"label endOfFunc");
+
+            instruction_list.Add($"pop rdx");
+            instruction_list.Add($"pop rsi");
+            instruction_list.Add($"pop rdi");
+            // Setup our return address because jumping there is shonky
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"mov rax, {jump_point}");
+            instruction_list.Add($"mov [rsp+8], rax");
+            instruction_list.Add($"pop rax");
+            instruction_list.Add($"ret");
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
         void ReplacePathListLoadIn(Int64 functionAddress, string pattern)
         {
             AccessorRegister pushReg;
