@@ -34,33 +34,51 @@ namespace p4gpc.dungeonloader.Accessors
 
         private List<DungeonFloor> _floors;
         private nuint _newFloorTable;
+        private nuint _newFloorNames;
+        private nuint _newFloorNamesLookup;
 
         public FloorTable(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
             _floors = jsonImporter.GetFloors();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
-            _utils.LogDebug("Floor hooks established.");
+            _utils.LogDebug("Floor hooks established.", Config.DebugLevels.AlertConnections);
         }
 
         protected override void Initialize()
         {
             // Debugger.Launch();
             List<Int64> functions;
+            List<Int64> nameOffsets = new List<Int64>();
+            Int64 offset = 0;
             long address;
             int totalTemplateTableSize = 0;
+            int floorNameByteCount = 0;
 
 
             foreach (DungeonFloor floor in _floors)
             {
-                totalTemplateTableSize += 16;
+                if (floor.floorName != null)
+                {
+                    floorNameByteCount+=floor.floorName.Length+1;
+                }
             }
 
 
-            _newFloorTable = _memory.Allocate(totalTemplateTableSize);
-            _utils.LogDebug($"New floor table address: {_newFloorTable.ToString("X8")}", 1);
-            _utils.LogDebug($"New floor table size: {totalTemplateTableSize.ToString("X8")} bytes", 1);
+            _newFloorTable = _memory.Allocate(_floors.Count()*16);
+            _utils.LogDebug($"New floor table address: {_newFloorTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New floor table size: {totalTemplateTableSize.ToString("X8")} bytes", Config.DebugLevels.TableLocations);
+
+
+            _newFloorNames = _memory.Allocate(floorNameByteCount);
+            _utils.LogDebug($"New floor name table address: {_newFloorTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New floor name table size: {totalTemplateTableSize.ToString("X8")} bytes", Config.DebugLevels.TableLocations);
+
+            _newFloorNamesLookup = _memory.Allocate(_floors.Count()*8);
+            _utils.LogDebug($"New floor name lookup table address: {_newFloorTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New floor name lookup table size: {totalTemplateTableSize.ToString("X8")} bytes", Config.DebugLevels.TableLocations);
 
             totalTemplateTableSize = 0;
+            int floorNameCounter = 0;
             foreach (DungeonFloor floor in _floors)
             {
                 _memory.SafeWrite(_newFloorTable + (nuint)totalTemplateTableSize, floor.ID);
@@ -81,8 +99,28 @@ namespace p4gpc.dungeonloader.Accessors
                 totalTemplateTableSize++;
                 _memory.SafeWrite(_newFloorTable + (nuint)totalTemplateTableSize, 0x00);
                 totalTemplateTableSize+=2;
+
+                if (floor.floorName != null)
+                {
+
+                    for (int k = 0; k < floor.floorName.Length; k++)
+                    {
+                        _memory.SafeWrite((_newFloorNames + (nuint)offset + (nuint)k), floor.floorName[k]);
+                    }
+                    _memory.SafeWrite((_newFloorNames + (nuint)offset + (nuint)floor.floorName.Length), (byte)0);
+ 
+                    _memory.SafeWrite((_newFloorNamesLookup + (nuint)floorNameCounter), (Int64)(_newFloorNames + (nuint)offset));
+                    offset += floor.floorName.Length+1;
+
+                }
+                else
+                {
+                    _memory.SafeWrite((_newFloorNamesLookup + (nuint)floorNameCounter), (Int64)(_newFloorNames));
+                }
+                floorNameCounter+= 8;
+
+
             }
-            _utils.LogDebug($"New floor table initialized!");
 
 
             functions = _utils.SigScan_FindAll("44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0 E8", "FloorTable Access (Wave 1)");
@@ -91,17 +129,26 @@ namespace p4gpc.dungeonloader.Accessors
                 byte addValue;
                 _memory.SafeRead((nuint)(function + 4), out addValue);
                 FloorTableWave1(function, "44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0", addValue);
-                _utils.LogDebug($"Replaced Wave1 target at: {function.ToString("X8")}", 5);
+                _utils.LogDebug($"Replaced code [44 8B 44 24 ?? 48 8D 0D ?? ?? ?? ?? 48 8B D0] at: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                 //_memory.SafeWriteRaw((nuint)function+8, BitConverter.GetBytes(address));
             }
-            _utils.LogDebug($"First search target replaced", 2);
 
 
             // Old search: 81 7E 04 9F 00 00 00 48 8D 05 ?? ?? ?? ?? 48 89 46 30 74 67
             address = _utils.SigScan("81 ?? ?? 9F 00 00 00 ?? ?? 05 ?? ?? ?? ??", "FloorTable Access (Wave 2)");
             FloorTableWave2(address, "81 ?? ?? 9F 00 00 00 ?? ?? 05 ?? ?? ?? ??");
-            _utils.LogDebug($"Replaced Wave1 target at: {address.ToString("X8")}", 5);
-            _utils.LogDebug($"Second search target replaced", 2);
+            _utils.LogDebug($"Replaced code [81 ?? ?? 9F 00 00 00 ?? ?? 05 ?? ?? ?? ??] at: {address.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+
+            // As far as I can tell, field names are handled by a single function that
+            // -- Picks an address telling which table to draw the name from
+            // -- Pick the name address from the selected table
+            // To account for this for now, going to just replace the entry that holds the dungeon floor
+            // names. Current address as of 12/20/2023 is 140A801F0
+            address = _utils.SigScan("F0 01 A8 40 01 00 00 00", "DungeonFloorNameTableAddress");
+            _memory.SafeWrite(address, (Int64)_newFloorNamesLookup);
+
+            _utils.LogDebug($"Replaced address [F0 01 A8 40 01 00 00 00] at: {address.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+
         }
 
         private void FloorTableWave1(Int64 functionAddress, string pattern, byte offsetSize)
@@ -133,5 +180,6 @@ namespace p4gpc.dungeonloader.Accessors
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
+
     }
 }

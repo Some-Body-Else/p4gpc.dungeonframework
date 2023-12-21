@@ -13,6 +13,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using static p4gpc.dungeonloader.Configuration.Config;
 
 namespace p4gpc.dungeonloader
 {
@@ -52,11 +53,11 @@ namespace p4gpc.dungeonloader
             _logger.WriteLine($"[DungeonLoader] {message}");
         }
 
-        public void LogDebug(string message, byte debugLevel = 0)
+        public void LogDebug(string message, DebugLevels debugLevel)
         {
-            if (Configuration.logDebug)
+            if ((byte)Configuration.logDebug >= (byte)debugLevel)
             {
-                _logger.WriteLine($"[DungeonLoader] {message}", debugLevelDict[debugLevel]);
+                _logger.WriteLine($"[DungeonLoader] {message}", debugLevelDict[(int)debugLevel]);
             }
         }
 

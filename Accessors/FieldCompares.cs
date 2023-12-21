@@ -22,6 +22,7 @@ using p4gpc.dungeonloader.JsonClasses;
 using p4gpc.dungeonloader.Configuration;
 using System.Reflection;
 using Reloaded.Memory.Pointers;
+using static p4gpc.dungeonloader.Configuration.Config;
 
 namespace p4gpc.dungeonloader.Accessors
 {
@@ -41,9 +42,9 @@ namespace p4gpc.dungeonloader.Accessors
 
         public FieldCompares(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
-            _fieldCompareTable = jsonImporter.GetFieldCompare();
+            // _fieldCompareTable = jsonImporter.GetFieldCompare();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
-            _utils.LogDebug("Field compare hooks established.");
+            _utils.LogDebug("Field compare hooks established.", DebugLevels.AlertConnections);
         }
 
         protected override void Initialize()

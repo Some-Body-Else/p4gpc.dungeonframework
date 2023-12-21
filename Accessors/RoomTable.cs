@@ -31,7 +31,6 @@ namespace p4gpc.dungeonloader.Accessors
         /*
         To do:
             -Account for room connection table (Maybe, since it's tile-by-tile basis, it might have all bases covered already)
-            -
          */
 
         private List<DungeonRoom> _rooms;
@@ -41,7 +40,7 @@ namespace p4gpc.dungeonloader.Accessors
         {
             _rooms = jsonImporter.GetRooms();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
-            _utils.LogDebug("Room hooks established.");
+            _utils.LogDebug("Room hooks established.", Config.DebugLevels.AlertConnections);
         }
 
         protected override void Initialize()
@@ -68,8 +67,7 @@ namespace p4gpc.dungeonloader.Accessors
             }
 
             _newRoomTable = _memory.Allocate(totalTemplateTableSize);
-            _utils.LogDebug($"New room table address: {_newRoomTable.ToString("X8")}", 1);
-            _utils.LogDebug($"New room table size: {_newRoomTable.ToString("X8")} bytes", 1);
+            _utils.LogDebug($"Address of NewRoomTable: {_newRoomTable.ToString("X8")}", Config.DebugLevels.TableLocations);
 
             totalTemplateTableSize = 0;
             foreach (DungeonRoom room in _rooms)
@@ -123,7 +121,6 @@ namespace p4gpc.dungeonloader.Accessors
                 }
 
             }
-            _utils.LogDebug($"New room table initialized!");
 
             _roomTables = _utils.SigScan_FindCount("48 6B C8 56", "RoomTable Reference Function", 4);
 
@@ -133,7 +130,6 @@ namespace p4gpc.dungeonloader.Accessors
             foreach (long _roomTable in _roomTables)
             {
                 _memory.SafeRead((nuint)_roomTable+4, out prefixExists);
-                _utils.LogDebug($"Address: {_roomTable.ToString("X8")}", 3);
                 if (0x40 <= prefixExists && prefixExists <= 0x4F)
                 {
                     _memory.SafeRead((nuint)_roomTable+8, out SIB);
@@ -141,6 +137,7 @@ namespace p4gpc.dungeonloader.Accessors
                     regToZero = (AccessorRegister)((SIB >> 3) & 0x7);
                     regToZero += (prefixExists & 0x2) << 2;
                     ReplaceImul(_roomTable, 13, regToZero);
+                    _utils.LogDebug($"Location of [{search_string}]: {_roomTable.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                 }
                 else
                 {
@@ -148,59 +145,46 @@ namespace p4gpc.dungeonloader.Accessors
                     _memory.SafeRead((nuint)_roomTable+8, out oldAddress);
                     regToZero = (AccessorRegister)((SIB >> 3) & 0x7);
                     ReplaceImul(_roomTable, 12, regToZero);
+                    _utils.LogDebug($"Location of [{search_string}]: {_roomTable.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                 }
-
-
-                /*
-                 
-                address_str_old = (oldAddress).ToString("X8");
-                address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
-                functions = _utils.SigScan_FindAll("0F 10 ?? ?? " + address_str_old, $"RoomTable Address Chunk #1 [{oldAddress.ToString("X8")}]");
-                foreach (long function in functions)
-                {
-                    _memory.SafeWrite((nuint)function+4, _newRoomTable);
-                }
-                 */
-
 
                 address_str_old = (oldAddress+0x10).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("0F 10 ?? ?? " + address_str_old, $"RoomTable Address Chunk #2 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x10));
+                _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
                 address_str_old = (oldAddress+0x20).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("0F 10 ?? ?? " + address_str_old, $"RoomTable Address Chunk #3 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x20));
+                _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
                 address_str_old = (oldAddress+0x30).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("0F 10 ?? ?? " + address_str_old, $"RoomTable Address Chunk #4 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x30));
+                _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
                 address_str_old = (oldAddress+0x40).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("0F 10 ?? ?? " + address_str_old, $"RoomTable Address Chunk #5 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x40));
+                _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
                 address_str_old = (oldAddress+0x50).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("8B 84 ?? " + address_str_old, $"RoomTable Address Chunk #6 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+3, (Int32)(_newRoomTable+0x50));
+                _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
                 address_str_old = (oldAddress+0x54).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("0F B7 ?? ?? " + address_str_old, $"RoomTable Address Chunk #7 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x54));
+                _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
             }
-
-            /*             
-            0F 10 ?? ?? [ADDRESS]
-            8B 84 ?? [ADDRESS]
-            0F B7 ?? ?? [ADDRESS]
-             */
-
         }
         
         private void ReplaceImul(Int64 functionAddress, int length, AccessorRegister offsetReg)

@@ -39,7 +39,6 @@ namespace p4gpc.dungeonloader.Accessors
         private Dictionary<byte, byte> _dungeon_template_dict;
         private nuint _templateLookupTable;
         private nuint _templateExitLookupTable;
-        private nuint _debugInfoAddress;
 
         // TODO: See if we can easily use this to circumvent code replacements elegantly
         private nuint _currentTemplate;
@@ -47,18 +46,12 @@ namespace p4gpc.dungeonloader.Accessors
         private long _templateTable;
 
 
-        private IReverseWrapper<DebugLogFunc> _debugLogWrapper;
-        private string _debugLogCallMnemonic;
-
-
         private byte mod;
         private byte scale;
-        private byte index;
         private AccessorRegister outReg;
         private AccessorRegister inReg;
         private AccessorRegister baseReg;
         private Instruction type;
-        private bool use64;
         private enum Instruction
         {
             MOVSX = 0,
@@ -80,7 +73,7 @@ namespace p4gpc.dungeonloader.Accessors
             _templates = jsonImporter.GetTemplates();
             _dungeon_template_dict = jsonImporter.GetDungeonTemplateDictionary();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
-            _utils.LogDebug("Templates hooks established.");
+            _utils.LogDebug("Templates hooks established.", Config.DebugLevels.AlertConnections);
         }
 
         protected override void Initialize()
@@ -104,27 +97,21 @@ namespace p4gpc.dungeonloader.Accessors
             byte sibByte;
             bool hasREX;
 
-            _debugLogWrapper = _hooks.CreateReverseWrapper<DebugLogFunc>(DebugLog);
-            _debugLogCallMnemonic = _hooks.Utilities.GetAbsoluteCallMnemonics(DebugLog, out _debugLogWrapper);
-
             _currentTemplate = _memory.Allocate(sizeof(byte));
 
 
             _templateTable = _utils.SigScan("08 09 01 02 03 05 06 07 09 0A 04 00 09 0A 01 02 03 05 07 06 08 0B 0C 04 08 09 01 02 03 05 06 08 0D 0E 04 00", "TemplateTable");
-            _utils.LogDebug($"Original template table address: {_templateTable.ToString("X8")}", 1);
             _templateTable = _utils.StripBaseAddress(_templateTable);
-            _utils.LogDebug($"Accounting for base address: {_templateTable.ToString("X8")}", 1);
-
-
-            _debugInfoAddress = _memory.Allocate(40);
-            _utils.LogDebug($"DebugAddress : {_debugInfoAddress.ToString("X8")}", 1);
-
+            
             _templateLookupTable = _memory.Allocate(_templates.Count() * DOUBLEWORD);
-            _utils.LogDebug($"Template lookup table address: {_templateLookupTable.ToString("X8")}", 1);
+            _utils.LogDebug($"Location of TemplateLookupTable table: {_templateLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
             _templateExitLookupTable = _memory.Allocate(_templates.Count());
-
+            _utils.LogDebug($"Location of TemplateExitLookupTable table: {_templateLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
             _templateTypeTable = _memory.Allocate(sizeof(byte)*256);
-            _utils.LogDebug($"TemplateType address: {_templateTypeTable.ToString("X8")}", 1); for (int i = 0; i <= 255; i++)
+
+            _utils.LogDebug($"Location of TemplateTypeTable table: {_templateLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+            for (int i = 0; i <= 255; i++)
             {
                 if (_dungeon_template_dict.TryGetValue((byte)i, out idByte1))
                 {
@@ -158,7 +145,6 @@ namespace p4gpc.dungeonloader.Accessors
 
                 tablecounter++;
             }
-            _utils.LogDebug($"New template table initialized!");
 
 
             // Special replacements:
@@ -192,7 +178,6 @@ namespace p4gpc.dungeonloader.Accessors
                 {
                     throw new InvalidAsmInstructionTypeException(function, _utils);
                 }
-                _utils.LogDebug($"Opcode type: {instruction_type}", 4);
                 _memory.SafeRead((nuint)(function+5), out rmByte);
                 _memory.SafeRead((nuint)(function+2), out sibByte);
                 mod = (byte)(rmByte >> 6);
@@ -202,7 +187,6 @@ namespace p4gpc.dungeonloader.Accessors
                 baseReg = (AccessorRegister)(sibByte & 0x7);                //Reg_Base  sib.BASE
                 if (prefixREX >0x4F || prefixREX < 0x40)
                 {
-                    _utils.LogDebug("No REX prefix", 5);
                 }
                 else
                 {
@@ -210,13 +194,11 @@ namespace p4gpc.dungeonloader.Accessors
                     inReg += (prefixREX & 0x2) << 2;
                     hasREX = true;
                 }
-
-                _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+                _utils.LogDebug($"Location of [{search_string}]: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                 ReplaceMoveInstructionE(function, search_string, TemplateAccessType.ROOM_COUNT);
             }
 
 
-            _utils.LogDebug($"First search target replaced", 2);
 
 
             /*
@@ -233,7 +215,7 @@ namespace p4gpc.dungeonloader.Accessors
             // 0F ?? ?? ?? AD DR ES S! ?? ?? ?? ?? 0F ?? ?? ?? AD DR ES S!
             address_str_old = (_templateTable).ToString("X8");
             address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
-            _utils.LogDebug($"Old template table address for search: {address_str_old} bytes", 2);
+            // _utils.LogDebug($"Old template table address for search: {address_str_old} bytes", 2);
             search_string = "0F ?? ?? ?? " + address_str_old;
 
             address_str_old = (_templateTable+1).ToString("X8");
@@ -258,7 +240,6 @@ namespace p4gpc.dungeonloader.Accessors
                 {
                     throw new InvalidAsmInstructionTypeException(function, _utils);
                 }
-                _utils.LogDebug($"Opcode type: {instruction_type}", 4);
                 _memory.SafeRead((nuint)(function+2), out rmByte);
                 _memory.SafeRead((nuint)(function+3), out sibByte);
                 mod = (byte)(rmByte >> 6);
@@ -268,7 +249,6 @@ namespace p4gpc.dungeonloader.Accessors
                 baseReg = (AccessorRegister)(sibByte & 0x7);                //Reg_Base  sib.BASE
                 if (prefixREX >0x4F || prefixREX < 0x40)
                 {
-                    _utils.LogDebug("No REX prefix for mov", 5);
                 }
                 else
                 {
@@ -276,24 +256,21 @@ namespace p4gpc.dungeonloader.Accessors
                     inReg += (prefixREX & 0x2) << 2;
                     hasREX = true;
                 }
-                _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+                // _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+                _utils.LogDebug($"Location of [{search_string}]: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                 GetExitRoomID(function, search_string, hasREX);
             }
-
-
-            _utils.LogDebug($"Second search target replaced", 2);
 
             for (int i = 0; i < 3; i++)
             {
                 byte temp;
                 address_str_old = (_templateTable+i).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
-                _utils.LogDebug($"Old template table address for search: {address_str_old} bytes", 2);
                 if (i != 2)
                 {
                     search_string = "0F ?? ?? ?? " + address_str_old;
                     functions = _utils.SigScan_FindAll(search_string, "TemplateTable Move/Compare Opcodes");
-                    _utils.LogDebug($"Function count: {functions.Count()}", 3);
+                    // _utils.LogDebug($"Function count: {functions.Count()}", 3);
                     foreach (long function in functions)
                     {
                         hasREX = false;
@@ -311,7 +288,6 @@ namespace p4gpc.dungeonloader.Accessors
                         {
                             throw new InvalidAsmInstructionTypeException(function, _utils);
                         }
-                        _utils.LogDebug($"Opcode type: {instruction_type}", 4);
                         _memory.SafeRead((nuint)(function+2), out rmByte);
                         _memory.SafeRead((nuint)(function+3), out sibByte);
                         mod = (byte)(rmByte >> 6);
@@ -322,7 +298,7 @@ namespace p4gpc.dungeonloader.Accessors
 
                         if (prefixREX >0x4F || prefixREX < 0x40)
                         {
-                            _utils.LogDebug("No REX prefix", 5);
+                            
                         }
                         else
                         {
@@ -332,11 +308,9 @@ namespace p4gpc.dungeonloader.Accessors
                             hasREX = true;
                         }
 
-                        if ((prefixREX & 0x8) != 0)
-                        {
-                            _utils.LogDebug("Output to 64-bit register", 5);
-                        }
-                        _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+                        // _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+                        _utils.LogDebug($"Location of [{search_string}]: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+
                         ReplaceMoveInstruction(function, search_string, (TemplateAccessType)i, hasREX);
                     }
                 }
@@ -344,7 +318,6 @@ namespace p4gpc.dungeonloader.Accessors
                 {
                     search_string = "8D ?? ?? ?? 0F ?? ?? ?? " + address_str_old;
                     functions = _utils.SigScan_FindAll(search_string, "TemplateTable Move/Compare Opcodes");
-                    _utils.LogDebug($"Function count: {functions.Count()}", 3);
                     foreach (long function in functions)
                     {
                         hasREX = false;
@@ -359,13 +332,11 @@ namespace p4gpc.dungeonloader.Accessors
                         {
                             throw new ToBeNamedException(_utils);
                         }
-                        _utils.LogDebug($"Opcode type: {instruction_type}", 4);
                         _memory.SafeRead((nuint)(function+2), out sibByte);
                         inReg = (AccessorRegister)((sibByte >> 3) & 0x7);       //Reg_In    sib.INDEX
                         baseReg = (AccessorRegister)(sibByte & 0x7);            //Reg_Base  sib.BASE
                         if (prefixREX >0x4F || prefixREX < 0x40)
                         {
-                            _utils.LogDebug("No REX prefix for lea", 5);
                         }
                         else
                         {
@@ -388,7 +359,6 @@ namespace p4gpc.dungeonloader.Accessors
                         {
                             throw new InvalidAsmInstructionTypeException(function, _utils);
                         }
-                        _utils.LogDebug($"Opcode type: {instruction_type}", 4);
                         _memory.SafeRead((nuint)(function+6), out rmByte);
                         mod = (byte)(rmByte >> 6);
                         scale = (byte)(sibByte >> 6);
@@ -396,24 +366,18 @@ namespace p4gpc.dungeonloader.Accessors
 
                         if (prefixREX >0x4F || prefixREX < 0x40)
                         {
-                            _utils.LogDebug("No REX prefix for mov", 5);
                         }
                         else
                         {
                             outReg += ((prefixREX & 0x4)) << 1;
                         }
 
-                        if ((prefixREX & 0x8) != 0)
-                        {
-                            _utils.LogDebug("Output to 64-bit register", 5);
-                        }
-                        _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+                        _utils.LogDebug($"Location of [{search_string}]: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                         ReplaceMoveInstruction(function, search_string, (TemplateAccessType)i, hasREX);
                     }
                 }
             }
 ;
-            _utils.LogDebug($"Third search target replaced", 2);
 
 
             // The 0xBC maybe should be a wildcard, but that requires effort I'm simply not going to put in right now
@@ -423,12 +387,10 @@ namespace p4gpc.dungeonloader.Accessors
                 byte temp;
                 address_str_old = (_templateTable+i).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
-                _utils.LogDebug($"Old template table address for search: {address_str_old} bytes", 2);
                 if (i != 2)
                 {
                     search_string = "41 80 BC ?? " + address_str_old;
                     functions = _utils.SigScan_FindAll(search_string, "TemplateTable Move/Compare Opcodes");
-                    _utils.LogDebug($"Function count: {functions.Count()}", 3);
                     foreach (long function in functions)
                     {
                         hasREX = true;
@@ -442,7 +404,6 @@ namespace p4gpc.dungeonloader.Accessors
                         {
                             throw new ToBeNamedException(_utils);
                         }
-                        _utils.LogDebug($"Opcode type: {instruction_type}", 4);
                         // _memory.SafeRead((nuint)(function+1), out rmByte);
                         _memory.SafeRead((nuint)(function+3), out sibByte);
                         // mod = (byte)(rmByte >> 6);
@@ -455,7 +416,6 @@ namespace p4gpc.dungeonloader.Accessors
 
                         if (prefixREX >0x4F || prefixREX < 0x40)
                         {
-                            _utils.LogDebug("No REX prefix", 5);
                         }
                         else
                         {
@@ -467,9 +427,8 @@ namespace p4gpc.dungeonloader.Accessors
 
                         if ((prefixREX & 0x8) != 0)
                         {
-                            _utils.LogDebug("Output to 64-bit register", 5);
                         }
-                        _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {(0xBC).ToString("X8")}, mod: 2, SIB: {sibByte.ToString("X8")}, scale: {scale},  IN: {inReg}, BASE: {baseReg}, IMM: {temp}", 3);
+                        _utils.LogDebug($"Location of [{search_string}]: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                         // ReplaceMoveInstruction(function, search_string, (TemplateAccessType)i);
                         ReplaceCompareInstruction(function, search_string, (TemplateAccessType)i, temp, false);
 
@@ -477,10 +436,8 @@ namespace p4gpc.dungeonloader.Accessors
                 }
                 else
                 {
-                     search_string = "48 8D ?? ?? 42 80 BC ?? " + address_str_old + " 06";
-                    _utils.LogDebug(search_string, 5);
+                    search_string = "48 8D ?? ?? 42 80 BC ?? " + address_str_old + " 06";
                     function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
-                    _utils.LogDebug($"Function count: {functions.Count()}", 3);
                     // Need details from previous op to do what we intend to do
                     _memory.SafeRead((nuint)(function_single), out prefixREX);
                     _memory.SafeRead((nuint)(function_single+1), out idByte1);
@@ -492,13 +449,11 @@ namespace p4gpc.dungeonloader.Accessors
                     {
                         throw new ToBeNamedException(_utils);
                     }
-                    _utils.LogDebug($"Opcode type: {instruction_type}", 4);
                     _memory.SafeRead((nuint)(function_single+3), out sibByte);
                     inReg = (AccessorRegister)((sibByte >> 3) & 0x7);       //Reg_In    sib.INDEX
                     baseReg = (AccessorRegister)(sibByte & 0x7);            //Reg_Base  sib.BASE
                     if (prefixREX >0x4F || prefixREX < 0x40)
                     {
-                        _utils.LogDebug("No REX prefix for lea", 5);
                     }
                     else
                     {
@@ -516,26 +471,15 @@ namespace p4gpc.dungeonloader.Accessors
                     {
                         throw new ToBeNamedException(_utils);
                     }
-                    _utils.LogDebug($"Opcode type: {instruction_type}", 4);
                     scale = (byte)(sibByte >> 6);
 
                     _memory.SafeRead((nuint)(function_single+12), out temp);
 
-                    if (prefixREX >0x4F || prefixREX < 0x40)
-                    {
-                        _utils.LogDebug("No REX prefix for cmp", 5);
-                    }
-
-                    if ((prefixREX & 0x8) != 0)
-                    {
-                        _utils.LogDebug("Output to 64-bit register", 5);
-                    }
-                    _utils.LogDebug($"Location: {function_single.ToString("X8")}, RM: {(0xBC).ToString("X8")}, mod: 2, SIB: {sibByte.ToString("X8")}, scale: {scale},  IN: {inReg}, BASE: {baseReg}, IMM: {temp}", 3);
+                    _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                     ReplaceCompareInstructionE(function_single, search_string, (TemplateAccessType)i, temp, false);
                     
                 }
             }
-            _utils.LogDebug($"Fourth search target replaced", 2);
 
             // Might want a better search for this one
             // 8D ?? [ADDRESS] ?? 8D ?? ??
@@ -558,11 +502,9 @@ namespace p4gpc.dungeonloader.Accessors
             {
                 throw new ToBeNamedException(_utils);
             }
-            _utils.LogDebug($"Opcode type: {instruction_type}", 4);
             //baseReg = (AccessorRegister)(sibByte & 0x7);            //Reg_Base  sib.BASE
             if (prefixREX >0x4F || prefixREX < 0x40)
             {
-                _utils.LogDebug("No REX prefix for lea", 5);
             }
             else
             {
@@ -581,15 +523,6 @@ namespace p4gpc.dungeonloader.Accessors
             {
                 throw new ToBeNamedException(_utils);
             }
-            if (prefixREX >0x4F || prefixREX < 0x40)
-            {
-                _utils.LogDebug("No REX prefix for lea 2", 5);
-            }
-
-            if ((prefixREX & 0x8) != 0)
-            {
-                _utils.LogDebug("Output to 64-bit register", 5);
-            }
 
             _memory.SafeRead((nuint)(function_single+8), out rmByte);
             _memory.SafeRead((nuint)(function_single+9), out sibByte);
@@ -599,7 +532,6 @@ namespace p4gpc.dungeonloader.Accessors
             mod = (byte)(rmByte >> 6);
             if (prefixREX >0x4F || prefixREX < 0x40)
             {
-                _utils.LogDebug("No REX prefix", 5);
             }
             else
             {
@@ -608,21 +540,18 @@ namespace p4gpc.dungeonloader.Accessors
                 hasREX = true;
                 outReg += ((prefixREX & 0x4)) << 1;
             }
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale}, IN: {inReg}, OUT: {outReg}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             ReplaceAddressSetupA(function_single, search_string, hasREX);
-            _utils.LogDebug($"Fifth search target replaced\n", 2);
 
             
             search_string = "0F ?? ?? ?? 80 FE 90 00";
             functions = _utils.SigScan_FindAll(search_string, "TemplateTable Move/Compare Opcodes");
-            _utils.LogDebug($"Function count: {functions.Count()}", 3);
             foreach (long function in functions)
             {
                 hasREX = true;
                 _memory.SafeRead((nuint)(function-1), out prefixREX);
                 _memory.SafeRead((nuint)(function+1), out idByte1);
                 
-                _utils.LogDebug($"Opcode type: {instruction_type}", 4);
                 _memory.SafeRead((nuint)(function+2), out rmByte);
                 _memory.SafeRead((nuint)(function+3), out sibByte);
                 mod = (byte)(rmByte >> 6);
@@ -633,7 +562,6 @@ namespace p4gpc.dungeonloader.Accessors
 
                 if (prefixREX >0x4F || prefixREX < 0x40)
                 {
-                    _utils.LogDebug("No REX prefix", 5);
                 }
                 else
                 {
@@ -642,12 +570,7 @@ namespace p4gpc.dungeonloader.Accessors
                     outReg += ((prefixREX & 0x4)) << 1;
                     hasREX = true;
                 }
-
-                if ((prefixREX & 0x8) != 0)
-                {
-                    _utils.LogDebug("Output to 64-bit register", 5);
-                }
-                _utils.LogDebug($"Location: {function.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+                _utils.LogDebug($"Location of [{search_string}]: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                 ReplaceTemplateTypeAccessA(function, search_string, hasREX);
             }
             
@@ -667,7 +590,6 @@ namespace p4gpc.dungeonloader.Accessors
             outReg = (AccessorRegister)((rmByte >> 3) & 0x7);       //Reg_Out
             if (prefixREX >0x4F || prefixREX < 0x40)
             {
-                _utils.LogDebug("No REX prefix for lea", 5);
             }
             else
             {
@@ -675,7 +597,7 @@ namespace p4gpc.dungeonloader.Accessors
                 inReg += (prefixREX & 0x2) << 2;
                 outReg += ((prefixREX & 0x4)) << 1;
             }
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             ReplaceTemplateTypeAccessB(function_single, search_string);
 
             search_string = "4D ?? ?? 80 FE 90 00 ?? ?? ?? 08 01 00 00";
@@ -693,7 +615,6 @@ namespace p4gpc.dungeonloader.Accessors
             outReg = (AccessorRegister)((rmByte >> 3) & 0x7);       //Reg_Out
             if (prefixREX >0x4F || prefixREX < 0x40)
             {
-                _utils.LogDebug("No REX prefix for lea", 5);
             }
             else
             {
@@ -701,8 +622,7 @@ namespace p4gpc.dungeonloader.Accessors
                 inReg += (prefixREX & 0x2) << 2;
                 outReg += ((prefixREX & 0x4)) << 1;
             }
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
-
+            _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             ReplaceTemplateTypeAccessB(function_single, search_string);
 
 
@@ -719,7 +639,6 @@ namespace p4gpc.dungeonloader.Accessors
             outReg = (AccessorRegister)(rmByte & 0x7);       //Reg_Out
             if (prefixREX >0x4F || prefixREX < 0x40)
             {
-                _utils.LogDebug("No REX prefix for lea", 5);
             }
             else
             {
@@ -729,48 +648,41 @@ namespace p4gpc.dungeonloader.Accessors
                 _memory.SafeRead((nuint)(function_single+7), out prefixREX);
                 if (prefixREX >0x4F || prefixREX < 0x40)
                 {
-                    _utils.LogDebug("No REX prefix for lea", 5);
                 }
                 else
                 {
                     outReg += ((prefixREX & 0x1)) << 3;
                 }
             }
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}, RM: {rmByte.ToString("X8")}, mod: {mod}, SIB: {sibByte.ToString("X8")}, scale: {scale},  OUT: {outReg}, IN: {inReg}, BASE: {baseReg}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
             ReplaceTemplateTypeAccessC(function_single, search_string);
  
-            _utils.LogDebug($"Sixth search target replaced\n", 2);
-
 
             search_string = "48 0B B5 1C F1 5D 3C 40 8A 3E";
             function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             OddballReplace1(function_single, search_string);
 
             search_string = "4C 89 F9 41 5E 44 0A 30";
             function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             OddballReplace3(function_single, search_string);
 
             search_string = "48 8D 64 24 F8 48 2B 04 24 48 01 14 24 48 03 04 24 48 8D 64 24 08 49 89 81 10 01 00 00";
             function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             OddballReplace4(function_single, search_string);
 
             search_string = "4D 89 B1 60 01 00 00 41 56 49 F7 D6 4C 21 34 24 4C 8B 34 24 48 8D 64 24 08 4D 03 B1 00 02 00 00";
             function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             OddballReplace5(function_single, search_string);
 
             search_string = "49 33 81 00 02 00 00 49 89 81 E8 00 00 00 50 48 F7 D0";
             function_single = _utils.SigScan(search_string, "TemplateTable Move/Compare Opcodes");
-            _utils.LogDebug($"Location: {function_single.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             OddballReplace6(function_single, search_string);
-
-
-            _utils.LogDebug($"Seventh search target replaced\n", 2);
-
 
         }
 
@@ -931,29 +843,9 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
 
-            //IReverseWrapper<GetIdFunction> reverseWrapperID = _hooks.CreateReverseWrapper<GetIdFunction>(GetID);
-
-            // _commands.Add($"{_hooks.Utilities.GetAbsoluteCallMnemonics(DebugLog, out _debugLogWrapper)}");
-
-            /*
-             inReg - 0x00, 0x03, or 0x06
-             baseReg - 0x0140000000
-            140000000
-            1402DD5F0
-             outReg - output of calculation
-            */
             // Debug info, notes the last function that was used before program crashed
 
             instruction_list.Add($"push {inReg}");
-
-
-            /*
-             
-            instruction_list.Add($"push rax");
-            instruction_list.Add($"mov rax, {functionAddress}");
-            instruction_list.Add($"{_debugLogCallMnemonic}");
-            instruction_list.Add($"pop rax");
-             */
 
             instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {baseReg}");
@@ -1085,12 +977,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"use64");
             instruction_list.Add($"push {inReg}");
 
-
-            instruction_list.Add($"push {inReg}");
-            instruction_list.Add($"mov {inReg}, {_debugInfoAddress}");
-            instruction_list.Add($"mov [{inReg}], dword {functionAddress & 0xFFFFFFFF}");
-            instruction_list.Add($"pop {inReg}");
-
             instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {baseReg}");
 
@@ -1195,12 +1081,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"use64");
             instruction_list.Add($"push {inReg}");
 
-
-            instruction_list.Add($"push {inReg}");
-            instruction_list.Add($"mov {inReg}, {_debugInfoAddress}");
-            instruction_list.Add($"mov [{inReg}], dword {functionAddress & 0xFFFFFFFF}");
-            instruction_list.Add($"pop {inReg}");
-
             instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {baseReg}");
 
@@ -1296,11 +1176,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"use64");
             instruction_list.Add($"push {inReg}");
 
-
-            instruction_list.Add($"push {inReg}");
-            instruction_list.Add($"mov {inReg}, {_debugInfoAddress}");
-            instruction_list.Add($"mov [{inReg}], dword {functionAddress & 0xFFFFFFFF}");
-            instruction_list.Add($"pop {inReg}");
 
             if (inReg != AccessorRegister.rax && outReg != AccessorRegister.rax && baseReg != AccessorRegister.rax)
             {
@@ -1428,12 +1303,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"mov {outReg}, {_templateTypeTable}");
 
             instruction_list.Add($"mov [r9 + 0x108], {outReg}");
-            /*
-             instruction_list.Add($"push r9");
-            instruction_list.Add($"add r9, 0x0108");
-            instruction_list.Add($"mov [r9], {outReg}");
-            instruction_list.Add($"pop r9");
-             */
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
@@ -1452,12 +1321,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"and {outReg}, 255");
 
             instruction_list.Add($"push {outReg}");
-            /*
-             instruction_list.Add($"push r9");
-            instruction_list.Add($"add r9, 0x0108");
-            instruction_list.Add($"mov [r9], {outReg}");
-            instruction_list.Add($"pop r9");
-             */
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
@@ -1468,12 +1331,7 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
-
-            instruction_list.Add($"push rsi");
-            instruction_list.Add($"mov rsi, {_debugInfoAddress}");
-            instruction_list.Add($"mov [rsi], dword {functionAddress & 0xFFFFFFFF}");
-            instruction_list.Add($"pop rsi");
-            
+                        
             instruction_list.Add($"or rsi, [ rbp + 0x3C5DF11C ]");
             instruction_list.Add($"mov dil, [rsi]");
 
@@ -1489,10 +1347,6 @@ namespace p4gpc.dungeonloader.Accessors
 
             instruction_list.Add($"lea rsp, [rsp+8]");
 
-            instruction_list.Add($"push rsi");
-            instruction_list.Add($"mov rsi, {_debugInfoAddress}");
-            instruction_list.Add($"mov [rsi], dword {functionAddress & 0xFFFFFFFF}");
-            instruction_list.Add($"pop rsi");
 
             instruction_list.Add($"push rbx");
             //instruction_list.Add($"mov rcx, r8");
@@ -1537,11 +1391,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"use64");
             instruction_list.Add($"mov rcx, r15");
 
-            instruction_list.Add($"push rsi");
-            instruction_list.Add($"mov rsi, {_debugInfoAddress}");
-            instruction_list.Add($"mov [rsi], dword {functionAddress & 0xFFFFFFFF}");
-            instruction_list.Add($"pop rsi");
-
             instruction_list.Add($"sub rax, {_templateTable}");
             instruction_list.Add($"and rax, 0xFF");
             instruction_list.Add($"shr rax, 2");
@@ -1576,10 +1425,6 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
 
-            instruction_list.Add($"push rsi");
-            instruction_list.Add($"mov rsi, {_debugInfoAddress}");
-            instruction_list.Add($"mov [rsi], dword {functionAddress & 0xFFFFFFFF}");
-            instruction_list.Add($"pop rsi");
 
             instruction_list.Add($"push rax");
             instruction_list.Add($"and rax, 0xFF");
@@ -1613,10 +1458,6 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
-            instruction_list.Add($"push rsi");
-            instruction_list.Add($"mov rsi, {_debugInfoAddress}");
-            instruction_list.Add($"mov [rsi], dword {functionAddress & 0xFFFFFFFF}");
-            instruction_list.Add($"pop rsi");
             /*
              Need to figure a way to determine to use roomcount or roomcountex
              */
@@ -1636,11 +1477,6 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
-
-            instruction_list.Add($"push rsi");
-            instruction_list.Add($"mov rsi, {_debugInfoAddress}");
-            instruction_list.Add($"mov [rsi], dword {functionAddress & 0xFFFFFFFF}");
-            instruction_list.Add($"pop rsi");
 
             instruction_list.Add($"mov rax, {_currentTemplate}");
             instruction_list.Add($"mov rax, [rax]");
@@ -1701,13 +1537,5 @@ namespace p4gpc.dungeonloader.Accessors
             functionList.Add($"pop {pushReg2}");
             functionList.Add($"pop {pushReg}");
         }
-        private void DebugLog(Int64 address)
-        {
-            address++;
-            // _utils.LogDebug($"ACCESSED FUNCTION: {address.ToString("X8")}", 1);
-        }
-        [Function( Register.rax, Register.rax, false)]
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void DebugLogFunc(Int64 rax);
     }
 }

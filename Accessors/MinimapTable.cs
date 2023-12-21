@@ -32,24 +32,23 @@ namespace p4gpc.dungeonloader.Accessors
     {
         /*
         To do:
-            -Figure search targets for minimap name load-in
-            --Need to update the list of name that load in
-            -Figure out what accesses minimap address table Minimap Tile Property Accessor Table
-            --Re-allocate to sepearate space to ensure there's enough entries for all new rooms
-
+            - Determine how minimap updates are made (what enables room to be hidden by doors?)
+            - 
          */
 
         private List<DungeonMinimap> _minimaps;
         private nuint _newMinimapTable;
-        // private nuint _newMinimapLookupTable;
+
         private nuint _roomHasMultipleTexturesTable;
         private nuint _minimapTextureOffsetTableLookupTable;
+
         // Okay, THIS cannot go without some sort of note.
         // After all of the textures are checked from smap.bin, another loop goes and sets
         // up a table of 8-byte addresses. There's one for each minimap texture, but I have
         // little to no idea what the devil they are. I'm moving it because the current location appears
         // to run out of space for any additional rooms, and I need to modify this section anyways
         // because it checks from the number of minimap textures, which is normally hardcoded
+
         private nuint _minimapUnknownPerTextureTable;
         /*
          * Each of the textures have a set of coordinate textures to dictate what part of the image is actually rendered
@@ -64,7 +63,6 @@ namespace p4gpc.dungeonloader.Accessors
          * Stored as a pair of 4-btye floats (x scale and y scale)
          */
         private nuint _minimapTextureScaleTable;
-        private nuint _minimapTextureScaleLookupTable;
         
         /*
          * One part of one texture has its scale values switched depending on how it is rotated in-game, so this accounts for that and any
@@ -72,7 +70,6 @@ namespace p4gpc.dungeonloader.Accessors
          * Stored as a single byte per texture, although since these are just binary values there's probably a better way to store/access them
          */
         private nuint _minimapTextureOrientTable;
-        private nuint _minimapTextureOrientLookupTable;
 
         /*
          * In a given table that accounts for multiple textures, if you put all the variants of stuff together 
@@ -90,7 +87,7 @@ namespace p4gpc.dungeonloader.Accessors
         {
             _minimaps = jsonImporter.GetMinimap();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
-            _utils.LogDebug("Minimap hooks established.");
+            _utils.LogDebug("Minimap hooks established.", Config.DebugLevels.AlertConnections);
         }
 
         protected override void Initialize()
@@ -151,8 +148,14 @@ namespace p4gpc.dungeonloader.Accessors
             }
 
             _newMinimapTable = _memory.Allocate(totalMinimapTableSize);
+            _utils.LogDebug($"Location of MinimapPath table: {_newMinimapTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
             _newMinimapLookupTable = _memory.Allocate(minimapCounter*16);
+            _utils.LogDebug($"Location of MinimapPathLookup table: {_newMinimapLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
             _minimapUnknownPerTextureTable = _memory.Allocate(minimapCounter*8);
+            _utils.LogDebug($"Location of UnknownPerTextureTable: {_minimapUnknownPerTextureTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
 
             offset = 0;
             for (int i = 0; i < _minimaps.Count; i++)
@@ -202,8 +205,14 @@ namespace p4gpc.dungeonloader.Accessors
 
 
             _minimapIndexLookupTable = _memory.Allocate(_minimaps.Count);
+            _utils.LogDebug($"Location of MinimapIndexLookup table: {_minimapIndexLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            
             _roomHasMultipleTexturesTable = _memory.Allocate(_minimaps.Count);
+            _utils.LogDebug($"Location of RoomIsMultiTexture table: {_roomHasMultipleTexturesTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
             _minimapTextureOffsetTableLookupTable = _memory.Allocate(8*_minimaps.Count);
+            _utils.LogDebug($"Location of MinimapTextureOffset table: {_minimapTextureOffsetTableLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            
 
             Int32 offsetLookup = 0;
 
@@ -231,15 +240,13 @@ namespace p4gpc.dungeonloader.Accessors
 
             // 2 pair of 4-byte float coordinates per texture
             _minimapTextureCoordinateTable = _memory.Allocate(minimapCounter*4*4*4);
+            _utils.LogDebug($"Location of MinimapTexCoordTable: {_minimapTextureCoordinateTable.ToString("X8")}", Config.DebugLevels.TableLocations);
             // 1 pair of 4-byte float per texture 
             _minimapTextureScaleTable = _memory.Allocate(minimapCounter*4*2);
+            _utils.LogDebug($"Location of MinimapScaleTable: {_minimapTextureScaleTable.ToString("X8")}", Config.DebugLevels.TableLocations);
             // 1 byte per texture
             _minimapTextureOrientTable = _memory.Allocate(minimapCounter);
-
-            _minimapTextureCoordinateLookupTable = _memory.Allocate(minimapCounter*8);
-            _minimapTextureScaleLookupTable = _memory.Allocate(minimapCounter*8);
-            // Since it's just increment, might not need this
-            _minimapTextureOrientLookupTable = _memory.Allocate(minimapCounter*8);
+            _utils.LogDebug($"Location of MinimapOrientTable: {_minimapTextureOrientTable.ToString("X8")}", Config.DebugLevels.TableLocations);
 
             offset = 0;
             for (int i = 0; i < _minimaps.Count; i++)
@@ -291,50 +298,51 @@ namespace p4gpc.dungeonloader.Accessors
                     }
                     offsetLookup++;
                 }
-            }    
+            }
 
             // "48 8D 3D ?? ?? ?? ?? 48 8B F3 48 2B F7 48 8D 2D ?? ?? ?? ?? 0F 1F 00"
             // This is the search target for the code that touches the startup table
 
-            func = _utils.SigScan("48 8D 3D ?? ?? ?? ?? 48 8B F3 48 2B F7 48 8D 2D ?? ?? ?? ?? 0F 1F 00", $"StartupMinimapSearch");
+            search_string = "48 8D 3D ?? ?? ?? ?? 48 8B F3 48 2B F7 48 8D 2D ?? ?? ?? ?? 0F 1F 00";
+            func = _utils.SigScan(search_string, $"StartupMinimapSearch");
             ReplaceStartupSearch(func, 23);
-            _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
             // 4C 8D 35 91 CB DB 04 89 54 24 70 48 8D 7B 20 4C 2B F3 8D 6E 1E
             search_string = "4C 8D 35 91 CB DB 04 89 54 24 70 48 8D 7B 20 4C 2B F3 8D 6E 1E";
             func = _utils.SigScan(search_string, $"StartupMinimapCapSwap");
             StartupMinimapCapSwap(func, search_string);
-            _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
             search_string = "3C 09 0F 82 ?? ?? ?? ?? 0F B6 4B 09 80 F9 01 75 33 0F B6 C0 83 C0 F7 83 F8 05 0F 87 ?? ?? ?? ??";
             func = _utils.SigScan(search_string, $"ReplaceMinimapPathSearch");
             _memory.SafeRead((nuint)(func + 28), out offset);
             ReplaceMinimapPathSearch(func, offset, search_string);
-            _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
             search_string = "40 80 FF 09 0F 82 ?? ?? ?? ?? 40 0F B6 ?? 83 C0 F7 83 F8 05 0F 87 ?? ?? ?? ??";
             func = _utils.SigScan(search_string, $"ReplaceMinimapTextureMapping");
             _memory.Read((nuint)(func+22), out offset);
             ReplaceMinimapTextureMapping(func, offset, search_string);
-            _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
             // 4C 8D 15 1D 19 4E 00 44 8B CD
             search_string = "4C 8D 15 1D 19 4E 00 44 8B CD";
             func = _utils.SigScan(search_string, $"ReplaceMinimapPathListLoadIn");
             ReplacePathListLoadIn(func, search_string);
-            _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
 
             // 49 83 C2 08 4C 63 D8 41 83 F9 1E
             search_string = "49 83 C2 08 4C 63 D8 41 83 F9 1E";
             func = _utils.SigScan(search_string, $"ReplaceMinimapPathListSizeCheck");
             ReplacePathListSizeCheck(func, search_string);
-            _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
             search_string = "4E 8B 84 DF 90 C4 1E 05 48 8D 7B 40";
             func = _utils.SigScan(search_string, $"ReplaceMinimapUnknownTableLookup");
             ReplaceMinimapUnknownTableLookup(func, search_string);
-            _utils.LogDebug($"Location: {func.ToString("X8")}", 3);
+            _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
         }
 
         void ReplaceStartupSearch(Int64 functionAddress, int length)
@@ -485,19 +493,22 @@ namespace p4gpc.dungeonloader.Accessors
             //uses it. Worth experimenting with.
             instruction_list.Add($"mov dil, [{_minimapTextureOrientTable} + rsi]");
             instruction_list.Add($"cmp dil, 1");
-            /*
-             
-            instruction_list.Add($"cmp al, dl");
-            instruction_list.Add($"je defaultScale");
-            instruction_list.Add($"cmp al, 03");
-            instruction_list.Add($"je defaultScale");
-             */
 
             instruction_list.Add($"jne defaultScale");
-            instruction_list.Add($"mov [rbx+0xA2], dl");
+            instruction_list.Add($"mov [rbx+0x000000A2], dl");
             instruction_list.Add($"and dx, 1");
             instruction_list.Add($"cmp dx, 1");
             instruction_list.Add($"je defaultScale");
+
+            instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x34], edi");
+            instruction_list.Add($"add rcx, 4");
+            instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
+            instruction_list.Add($"mov [rbx+0x30], edi");
+            instruction_list.Add($"jmp endOfFunc");
+
+            instruction_list.Add($"label defaultScale");
+            // Gotta check orientation for scale reasons
 
             instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
             instruction_list.Add($"mov [rbx+0x30], edi");
@@ -506,25 +517,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
             instruction_list.Add($"mov [rbx+0x34], edi");
             instruction_list.Add($"jmp endOfFunc");
-            /*
-            // Gotta check orientation for scale reasons
-            
-             
-            instruction_list.Add($"cmp al, 2");
-            instruction_list.Add($"jne endOfFunc");
-            instruction_list.Add($"mov [rbx+0xA2], dl");
-             */
-
-
-
-            instruction_list.Add($"label defaultScale");
-            // Gotta check orientation for scale reasons
-            instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
-            instruction_list.Add($"mov [rbx+0x34], edi");
-            instruction_list.Add($"add rcx, 4");
-            instruction_list.Add($"mov edi, [{_minimapTextureScaleTable} + rcx]");
-            instruction_list.Add($"mov [rbx+0x30], edi");
-
 
             instruction_list.Add($"label endOfFunc");
 

@@ -40,7 +40,7 @@
     ],
     "texScaleSingle": [ 32.0, 32.0 ],
     "texScaleMulti": [
-      [ 37.0, 19.0 ],
+      [ 19.0, 37.0 ],
       [ 19.0, 19.0 ]
     ],
     "singleOrientBased": false,
@@ -164,8 +164,8 @@
     "multipleNames": true,
     "name": "smap10.tmx",
     "names": [
-      "smap10_01.tmx",
-      "smap10_02.tmx"
+      "smap09_01.tmx",
+      "smap09_02.tmx"
     ],
     "uVarsSingle": [ 1, 1, 0, 1, 2 ],
     "uVarsMulti": [
@@ -226,12 +226,12 @@
     ],
     "texScaleSingle": [ 32.0, 32.0 ],
     "texScaleMulti": [
-      [ 55.0, 19.0 ],
+      [ 19.0, 55.0 ],
       [ 37.0, 37.0 ]
     ],
     "singleOrientBased": false,
     "multiOrientBased": [
-      false,
+      true,
       false
     ]
   },
@@ -240,8 +240,8 @@
     "multipleNames": true,
     "name": "smap12.tmx",
     "names": [
-      "smap12_01.tmx",
-      "smap12_02.tmx"
+      "smap11_01.tmx",
+      "smap11_02.tmx"
     ],
     "uVarsSingle": [ 2, 1, 0, 2, 2 ],
     "uVarsMulti": [
@@ -264,7 +264,7 @@
     ],
     "texScaleSingle": [ 32.0, 32.0 ],
     "texScaleMulti": [
-      [ 55.0, 19.0 ],
+      [ 19.0, 55.0 ],
       [ 37.0, 37.0 ]
     ],
     "singleOrientBased": false,
@@ -278,9 +278,9 @@
     "multipleNames": true,
     "name": "smap13.tmx",
     "names": [
-      "smap13_01.tmx",
+      "smap09_01.tmx",
       "smap13_02.tmx",
-      "smap13_03.tmx"
+      "smap09_01.tmx"
     ],
     "uVarsSingle": [ 3, 0, 0, 3, 2 ],
     "uVarsMulti": [
@@ -324,9 +324,9 @@
     "multipleNames": true,
     "name": "smap14.tmx",
     "names": [
-      "smap14_01.tmx",
-      "smap14_02.tmx",
-      "smap14_03.tmx"
+      "smap09_01.tmx",
+      "smap13_02.tmx",
+      "smap09_01.tmx"
     ],
     "uVarsSingle": [ 3, 0, 0, 3, 2 ],
     "uVarsMulti": [
