@@ -15,13 +15,23 @@ namespace p4gpc.dungeonloader.Exceptions
             _utils.LogThrownException(msg);
         }
     }
-    public class ToBeNamedExcpetion : CustomException
+    public class ToBeNamedException : CustomException
     {
-        public ToBeNamedExcpetion(Utilities _utils) : base($"This is definitely a problem, but I don't know what to call it yet :/", _utils)
+        public ToBeNamedException(Utilities _utils) : base($"This is definitely a problem, but I don't know what to call it yet :/", _utils)
         {
 
         }
     }
+
+    public class InvalidSAddressValueLoadException : CustomException
+    {
+        public InvalidSAddressValueLoadException(Utilities _utils, Int64 address) : base($"$Failed to load value from function at address {address.ToString("X8")}", _utils)
+        {
+
+        }
+    
+    }
+
     public class InvalidJsonPathException : CustomException
     {
         public InvalidJsonPathException(string json, Utilities _utils) : base($"Attempt to load {json} from Persona 4 Golden mod folder failed, defaulting to vanilla {json}", _utils)
@@ -30,43 +40,43 @@ namespace p4gpc.dungeonloader.Exceptions
     }
     public class InvalidAsmInstructionAccessTypeException : CustomException
     {
-        public InvalidAsmInstructionAccessTypeException(int address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} attempting to access invalid template address, contact mod developer.", _utils)
+        public InvalidAsmInstructionAccessTypeException(Int64 address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} attempting to access invalid template address, contact mod developer.", _utils)
         {
         }
     }
     public class InvalidAsmInstructionModValueException : CustomException
     {
-        public InvalidAsmInstructionModValueException(int address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} contains invalid mod value, contact mod developer.", _utils)
+        public InvalidAsmInstructionModValueException(Int64 address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} contains invalid mod value, contact mod developer.", _utils)
         {
         }
     }
     public class InvalidAsmInstructionModAccessCombinationException: CustomException
     {
-        public InvalidAsmInstructionModAccessCombinationException(int address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} contains unexpected mod/address combination, contact mod developer.", _utils)
+        public InvalidAsmInstructionModAccessCombinationException(Int64 address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} contains unexpected mod/address combination, contact mod developer.", _utils)
         {
         }
     }
     public class InvalidAsmInstructionRegisterReferenceException : CustomException
     {
-        public InvalidAsmInstructionRegisterReferenceException(int address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} contains unexpected register reference, contact mod developer.", _utils)
+        public InvalidAsmInstructionRegisterReferenceException(Int64 address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} contains unexpected register reference, contact mod developer.", _utils)
         {
         }
     }
     public class InvalidAsmInstructionTypeException : CustomException
     {
-        public InvalidAsmInstructionTypeException(int address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} is unexpected, contact mod developer.", _utils)
+        public InvalidAsmInstructionTypeException(Int64 address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} is unexpected, contact mod developer.", _utils)
         {
         }
     }
     public class InvalidTemplateAccessorTypeException : CustomException
     {
-        public InvalidTemplateAccessorTypeException(int address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} accessing unexpected address, contact mod developer.", _utils)
+        public InvalidTemplateAccessorTypeException(Int64 address, Utilities _utils) : base($"Instruction at address {address.ToString("X8")} accessing unexpected address, contact mod developer.", _utils)
         {
         }
     }
     public class InvalidTemplateAccessorAddressException : CustomException
     {
-        public InvalidTemplateAccessorAddressException(int address, Utilities _utils) : base($"TemplateAccessor given invalid address: {address.ToString("X8")}", _utils)
+        public InvalidTemplateAccessorAddressException(Int64 address, Utilities _utils) : base($"TemplateAccessor given invalid address: {address.ToString("X8")}", _utils)
         {
         }
     }

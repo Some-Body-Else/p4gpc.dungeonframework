@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 namespace p4gpc.dungeonloader.JsonClasses
 {
     
-    public class DungeonFloors
+    public class DungeonFloor
     {
-        public int ID { get; set; }
-        public int subID { get; set; }
-        public int Byte04 { get; set; }
-        public int floorMin { get; set; }
-        public int floorMax { get; set; }
-        public int Byte0A { get; set; }
-        public int dungeonScript{ get; set; }
-        public int usedEnv{ get; set; }
+        public UInt16 ID { get; set; }
+        public UInt16 subID { get; set; }
+        public UInt32 Byte04 { get; set; }
+        public byte floorMin { get; set; }
+        public byte floorMax { get; set; }
+        public UInt16 Byte0A { get; set; }
+        public byte dungeonScript{ get; set; }
+        public byte usedEnv{ get; set; }
         public string? floorName { get; set; }
         public nuint nameAddress { get; set; }
     }

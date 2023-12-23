@@ -161,7 +161,7 @@ The only portion of floor data not directly linked to dungeon.bin is the name of
 
 
 ### Minimap
-Much of the minimap still remains unknown for the moment, but what is known is where the textures are (**init_free.bin/field/smap.bin**) and the location of some functions that<br> handle some form of transformation on the texture. The game loads all of the textures in at launch and then internally keeps tabs on their information through a table. The textures themselves are modified after being loaded in, leading to searches for the texture based on its file contents to turn up dust. 
+Much of the minimap still remains unknown for the moment, but what is known is where the textures are (**init_free.bin/field/smap.bin**) and the location of some functions that handle some form of transformation on the texture. The game loads all of the textures in at launch and then internally keeps tabs on their information through a table. The textures themselves are modified after being loaded in, leading to searches for the texture based on its file contents to turn up dust. 
 
 ### Field Compares
 Previously unmentioned because there's no real good place to bring it up, but Persona 4 Golden checks field type based on their ID.<br>
@@ -172,13 +172,13 @@ If a field's ID is:<br>
 - Between 80 and 199, admittedly unsure since there is one field I've seen in that range (100) and I'm not quite sure what it is.<br>
 - 200 and above is a battle field for the various encounters in the game.<br><br>
 
-Since this sort of rigid structure is not quite conducive to modding a game to hell and back, I've attempted to circumvent this<br>
-by having a 256 entry array in field_compare.json handle the job of identifying field types. One issue with this solution<br>
+Since this sort of rigid structure is not quite conducive to modding a game to hell and back, I've attempted to circumvent this
+by having a 256 entry array in field_compare.json handle the job of identifying field types. One issue with this solution
 is that I'm not certain about the properties fields whose IDs are in the grey space between 80 and 199, which leads them to being
 treated as pregenerated floors under the presumption that the tutorial is related to the field, but this could be incorrect.
 
 ### Room Compares
-Most of these are found in regards to the minimap functions, there are times where the game makes decisions based on the ID of the room. The functions most of these are <br>found around seem to be transformation functions, which makes sense considering the data the game has at hand during execution at that time lacks some potentially <br>critical information, such as the size of the room. The plan is for DungeonLoader to have the properties that these rooms are seperated on be stored as variables and make jumps based on what value that variable holds.
+Most of these are found in regards to the minimap functions, there are times where the game makes decisions based on the ID of the room. The functions most of these are found around seem to be transformation functions, which makes sense considering the data the game has at hand during execution at that time lacks some potentially critical information, such as the size of the room. The plan is for DungeonLoader to have the properties that these rooms are seperated on be stored as variables and make jumps based on what value that variable holds.
 
 ## Thanks
 

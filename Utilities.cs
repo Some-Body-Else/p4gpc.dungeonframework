@@ -13,22 +13,35 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using static p4gpc.dungeonloader.Configuration.Config;
 
 namespace p4gpc.dungeonloader
 {
     /// <summary>
-    /// The entirety of this file is stolen from AnimatedSwine37, specifically their XP Share mod for P4G.
+    /// The entirety of this file is stolen from AnimatedSwine37, specifically their XP Share mod for P4G
+    /// <br></br>
     /// Link here: https://github.com/AnimatedSwine37/Persona-4-Golden-Xp-Share/blob/main/p4gpc.xpshare/XpShare.cs
+    /// <br></br>
     /// Names are slightly different because it was copied by hand to get a better understanding as to how it should be used.
     /// Possibly subject to change as the project moves forward.
     /// </summary>
     public class Utilities
     {
+        private Dictionary<int, System.Drawing.Color> debugLevelDict = new Dictionary<int, System.Drawing.Color>()
+        {
+            { 0, System.Drawing.Color.AliceBlue },
+            { 1, System.Drawing.Color.Gold },
+            { 2, System.Drawing.Color.BlueViolet },
+            { 3, System.Drawing.Color.Cornsilk },
+            { 4, System.Drawing.Color.DarkGoldenrod },
+            { 5, System.Drawing.Color.BurlyWood },
+        };
+
         public Config Configuration;
         private ILogger _logger;
-        private int _processBaseAddress;
+        private Int64 _processBaseAddress;
 
-        public Utilities(Config configuration, ILogger logger, int processBaseAddress)
+        public Utilities(Config configuration, ILogger logger, Int64 processBaseAddress)
         {
             Configuration = configuration;
             _logger = logger;
@@ -40,12 +53,11 @@ namespace p4gpc.dungeonloader
             _logger.WriteLine($"[DungeonLoader] {message}");
         }
 
-        public void LogDebug(string message, byte debugLevel = 0)
+        public void LogDebug(string message, DebugLevels debugLevel)
         {
-            //Should give a proper debug condition later
-            if (Configuration.logDebug)
+            if ((byte)Configuration.logDebug >= (byte)debugLevel)
             {
-                _logger.WriteLine($"[DungeonLoader] {message}", System.Drawing.Color.BlueViolet);
+                _logger.WriteLine($"[DungeonLoader] {message}", debugLevelDict[(int)debugLevel]);
             }
         }
 
@@ -70,7 +82,7 @@ namespace p4gpc.dungeonloader
         /// <param name="pattern"></param>
         /// <param name="funcName"></param>
         /// <returns></returns>
-        public unsafe long SigScan(string pattern, string funcName)
+        public unsafe Int64 SigScan(string pattern, string funcName)
         {
             try
             {
@@ -78,7 +90,7 @@ namespace p4gpc.dungeonloader
                 var baseAddress = currentProc.MainModule.BaseAddress;
                 var exeSize = currentProc.MainModule.ModuleMemorySize;
                 using var sigscanner = new Scanner((byte*)baseAddress, exeSize);
-                long funcAddress = sigscanner.FindPattern(pattern).Offset;
+                Int64 funcAddress = (Int64) sigscanner.FindPattern(pattern).Offset;
                 if (funcAddress < 0) throw new Exception($"Unable to find byte pattern {pattern}");
                 funcAddress += _processBaseAddress;
                 return funcAddress;
@@ -98,25 +110,25 @@ namespace p4gpc.dungeonloader
         /// <param name="funcName"></param>
         /// <param name="funcCount"></param>
         /// <returns></returns>
-        public unsafe List<long> SigScan_FindCount(string pattern, string funcName, int funcCount)
+        public unsafe List<Int64> SigScan_FindCount(string pattern, string funcName, int funcCount)
         {
             using var currentProc = Process.GetCurrentProcess();
             var baseAddress = currentProc.MainModule.BaseAddress;
             var exeSize = currentProc.MainModule.ModuleMemorySize;
-            List<long> return_list = new List<long>();
+            List<Int64> return_list = new List<Int64>();
             for (int i = 0; i < funcCount; i++)
             {
                 try
                 {
                     using var sigscanner = new Scanner((byte*)baseAddress, exeSize);
-                    long funcAddress = sigscanner.FindPattern(pattern).Offset;
+                    Int64 funcAddress = (Int64) sigscanner.FindPattern(pattern).Offset;
                     if (funcAddress < 0)
                     {
                         if (return_list.Count == 0)
                             throw new Exception($"Unable to find byte pattern {pattern}");
                         break;
                     };
-                    funcAddress += (long)baseAddress;
+                    funcAddress += (Int64)baseAddress;
                     return_list.Add(funcAddress);
                     baseAddress = (IntPtr)funcAddress + 1;
                 }
@@ -134,15 +146,15 @@ namespace p4gpc.dungeonloader
         /// <param name="pattern"></param>
         /// <param name="funcName"></param>
         /// <returns></returns>
-        public unsafe List<long> SigScan_FindAll(string pattern, string funcName)
+        public unsafe List<Int64> SigScan_FindAll(string pattern, string funcName)
         {
             using var currentProc = Process.GetCurrentProcess();
             var baseAddress = currentProc.MainModule.BaseAddress;
             var exeSize = currentProc.MainModule.ModuleMemorySize;
             using var sigscanner = new Scanner((byte*)baseAddress, exeSize);
             int funcOffset = 0;
-            long funcAddress = 0;
-            List<long> return_list = new List<long>();
+            Int64 funcAddress = 0;
+            List<Int64> return_list = new List<Int64>();
             while(true)
             {
                 try
@@ -155,7 +167,7 @@ namespace p4gpc.dungeonloader
                             throw new Exception($"Unable to find byte pattern {pattern}");
                         break;
                     };
-                    funcAddress = (long)baseAddress+funcOffset;
+                    funcAddress = ((Int64)baseAddress) + ((Int64)funcOffset);
                     return_list.Add(funcAddress);
                 }
                 catch (Exception ex)
@@ -178,9 +190,24 @@ namespace p4gpc.dungeonloader
             return pattern.Length/2;
         }
 
-        public int AccountForBaseAddress(int address)
+        /// <summary>
+        /// Returns a value that adds the base address of the P4G process to the value.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public Int64 AccountForBaseAddress(Int64 address)
         {
             return address + _processBaseAddress;
+        }
+
+        /// <summary>
+        /// Returns a value that removes the base address of the P4G process from the value.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        public Int64 StripBaseAddress(Int64 address)
+        {
+            return address - _processBaseAddress;
         }
     }
 }

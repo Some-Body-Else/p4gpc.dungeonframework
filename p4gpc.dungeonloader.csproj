@@ -58,12 +58,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Accessors\TemplateAccessors.cs">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="JSON\room_compare_search.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

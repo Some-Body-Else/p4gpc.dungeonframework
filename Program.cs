@@ -11,6 +11,8 @@ using Reloaded.Mod.Interfaces.Internal;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace p4gpc.dungeonloader
 {
@@ -19,7 +21,7 @@ namespace p4gpc.dungeonloader
         /// <summary>
         /// Not quite sure, I'm stealing this from Swine
         /// </summary>
-        private const string MyModId = "p4gpc.dungeonloader";
+        private const string MyModId = "p4gpc64.dungeonloader";
 
         /// <summary>
         /// Used for writing text to the Reloaded log.
@@ -52,19 +54,13 @@ namespace p4gpc.dungeonloader
 
         private JsonImporter _jsonImporter;
 
-        private TemplateAccessors _templates;
-        private FloorAccessors _floors;
-        private RoomAccessors _rooms;
-        private MinimapAccessors _minimap;
-        private FieldCompareAccessors _compares_field;
-        private RoomCompareAccessors _compares_room;
-
+        private List<Accessor> _accessors;
 
         private Utilities _utilities;
 
         public void StartEx(IModLoaderV1 loaderApi, IModConfigV1 modConfig)
         {
-            //Debugger.Launch();
+            // Debugger.Launch();
 
             _modLoader = (IModLoader)loaderApi;
             _modConfig = (IModConfig)modConfig;
@@ -77,23 +73,32 @@ namespace p4gpc.dungeonloader
 
             _memory = new Memory();
             using var currentProc = Process.GetCurrentProcess();
-            int baseAddress = currentProc.MainModule.BaseAddress.ToInt32();
             
-            string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\mods\\dungeonloader"));
+            Int64 baseAddress = currentProc.MainModule.BaseAddress.ToInt64();
+            
+            string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\dungeonloader"));
             string defaultPath = Path.GetFullPath(Path.Combine(_modLoader.GetModConfigDirectory(_modConfig.ModId), @"..\\..\\..\\")) + "\\Mods\\p4gpc.dungeonloader\\JSON";
 
             _utilities = new Utilities(_configuration, _logger, baseAddress);
             _jsonImporter = new JsonImporter(_configuration, _utilities, modPath, defaultPath);
             _utilities.Log("JSON files loaded.");
 
+            _accessors = new List<Accessor>();
+            _accessors.Append(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Append(new FloorTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Append(new RoomTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Append(new MinimapTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Append(new RoomCompares(_hooks, _utilities, _memory, _configuration, _jsonImporter));
 
-            _templates = new TemplateAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
-            _floors = new FloorAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
-            _rooms = new RoomAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
-            _minimap = new MinimapAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
-            _compares_field = new FieldCompareAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
-            _compares_room = new RoomCompareAccessors(_hooks, _utilities, _memory, _configuration, _jsonImporter);
-            _utilities.Log("DungeonLoader set up complete.");
+            // Field comparison replacements are a larger-scale thing I want to tackle later.
+            // What type of field you deal with (overworld, dungeon, battle, other?) is dictated by what
+            // range of number its ID falls into. As you might imagine, this makes the possibility of creating
+            // custom fields more difficult, since instead of just using an unused ID, you'd have to find one
+            // in a specific range instead. However, for the moment, I'm focusing on dungeon-only stuff, so
+            // this is to be ignored for the moment.
+            // _accessors.Append(new FieldCompares(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+
+            _utilities.Log("DungeonLoader set up complete!");
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)

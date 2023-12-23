@@ -12,33 +12,30 @@ namespace p4gpc.dungeonloader.Configuration
         public string defaultPath { get; set; } = (System.IO.Directory.GetCurrentDirectory() + "/Mods/p4gpc.dungeonloader/JSON");
          */
 
-
-        [DisplayName("Allow custom searches")]
-        [Description("Allows DungeonLoader to load in user-created JSON files to find code to replace in the game.\n"+
-                     "NOTE: Unless the user intends to replace more of the executable's original code with their own, this should be disabled."
-                     )]
-        public bool customSearch { get; set; } = false;
-
         [DisplayName("Suppress default warning/error text")]
         [Description("DungeonLoader will present warning/error text in the Reloaded-II log when it cannot find a custom JSON to load.\n" +
-                     "After displaying the text, it will load in a default JSON in place of the missing one that replicates vanilla dungeon behavior.\n" + 
-                     "Setting this to true will disable the warning/error text from being logged when a default file is used instead of an expected custom file."
+                     "After displaying the text, it will load in a default JSON in place of the missing one that replicates vanilla dungeon behavior.\n" +
+                     "Enabling this setting will disable the warning/error text from being logged when a default file is used instead of an expected custom file."
                     )]
         public bool suppressWarnErr { get; set; } = false;
 
-        [DisplayName("Allow debug logs")]
+        [DisplayName("Debug level")]
         [Description("Will allow DungeonLoader to log debug information to the Reloaded-II console.\n"+
                      "Information logged includes addresses of files in RAM, among other program details.\n"+
-                     "This information not required for usage, so it is disabled by default."
+                     "This information not required for usage, so it is disabled by default.\n"+
+                     "Each level of debug also shows the previous levels, if applicable."
                      )]
-        public bool logDebug { get; set; } = true;
+        [DefaultValue(DebugLevels.NoMessages)]
+        public DebugLevels logDebug { get; set; } = DebugLevels.NoMessages;
 
-        [DisplayName("Allow debug logs")]
-        [Description("Will allow DungeonLoader to log debug information to the Reloaded-II console.\n"+
-                     "Information logged includes addresses of files in RAM, among other program details.\n"+
-                     "This information not required for usage, so it is disabled by default."
-                     )]
-        public bool noteSizeDiscrepency { get; set; } = true;
+        public enum DebugLevels
+        {
+            NoMessages,
+            AlertConnections,
+            TableLocations,
+            CodeReplacedLocations
+        }
+
 
 
 
@@ -64,15 +61,7 @@ namespace p4gpc.dungeonloader.Configuration
         [DefaultValue(SampleEnum.ILoveIt)]
         public SampleEnum Reloaded { get; set; } = SampleEnum.ILoveIt;
 
-        public enum SampleEnum
-        {
-            NoOpinion,
-            Sucks,
-            IsMediocre,
-            IsOk,
-            IsCool,
-            ILoveIt
-        }
+        
          */
     }
 }
