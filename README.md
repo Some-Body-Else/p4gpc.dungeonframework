@@ -10,6 +10,7 @@ Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and mak
     + [What it Currently Does Not Do](#what-it-currently-does-not-do)
     + [Known Bugs](#known-bugs)
     + [Laundry List](#laundry-list)
+- [Screenshots](#screenshots)
 - [Usage](#usage)
     + [All Users](#all-users)
     + [Modders](#modders)
@@ -30,10 +31,9 @@ Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and mak
   - JSON files account for dungeon rooms, dungeon templates, dungeon floors.<br>
 - Allows for the addition of more dungeon floors to the game.<br>
 - Allows for the addition of custom dungeon templates to the game.<br>
-- Allows for the addition of custom dungeon rooms to the game **(not quite practical yet)**.<br>
-    + Custom rooms can now have their own minimap tiles!
 - Tie dungeon floor names to the .json, allowing them to be easily modified.<br>
-- Not crash the game ~~(probably)~~.<br>
+- Allows for the addition of custom dungeon rooms to the game **(limited but possible)**.<br>
+
 
 ### What it Currently Does Not Do
 
@@ -43,31 +43,31 @@ Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and mak
 
 ### Known Bugs
 
-- For some reason, some dungeons have the loading icon freeze while loading and also appear to take longer to load. This doesn't
- seem to affect anything on a gameplay level, but it is not ideal. Appears to affect all dungeons that follow template 0.<br><br>
- - Sometimes a room on the first floor does not load in properly. The room will appear as a blank space and have it's collision 
-act as a completely flat tile **with no walls**. This does mean you can walk out of bounds and subsequently crash the game.
-Entering a battle will cause the room to be loaded in properly.<br><br>
-- Presumed to be connected to the above bug, sometimes a room of the same time as the glitched room will visually
-appear out of the designated map area. Attempting to access it via the wall-less glitched room will crash the game.<br> 
-![Pain](https://user-images.githubusercontent.com/86819277/188294387-aeab8801-14f3-462b-b7e1-a3c8fee4cacc.jpg "Example of the glitched rooms")
-
+-No currently known bugs
 
 ### Laundry List
 
 Order is roughly from top of the list to the bottom, but not necessarily an indicator of how things will be done.<br>
-- Figure out the details behind dungeon generation more.<br>
-- Create tools to enable others to create their own .json files to load in, making the creation of custom dungeons more streamlined.<br>
-- Fix known bugs.<br>
-- Try to see if merging multiple custom .jsons is feasible, presuming two mods take up the same room/field ID.<br>
-- Optimize.<br>
+- Determine current unknown values <br>
+  - Do testing with custom 2x2 and 3x3 rooms <br>
+  - Look into .fbn files found within field .arc files <br>
+- Figure out more details behind dungeon generation <br>
+  - Figure if expanding the room size cap is possible <br>
+- Change how the type of field is determined <br>
 - Get an icon for the mod.<br>
 - Check to see if map expansion is plausible.<br>
 
+# Screenshots
+![Custom Room](https://github.com/Some-Body-Else/p4gpc.dungeonloader/assets/86819277/eed658f8-d9af-49b9-b593-fcb9d7a6b652) <br>
+![Another Angle](https://github.com/Some-Body-Else/p4gpc.dungeonloader/assets/86819277/11195aca-2219-4bcb-a890-8d5ccb10a770) <br>
+![Go Big Mode](https://github.com/Some-Body-Else/p4gpc.dungeonloader/assets/86819277/310383ec-6c89-46aa-9e5f-319fafe4d920) <br>
+
+
 ## Usage
 
+
 ### All Users
-This section is essentially for the future, if I'm being honest. While defining custom rooms/floors/templates in the .jsons does work and DungeonLoader does support loading files from a "dungeonloader" folder in the mods directory of Persona 4 Golden, the purpose of this release is to put it in the public to see if the build as it stands interrupts any part of a regular Persona 4 Golden playthrough. If you do insist on trying to implement custom dungeon stuff at this time, I am on the [Persona modding Discord](https://discord.gg/naoto) if you have any questions or insights.<br><br>
+This section is essentially for the future, if I'm being honest. While defining custom rooms/floors/templates in the .jsons does work and DungeonLoader does support loading files from a "dungeonloader" folder in the directory of Persona 4 Golden, the purpose of this release is to put it in the public to see if the build as it stands interrupts any part of a regular Persona 4 Golden playthrough. If you do insist on trying to implement custom dungeon stuff at this time, I am on the [Persona modding Discord](https://discord.gg/naoto) if you have any questions or insights.<br><br>
 
 That being said, there is one configuration options I wish to make note of: if the warning/error text about loading the default files is something that annoys you, it can be suppressed via an option in the Reloaded-II config.
 
@@ -78,20 +78,9 @@ DungeonLoader expects to load in a set of .json files with the following names:
 - dungeon_minimap.json
 - dungeon_rooms.json
 - dungeon_template_dict.json
-- dungeon_templates.json
-- __field_compare_search.json__
-- field_compares.json
-- __floor_search.json__
-- __minimap_search.json__
-- __room_compare_search.json__
-- __room_search.json__
-- __template_search.json__<br>
+- dungeon_templates.json_<br>
 
-Bolded file names indicate that custom variants of these files will not be loaded by DungeonLoader unless the Reloaded-II configuration option to allow custom searches is enabled. Since the search list exists to tell DungeonLoader where to hook into the game, replacing these should be unnecessary, but in case it is not, the option will remain.<br><br>
-To get started with creating custom .jsons, go into the Reloaded-II Mods folder and go into "p4gpc.dungeonloader", copy the contents of the "JSON" folder to a seperate location, then modify the moved .jsons as you see fit. **DO NOT MODIFY THE .json FILES IN THE "JSON" FOLDER**, these are the files DungeonLoader default to presuming no custom files are found and are meant to match up with the vanilla game.
-
-When it comes to loading custom .json files, you must create a folder named "dungeonloader" in your mod directory (not the package, the mod folder near the executable) and put all custom .json files in it. I do have a branch of Aemulus that loads the "dungeonloader" folder from a package, but you would have to build it yourself and mind the fact that in the event that more than one mod uses custom rooms it is currently not equipped to handle the situation.
-
+When it comes to loading custom .json files, you must create a folder named "dungeonloader" in your Persona 4 Golden executable's directory and place them in there. <br>
 
 ## The Big Explanation Bit
 
@@ -161,7 +150,7 @@ The only portion of floor data not directly linked to dungeon.bin is the name of
 
 
 ### Minimap
-Much of the minimap still remains unknown for the moment, but what is known is where the textures are (**init_free.bin/field/smap.bin**) and the location of some functions that handle some form of transformation on the texture. The game loads all of the textures in at launch and then internally keeps tabs on their information through a table. The textures themselves are modified after being loaded in, leading to searches for the texture based on its file contents to turn up dust. 
+Much of the minimap still remains unknown for the moment, but what is known is where the textures are (**init_free.bin/field/smap.bin**) and how portions of the texture are selected for rendering. The game loads all of the textures in at launch and then internally keeps tabs on their information through a table. 
 
 ### Field Compares
 Previously unmentioned because there's no real good place to bring it up, but Persona 4 Golden checks field type based on their ID.<br>
@@ -172,10 +161,7 @@ If a field's ID is:<br>
 - Between 80 and 199, admittedly unsure since there is one field I've seen in that range (100) and I'm not quite sure what it is.<br>
 - 200 and above is a battle field for the various encounters in the game.<br><br>
 
-Since this sort of rigid structure is not quite conducive to modding a game to hell and back, I've attempted to circumvent this
-by having a 256 entry array in field_compare.json handle the job of identifying field types. One issue with this solution
-is that I'm not certain about the properties fields whose IDs are in the grey space between 80 and 199, which leads them to being
-treated as pregenerated floors under the presumption that the tutorial is related to the field, but this could be incorrect.
+I have plans to try and change this form of field identification into something more usable for modders, but those plans will not be put into motion for the forseeable future.<br>
 
 ### Room Compares
 Most of these are found in regards to the minimap functions, there are times where the game makes decisions based on the ID of the room. The functions most of these are found around seem to be transformation functions, which makes sense considering the data the game has at hand during execution at that time lacks some potentially critical information, such as the size of the room. The plan is for DungeonLoader to have the properties that these rooms are seperated on be stored as variables and make jumps based on what value that variable holds.
