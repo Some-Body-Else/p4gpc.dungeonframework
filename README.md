@@ -78,7 +78,7 @@ DungeonLoader expects to load in a set of .json files with the following names:
 - dungeon_minimap.json
 - dungeon_rooms.json
 - dungeon_template_dict.json
-- dungeon_templates.json_<br>
+- dungeon_templates.json<br>
 
 When it comes to loading custom .json files, you must create a folder named "dungeonloader" in your Persona 4 Golden executable's directory and place them in there. <br>
 

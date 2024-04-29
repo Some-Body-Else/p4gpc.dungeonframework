@@ -27,9 +27,8 @@ namespace p4gpc.dungeonloader.Accessors
     {
         /*
         To do:
-            -Handle floor names
-            --DungeonFloor class stores name under floorName var
-            --Also has nameAddress var, but may be vestigial and worth cutting
+            Nothing, for now. Something will probably pop up at some point.
+            --Clarifying some of
          */
 
         private List<DungeonFloor> _floors;
@@ -87,9 +86,9 @@ namespace p4gpc.dungeonloader.Accessors
                 totalTemplateTableSize+=2;
                 _memory.SafeWrite(_newFloorTable + (nuint)totalTemplateTableSize, floor.Byte04);
                 totalTemplateTableSize+=4;
-                _memory.SafeWrite(_newFloorTable + (nuint)totalTemplateTableSize, floor.floorMin);
+                _memory.SafeWrite(_newFloorTable + (nuint)totalTemplateTableSize, floor.tileCountMin);
                 totalTemplateTableSize++;
-                _memory.SafeWrite(_newFloorTable + (nuint)totalTemplateTableSize, floor.floorMax);
+                _memory.SafeWrite(_newFloorTable + (nuint)totalTemplateTableSize, floor.tileCountMax);
                 totalTemplateTableSize++;
                 _memory.SafeWrite(_newFloorTable + (nuint)totalTemplateTableSize, floor.ID);
                 totalTemplateTableSize+=2;

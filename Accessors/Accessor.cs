@@ -65,93 +65,12 @@ namespace p4gpc.dungeonloader.Accessors
             r14 = 14,   //1110
             r15 = 15    //1111
         }
-        
-        /*
-        protected Dictionary<Register, String> AccReg_64;
-        protected Dictionary<Register, String> AccReg_32;
-        protected Dictionary<Register, String> AccReg_16;
-        protected Dictionary<Register, String> AccReg_8;
-         */
 
         protected enum Size
         {
             Byte        = 1,
             Word        = 2,
             DoubleWord  = 3
-        }
-
-        protected Accessor()
-        {
-            /*
-            AccReg_64 = new Dictionary<Register, String>();
-            AccReg_32 = new Dictionary<Register, String>();
-            AccReg_16 = new Dictionary<Register, String>();
-            AccReg_8 = new Dictionary<Register, String>();
-            AccReg_64.Add(Register.rax, "rax");
-            AccReg_32.Add(Register.rax, "eax");
-            AccReg_16.Add(Register.rax, "ax");
-            AccReg_8.Add(Register.rax, "al");
-            AccReg_64.Add(Register.rcx, "rcx");
-            AccReg_32.Add(Register.rcx, "ecx");
-            AccReg_16.Add(Register.rcx, "cx");
-            AccReg_8.Add(Register.rcx, "cl");
-            AccReg_64.Add(Register.rdx, "rdx");
-            AccReg_32.Add(Register.rdx, "edx");
-            AccReg_16.Add(Register.rdx, "dx");
-            AccReg_8.Add(Register.rdx, "dl");
-            AccReg_64.Add(Register.rbx, "rbx");
-            AccReg_32.Add(Register.rbx, "ebx");
-            AccReg_16.Add(Register.rbx, "bx");
-            AccReg_8.Add(Register.rbx, "bl");
-            AccReg_64.Add(Register.rsp, "rsp");
-            AccReg_32.Add(Register.rsp, "esp");
-            AccReg_16.Add(Register.rsp, "sp");
-            AccReg_8.Add(Register.rsp, "spl");
-            AccReg_64.Add(Register.rbp, "rbp");
-            AccReg_32.Add(Register.rbp, "ebp");
-            AccReg_16.Add(Register.rbp, "bp");
-            AccReg_8.Add(Register.rbp, "bpl");
-            AccReg_64.Add(Register.rsi, "rsi");
-            AccReg_32.Add(Register.rsi, "esi");
-            AccReg_16.Add(Register.rsi, "si");
-            AccReg_8.Add(Register.rsi, "sil");
-            AccReg_64.Add(Register.rdi, "rdi");
-            AccReg_32.Add(Register.rdi, "edi");
-            AccReg_16.Add(Register.rdi, "di");
-            AccReg_8.Add(Register.rdi, "dil");
-            AccReg_64.Add(Register.r8, "r8");
-            AccReg_32.Add(Register.r8, "r8d");
-            AccReg_16.Add(Register.r8, "r8w");
-            AccReg_8.Add(Register.r8, "r8l");
-            AccReg_64.Add(Register.r9, "r9");
-            AccReg_32.Add(Register.r9, "r9d");
-            AccReg_16.Add(Register.r9, "r9w");
-            AccReg_8.Add(Register.r9, "r9l");
-            AccReg_64.Add(Register.r10, "r10");
-            AccReg_32.Add(Register.r10, "r10d");
-            AccReg_16.Add(Register.r10, "r10w");
-            AccReg_8.Add(Register.r10, "r10l");
-            AccReg_64.Add(Register.r11, "r11");
-            AccReg_32.Add(Register.r11, "r11d");
-            AccReg_16.Add(Register.r11, "r11w");
-            AccReg_8.Add(Register.r11, "r11l");
-            AccReg_64.Add(Register.r12, "r12");
-            AccReg_32.Add(Register.r12, "r12d");
-            AccReg_16.Add(Register.r12, "r12w");
-            AccReg_8.Add(Register.r12, "r12l");
-            AccReg_64.Add(Register.r13, "r13");
-            AccReg_32.Add(Register.r13, "r13d");
-            AccReg_16.Add(Register.r13, "r13w");
-            AccReg_8.Add(Register.r13, "r13l");
-            AccReg_64.Add(Register.r14, "r14");
-            AccReg_32.Add(Register.r14, "r14d");
-            AccReg_16.Add(Register.r14, "r14w");
-            AccReg_8.Add(Register.r14, "r14l");
-            AccReg_64.Add(Register.r15, "r15");
-            AccReg_32.Add(Register.r15, "r15d");
-            AccReg_16.Add(Register.r15, "r15w");
-            AccReg_8.Add(Register.r15, "r15l"); 
-             */
         }
 
         protected const byte DOUBLEWORD = 8;

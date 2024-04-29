@@ -12,8 +12,8 @@ namespace p4gpc.dungeonloader.JsonClasses
         public UInt16 ID { get; set; }
         public UInt16 subID { get; set; }
         public UInt32 Byte04 { get; set; }
-        public byte floorMin { get; set; }
-        public byte floorMax { get; set; }
+        public byte tileCountMin { get; set; }
+        public byte tileCountMax { get; set; }
         public UInt16 Byte0A { get; set; }
         public byte dungeonScript{ get; set; }
         public byte usedEnv{ get; set; }

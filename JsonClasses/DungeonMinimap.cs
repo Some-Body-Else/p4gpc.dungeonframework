@@ -12,8 +12,6 @@ namespace p4gpc.dungeonloader.JsonClasses
         public bool multipleNames { get; set; }
         public string name { get; set; }
         public List<string> names { get; set; }
-        public List<byte> uVarsSingle { get; set; }
-        public List<List<byte>> uVarsMulti { get; set; }
         public List<List<float>> texCoordSingle { get; set; }
         public List<List<List<float>>> texCoordMulti { get; set; }
         public List<float> texScaleSingle { get; set; }
