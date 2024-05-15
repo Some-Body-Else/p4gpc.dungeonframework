@@ -15,7 +15,7 @@ namespace p4gpc.dungeonloader.JsonClasses
         public bool hasDoor { get; set; }
         public List<List<byte>> connectionPointers { get; set; }
         public List<List<byte>> revealProperties { get; set; }
-        public List<byte> unknownMasks { get; set; }
+        public List<sbyte> x_y_offsets { get; set; }
         public List<List<byte>> mapRamOutline { get; set; }
         public List<List<int>> connectionValues { get; set; }
     }

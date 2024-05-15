@@ -30,6 +30,7 @@ namespace p4gpc.dungeonloader.Accessors
 
         protected static nuint _newMinimapLookupTable;
         protected static nuint _newMinimapPathLookupTable;
+        protected static nuint _lastUsedAddress = 0;
         protected IReloadedHooks? _hooks;
         protected Utilities? _utils;
         protected IMemory _memory;
@@ -87,6 +88,12 @@ namespace p4gpc.dungeonloader.Accessors
             _reverseWrapperList = new List<IReverseWrapper>();
             _functionHookList = new List<IAsmHook>();
             _commands = new List<String>();
+
+            if (_lastUsedAddress == 0)
+            {
+                _lastUsedAddress = _memory.Allocate(8);
+                _utils.LogDebug($"Debug address: {_lastUsedAddress.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+            }    
 
             List<Task> initialTasks = new List<Task>();
             initialTasks.Add(Task.Run((() => Initialize())));

@@ -31,6 +31,7 @@ namespace p4gpc.dungeonloader.Accessors
         /*
         To do:
             -Account for room connection table (Maybe, since it's tile-by-tile basis, it might have all bases covered already)
+            --Doesn't appear so. Could also just cut out some related chaff with it
          */
 
         private List<DungeonRoom> _rooms;
@@ -59,8 +60,6 @@ namespace p4gpc.dungeonloader.Accessors
 
             List<long> _roomTables; 
 
-
-
             foreach (DungeonRoom room in _rooms)
             {
                 totalTemplateTableSize += 86;
@@ -84,7 +83,7 @@ namespace p4gpc.dungeonloader.Accessors
                 {
                     foreach (byte connection in connectionRow)
                     {
-                        _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, connection);
+                        _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, (byte)0xFF);
                         totalTemplateTableSize++;
                     }
                 }
@@ -96,9 +95,9 @@ namespace p4gpc.dungeonloader.Accessors
                         totalTemplateTableSize++;
                     }
                 }
-                _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, room.unknownMasks[0]);
+                _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, room.x_y_offsets[0]);
                 totalTemplateTableSize++;
-                _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, room.unknownMasks[1]);
+                _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, room.x_y_offsets[1]);
                 totalTemplateTableSize++;
                 foreach (List<byte> row in room.mapRamOutline)
                 {
@@ -137,7 +136,7 @@ namespace p4gpc.dungeonloader.Accessors
                     regToZero = (AccessorRegister)((SIB >> 3) & 0x7);
                     regToZero += (prefixExists & 0x2) << 2;
                     ReplaceImul(_roomTable, 13, regToZero);
-                    _utils.LogDebug($"Location of [{search_string}]: {_roomTable.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+                    _utils.LogDebug($"Location of [48 6B C8 56]: {_roomTable.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                 }
                 else
                 {
@@ -145,7 +144,7 @@ namespace p4gpc.dungeonloader.Accessors
                     _memory.SafeRead((nuint)_roomTable+8, out oldAddress);
                     regToZero = (AccessorRegister)((SIB >> 3) & 0x7);
                     ReplaceImul(_roomTable, 12, regToZero);
-                    _utils.LogDebug($"Location of [{search_string}]: {_roomTable.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+                    _utils.LogDebug($"Location of [48 6B C8 56]: {_roomTable.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
                 }
 
                 address_str_old = (oldAddress+0x10).ToString("X8");
@@ -185,14 +184,30 @@ namespace p4gpc.dungeonloader.Accessors
                 _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
             }
+            address_str_old = "0F B6 41 FF 48 8D 49 03";
+            func = _utils.SigScan(address_str_old, $"RoomTable Pointer Lookup (Function)");
+            address_str_old = "41 8B C9 B8 01 00 00 00 D3 E0 3B C7";
+            address = _utils.SigScan(address_str_old, $"RoomTable Pointer Lookup (JumpTo)");
+            ReplacePointerLookup(func, 11, address);
+            _utils.LogDebug($"Location of [0F B6 41 FF 48 8D 49 03 8B 04 82]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+            _utils.LogDebug($"Location of [41 8B C9 B8 01 00 00 00 D3 E0 3B C7]: {address.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
         }
-        
+
         private void ReplaceImul(Int64 functionAddress, int length, AccessorRegister offsetReg)
         {
             AccessorRegister pushReg;
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"imul rcx, rax, 0x56");
             instruction_list.Add($"mov {offsetReg}, 0");
             instruction_list.Add($"movups xmm0, [{_newRoomTable} + rcx]");
@@ -200,5 +215,33 @@ namespace p4gpc.dungeonloader.Accessors
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, length).Activate());
         }
 
+        private void ReplacePointerLookup(Int64 functionAddress, int length, Int64 search_location)
+        {
+            // Natively, part of the room table entry includes a pointer to data indicating where the room connects to
+            // and where its doors point. This happens despite the fact that the table has room for the data, meaning it
+            // could've just been stored there. Using this code snippet to take out the middle-man
+            List<string> instruction_list = new List<string>();
+
+            instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"mov rax, {search_location}");
+            instruction_list.Add($"mov [rsp+8], rax");
+            instruction_list.Add($"pop rax");
+            instruction_list.Add($"ret");
+
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, length).Activate());
+
+        }
     }
 }

@@ -154,6 +154,15 @@ namespace p4gpc.dungeonloader.Accessors
         {
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"mov r8d, [rsp + {offsetSize}]");
             instruction_list.Add($"mov rcx, {_newFloorTable}");
             instruction_list.Add($"mov rdx, rax");
@@ -164,18 +173,17 @@ namespace p4gpc.dungeonloader.Accessors
         {
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"cmp [rsi+4], byte 0x9F");
             instruction_list.Add($"mov rax, {_newFloorTable}");
-            /*
-             
-            instruction_list.Add($"lea eax, [{_newFloorTable}]");
-            instruction_list.Add($"mov [rsi+0x30], eax");
-            instruction_list.Add($"cmp [rsi+4], 0x0000009F");
-            instruction_list.Add($"jne end");
-            instruction_list.Add($"push {functionAddress+0x7A}");
-            instruction_list.Add($"ret");
-            instruction_list.Add($"label end");
-             */
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }

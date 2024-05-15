@@ -361,6 +361,16 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"mov rdi, {_newMinimapLookupTable}");
             instruction_list.Add($"mov rsi, rbx");
             instruction_list.Add($"sub rsi, rdi");
@@ -373,6 +383,14 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
 
             instruction_list.Add($"mov r14, {_minimapUnknownPerTextureTable}");
             instruction_list.Add($"mov [rsp+0x70], edx");
@@ -391,6 +409,15 @@ namespace p4gpc.dungeonloader.Accessors
             Int64 jump_point = functionAddress + 32 + jump_offset - 5;
             
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"mov cl, [rbx + 0x9]");
             instruction_list.Add($"push rbx");
             instruction_list.Add($"push rax");
@@ -446,6 +473,13 @@ namespace p4gpc.dungeonloader.Accessors
             
             instruction_list.Add($"use64");
 
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
 
             instruction_list.Add($"push rdi");
             instruction_list.Add($"push rsi");
@@ -531,6 +565,15 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"mov r10, {_newMinimapPathLookupTable}");
             instruction_list.Add($"mov r9, rbp");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
@@ -542,6 +585,15 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"add r10, 0x8");
             instruction_list.Add($"mov r11, rax");
             instruction_list.Add($"cmp r9d, {minimapCounter}");
@@ -554,6 +606,15 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"mov r8, [{_minimapUnknownPerTextureTable} + r11*0x8]");
             instruction_list.Add($"mov rdi, rbx");
             instruction_list.Add($"add rdi, 0x40");
@@ -584,6 +645,12 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov [{_lastUsedAddress}], rax");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"push rax");
             instruction_list.Add($"push rbx");
             instruction_list.Add($"push rcx");
@@ -630,33 +697,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"and rbx, 0xFF");
             instruction_list.Add($"cmp rbx, 1");
             instruction_list.Add($"jne END_OF_FUNCTION");
-            /*
-             
-            instruction_list.Add($"mov rbx, [rcx+0x6]");
-            instruction_list.Add($"and rbx, 0xFF");
-            instruction_list.Add($"cmp rbx, 1");
-            instruction_list.Add($"jne NEED_TO_CHECK");
-
-            instruction_list.Add($"mov rbx, [rcx+0x7]");
-            instruction_list.Add($"and rbx, 0xFF");
-            instruction_list.Add($"cmp rbx, 1");
-            instruction_list.Add($"jne NEED_TO_CHECK");
-
-            //1x1 room, don't need to check for adjacent tiles
-            instruction_list.Add($"mov rbx, r13");
-
-            instruction_list.Add($"add rbx, r9");
-            instruction_list.Add($"add rbx, r9");
-
-            instruction_list.Add($"mov rcx, r8");
-            instruction_list.Add($"mov rdx, [rbx]");
-
-            // Need to check to make sure this tile is connected to an already-revealed tile
-            instruction_list.Add($"bts dx, cx");
-            instruction_list.Add($"mov [rbx], dx");
-            
-            instruction_list.Add("jmp END_OF_FUNCTION");
-             */
 
             // Further inspection needed
             instruction_list.Add($"label NEED_TO_CHECK");
@@ -851,17 +891,8 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"push rdx");
             instruction_list.Add($"add rsi, 1");
 
-
             instruction_list.Add($"label MARK_CURRENT");
 
-            /*
-             
-            // Need to check if this is a room we mark as label-able
-            instruction_list.Add($"movzx r15, byte [rcx+0x1]");
-            instruction_list.Add($"and r15, 0x0F");
-            instruction_list.Add($"cmp r15l, 0x01");
-            instruction_list.Add($"jne DO_NOT_MARK");
-             */
             // Update internal minimap table
             instruction_list.Add($"mov r14, r9");
             instruction_list.Add($"add r14, r14");
@@ -921,15 +952,6 @@ namespace p4gpc.dungeonloader.Accessors
             // Get the next value from the stack and set up its variables accordingly
             instruction_list.Add($"pop rcx");
 
-            /*
-             
-            // Full offset
-            instruction_list.Add($"xor rdi, rdi");
-            instruction_list.Add($"add rdi, r9");
-            instruction_list.Add($"shl rdi, 4");
-            instruction_list.Add($"add rdi, r8");
-            instruction_list.Add($"shl rdi, 4");
-             */
 
             instruction_list.Add($"mov rdi, rcx");
             instruction_list.Add($"sub rdi, r12");
@@ -976,6 +998,15 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
             Int64 jump_point = _utils.SigScan("8B 45 14 45 8B E5 F2 0F 10 75 0C F3 0F 5C F7", $"ReplaceMinimapPositionCheck");
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"push rax");
             instruction_list.Add($"push rax");
             instruction_list.Add($"mov rax, {jump_point}");

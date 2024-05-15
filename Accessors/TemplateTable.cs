@@ -105,11 +105,12 @@ namespace p4gpc.dungeonloader.Accessors
             
             _templateLookupTable = _memory.Allocate(_templates.Count() * DOUBLEWORD);
             _utils.LogDebug($"Location of TemplateLookupTable table: {_templateLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            
             _templateExitLookupTable = _memory.Allocate(_templates.Count());
-            _utils.LogDebug($"Location of TemplateExitLookupTable table: {_templateLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"Location of TemplateExitLookupTable table: {_templateExitLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            
             _templateTypeTable = _memory.Allocate(sizeof(byte)*256);
-
-            _utils.LogDebug($"Location of TemplateTypeTable table: {_templateLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"Location of TemplateTypeTable table: {_templateTypeTable.ToString("X8")}", Config.DebugLevels.TableLocations);
 
             for (int i = 0; i <= 255; i++)
             {
@@ -693,6 +694,14 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
 
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {baseReg}");
@@ -763,6 +772,15 @@ namespace p4gpc.dungeonloader.Accessors
             AccessorRegister pushReg;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             if (inReg == outReg)
             {
 
@@ -842,6 +860,14 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
 
             // Debug info, notes the last function that was used before program crashed
 
@@ -975,6 +1001,15 @@ namespace p4gpc.dungeonloader.Accessors
              */
 
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"push {inReg}");
 
             instruction_list.Add($"push {inReg}");
@@ -1079,6 +1114,15 @@ namespace p4gpc.dungeonloader.Accessors
              */
 
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"push {inReg}");
 
             instruction_list.Add($"push {inReg}");
@@ -1174,6 +1218,15 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"push {inReg}");
 
 
@@ -1233,6 +1286,15 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"and {inReg}, 255");
 
             if (inReg != AccessorRegister.rax && outReg != AccessorRegister.rax && baseReg != AccessorRegister.rax)
@@ -1284,6 +1346,14 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
 
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             // basereg
             instruction_list.Add($"mov {outReg}, [{baseReg} + {_templateTypeTable}]");
             instruction_list.Add($"and {outReg}, 0xFF");
@@ -1299,6 +1369,14 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
 
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             //basereg
             instruction_list.Add($"mov {outReg}, {_templateTypeTable}");
 
@@ -1313,6 +1391,14 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
 
             //basereg
             instruction_list.Add($"xor {inReg}, [{baseReg} - 0x3ADC5A0A]");
@@ -1331,7 +1417,15 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
-                        
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"or rsi, [ rbp + 0x3C5DF11C ]");
             instruction_list.Add($"mov dil, [rsi]");
 
@@ -1344,6 +1438,14 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
 
             instruction_list.Add($"lea rsp, [rsp+8]");
 
@@ -1389,6 +1491,15 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             instruction_list.Add($"mov rcx, r15");
 
             instruction_list.Add($"sub rax, {_templateTable}");
@@ -1425,6 +1536,13 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
 
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
 
             instruction_list.Add($"push rax");
             instruction_list.Add($"and rax, 0xFF");
@@ -1458,6 +1576,15 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             /*
              Need to figure a way to determine to use roomcount or roomcountex
              */
@@ -1477,6 +1604,14 @@ namespace p4gpc.dungeonloader.Accessors
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
 
             instruction_list.Add($"mov rax, {_currentTemplate}");
             instruction_list.Add($"mov rax, [rax]");

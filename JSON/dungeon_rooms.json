@@ -39,9 +39,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      255,
-      255
+    "x_y_offsets": [
+      -1,
+      -1
     ],
     "mapRamOutline": [
       [
@@ -82,19 +82,19 @@
     ],
     "connectionValues": [
       [
-        255,
-        255,
-        255
+        -1,
+        -1,
+        -1
       ],
       [
-        255,
-        255,
-        255
+        -1,
+        -1,
+        -1
       ],
       [
-        255,
-        255,
-        255
+        -1,
+        -1,
+        -1
       ]
     ]
   },
@@ -138,9 +138,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      254,
-      254
+    "x_y_offsets": [
+      -2,
+      -2
     ],
     "mapRamOutline": [
       [
@@ -237,9 +237,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      254,
-      254
+    "x_y_offsets": [
+      -2,
+      -2
     ],
     "mapRamOutline": [
       [
@@ -336,9 +336,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      254,
-      254
+    "x_y_offsets": [
+      -2,
+      -2
     ],
     "mapRamOutline": [
       [
@@ -435,9 +435,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      254,
-      254
+    "x_y_offsets": [
+      -2,
+      -2
     ],
     "mapRamOutline": [
       [
@@ -478,7 +478,7 @@
     ],
     "connectionValues": [
       [
-        255,
+        -1,
         0,
         0
       ],
@@ -534,9 +534,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      254,
-      254
+    "x_y_offsets": [
+      -2,
+      -2
     ],
     "mapRamOutline": [
       [
@@ -633,9 +633,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      254,
-      254
+    "x_y_offsets": [
+      -2,
+      -2
     ],
     "mapRamOutline": [
       [
@@ -732,9 +732,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      254,
-      254
+    "x_y_offsets": [
+      -2,
+      -2
     ],
     "mapRamOutline": [
       [
@@ -829,9 +829,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      254,
-      254
+    "x_y_offsets": [
+      -2,
+      -2
     ],
     "mapRamOutline": [
       [
@@ -871,21 +871,9 @@
       ]
     ],
     "connectionValues": [
-      [
-        46,
-        6,
-        0
-      ],
-      [
-        9,
-        139,
-        0
-      ],
-      [
-        0,
-        0,
-        0
-      ]
+      [ 46, 6, 0 ],
+      [ 9, 139, 0 ],
+      [ 0, 0, 0 ]
     ]
   },
   {
@@ -928,9 +916,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      255,
-      255
+    "x_y_offsets": [
+      -1,
+      -1
     ],
     "mapRamOutline": [
       [
@@ -1027,9 +1015,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      255,
-      255
+    "x_y_offsets": [
+      -1,
+      -1
     ],
     "mapRamOutline": [
       [
@@ -1126,9 +1114,9 @@
         0
       ]
     ],
-    "unknownMasks": [
-      255,
-      255
+    "x_y_offsets": [
+      -1,
+      -1
     ],
     "mapRamOutline": [
       [
@@ -1213,9 +1201,9 @@
       [ 16, 32, 32 ],
       [ 16, 0, 0 ]
     ],
-    "unknownMasks": [
-      255,
-      255
+    "x_y_offsets": [
+      -1,
+      -1
     ],
     "mapRamOutline": [
       [
@@ -1312,9 +1300,9 @@
         32
       ]
     ],
-    "unknownMasks": [
-      255,
-      255
+    "x_y_offsets": [
+      -1,
+      -1
     ],
     "mapRamOutline": [
       [
@@ -1399,9 +1387,9 @@
       [ 0, 32, 32 ],
       [ 16, 32, 32 ]
     ],
-    "unknownMasks": [
-      255,
-      255
+    "x_y_offsets": [
+      -1,
+      -1
     ],
     "mapRamOutline": [
       [ 0, 0, 0, 0, 0 ],
@@ -1411,21 +1399,9 @@
       [ 0, 2, 2, 2, 2 ]
     ],
     "connectionValues": [
-      [
-        0,
-        0,
-        1045
-      ],
-      [
-        0,
-        12,
-        263
-      ],
-      [
-        2090,
-        523,
-        3
-      ]
+      [ 0, 0, 1045 ],
+      [ 0, 12, 263 ],
+      [ 2090, 523, 3 ]
     ]
   }
 ]

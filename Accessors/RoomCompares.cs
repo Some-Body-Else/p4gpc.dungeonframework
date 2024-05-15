@@ -92,26 +92,8 @@ namespace p4gpc.dungeonloader.Accessors
             function = _utils.SigScan(search_string, $"RoomCompareC");
             _memory.Read((nuint)(function+4), out jump_offset);
             jump_offset &= 0xFF;
-            //LogOpcodeRunsD(function, search_string);
             ReplaceStartupSearchC(function, jump_offset, search_string);
             _utils.LogDebug($"Replaced code [{search_string}] at: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
-
-            /*
-             search_string = "83 C0 F7 83 F8 05 0F 87 ?? ?? ?? ??";
-            function = _utils.SigScan(search_string, $"RoomCompareGeneral");
-            _memory.Read((nuint)(function+8), out jump_offset);
-            // _memory.Read((nuint)(function+17), out jump_offset2);
-            //LogOpcodeRunsA(function, search_string);
-            ReplaceStartupSearch(function, jump_offset, search_string);
-            _utils.LogDebug($"Replaced code [{search_string}] at: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
-
-
-            // Attempting a more generic search gets us int
-            search_string = "3C 06 0F 87 ?? ?? ?? ?? 3C 02 0F 85 ?? ?? ?? ??";
-            function = _utils.SigScan(search_string, $"RoomCompareGeneral");
-            ReplaceMinimapUpdateCheck(function, search_string);
-            _utils.LogDebug($"Replaced code [{search_string}] at: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
-             */
 
         }
         void ReplaceMinimapUpdateCheck(Int64 functionAddress, string pattern)
@@ -135,6 +117,11 @@ namespace p4gpc.dungeonloader.Accessors
             List<string> instruction_list = new List<string>();
 
             instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov [{_lastUsedAddress}], rax");
+            instruction_list.Add($"pop rax");
 
             instruction_list.Add($"cmp {AccessorRegister.rax}, 2");
             instruction_list.Add($"je continue");
@@ -178,15 +165,10 @@ namespace p4gpc.dungeonloader.Accessors
             // if a hypothetical update breaks this trend
             // instruction_list.Add($"add rax");
 
-            /*
-            instruction_list.Add("cmp rax, 0xF");
-            instruction_list.Add("jne noDebug");
             instruction_list.Add($"push rax");
             instruction_list.Add($"mov rax, {functionAddress}");
-            instruction_list.Add($"{_debugLogCallMnemonic}");
+            instruction_list.Add($"mov [{_lastUsedAddress}], rax");
             instruction_list.Add($"pop rax");
-            instruction_list.Add("label noDebug");
-                */
 
             instruction_list.Add($"push rbx");
             instruction_list.Add($"push rax");
@@ -244,6 +226,13 @@ namespace p4gpc.dungeonloader.Accessors
             // Int64 jump_point2 = functionAddress + 36 + jump_offset2;
             instruction_list.Add($"use64");
 
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
 
             // So far I've only seen this with EAX/RAX, but may have to change if something new is found or
             // if a hypothetical update breaks this trend
@@ -310,16 +299,13 @@ namespace p4gpc.dungeonloader.Accessors
             Int64 jump_point = functionAddress + 5 + jump_offset;
             instruction_list.Add($"use64");
 
-            /*
-
-            instruction_list.Add("cmp rcx, 0xF");
-            instruction_list.Add("jne noDebug");
             instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
             instruction_list.Add($"mov rax, {functionAddress}");
-            instruction_list.Add($"{_debugLogCallMnemonic}");
-            instruction_list.Add($"pop rax");
-            instruction_list.Add("label noDebug");
-                */
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax"); ;
 
             instruction_list.Add($"push rbx");
             instruction_list.Add($"push rcx");
