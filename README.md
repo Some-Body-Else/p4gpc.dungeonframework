@@ -1,4 +1,4 @@
-# P4G DungeonLoader
+# P4G Dungeon Framework
 
 Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and makes them more easily accessible for modders.<br>
 
@@ -67,20 +67,20 @@ Order is roughly from top of the list to the bottom, but not necessarily an indi
 
 
 ### All Users
-This section is essentially for the future, if I'm being honest. While defining custom rooms/floors/templates in the .jsons does work and DungeonLoader does support loading files from a "dungeonloader" folder in the directory of Persona 4 Golden, the purpose of this release is to put it in the public to see if the build as it stands interrupts any part of a regular Persona 4 Golden playthrough. If you do insist on trying to implement custom dungeon stuff at this time, I am on the [Persona modding Discord](https://discord.gg/naoto) if you have any questions or insights.<br><br>
+This section is essentially for the future, if I'm being honest. While defining custom rooms/floors/templates in the .jsons does work and DungeonLoader does support loading files from a "dungeonframework" folder in the directory of Persona 4 Golden, the purpose of this release is to put it in the public to see if the build as it stands interrupts any part of a regular Persona 4 Golden playthrough. If you do insist on trying to implement custom dungeon stuff at this time, I am on the [Persona modding Discord](https://discord.gg/naoto) if you have any questions or insights.<br><br>
 
 That being said, there is one configuration options I wish to make note of: if the warning/error text about loading the default files is something that annoys you, it can be suppressed via an option in the Reloaded-II config.
 
 
 ### Modders
-DungeonLoader expects to load in a set of .json files with the following names:
+The Dungeon Framework expects to load in a set of .json files with the following names:
 - dungeon_floors.json
 - dungeon_minimap.json
 - dungeon_rooms.json
 - dungeon_template_dict.json
 - dungeon_templates.json<br>
 
-When it comes to loading custom .json files, you must create a folder named "dungeonloader" in your Persona 4 Golden executable's directory and place them in there. <br>
+When it comes to loading custom .json files, you must create a folder named "dungeonframework" in your Persona 4 Golden executable's directory and place them in there. <br>
 
 ## The Big Explanation Bit
 
@@ -164,7 +164,7 @@ If a field's ID is:<br>
 I have plans to try and change this form of field identification into something more usable for modders, but those plans will not be put into motion for the forseeable future.<br>
 
 ### Room Compares
-Most of these are found in regards to the minimap functions, there are times where the game makes decisions based on the ID of the room. The functions most of these are found around seem to be transformation functions, which makes sense considering the data the game has at hand during execution at that time lacks some potentially critical information, such as the size of the room. The plan is for DungeonLoader to have the properties that these rooms are seperated on be stored as variables and make jumps based on what value that variable holds.
+Most of these are found in regards to the minimap functions, there are times where the game makes decisions based on the ID of the room. The functions most of these are found around seem to be transformation functions, which makes sense considering the data the game has at hand during execution at that time lacks some potentially critical information, such as the size of the room.
 
 ## Thanks
 
