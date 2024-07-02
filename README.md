@@ -1,4 +1,4 @@
-# P4G DungeonLoader
+# P4G Dungeon Framework
 
 Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and makes them more easily accessible for modders.<br>
 
@@ -73,7 +73,7 @@ That being said, there is one configuration options I wish to make note of: if t
 
 
 ### Modders
-DungeonLoader expects to load in a set of .json files with the following names:
+The Dungeon Framework expects to load in a set of .json files with the following names:
 - dungeon_floors.json
 - dungeon_minimap.json
 - dungeon_rooms.json
@@ -164,7 +164,7 @@ If a field's ID is:<br>
 I have plans to try and change this form of field identification into something more usable for modders, but those plans will not be put into motion for the forseeable future.<br>
 
 ### Room Compares
-Most of these are found in regards to the minimap functions, there are times where the game makes decisions based on the ID of the room. The functions most of these are found around seem to be transformation functions, which makes sense considering the data the game has at hand during execution at that time lacks some potentially critical information, such as the size of the room. The plan is for DungeonLoader to have the properties that these rooms are seperated on be stored as variables and make jumps based on what value that variable holds.
+Most of these are found in regards to the minimap functions, there are times where the game makes decisions based on the ID of the room. The functions most of these are found around seem to be transformation functions, which makes sense considering the data the game has at hand during execution at that time lacks some potentially critical information, such as the size of the room.
 
 ## Thanks
 
