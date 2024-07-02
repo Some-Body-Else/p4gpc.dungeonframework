@@ -1,5 +1,5 @@
-﻿using p4gpc.dungeonloader.Configuration;
-using p4gpc.dungeonloader.Exceptions;
+﻿using p4gpc.dungeonframework.Configuration;
+using p4gpc.dungeonframework.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 //using Newtonsoft.Json;
 
-namespace p4gpc.dungeonloader.JsonClasses
+namespace p4gpc.dungeonframework.JsonClasses
 {
     public class JsonImporter
     {

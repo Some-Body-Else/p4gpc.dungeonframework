@@ -17,13 +17,13 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 
-using p4gpc.dungeonloader.Exceptions;
-using p4gpc.dungeonloader.JsonClasses;
-using p4gpc.dungeonloader.Configuration;
+using p4gpc.dungeonframework.Exceptions;
+using p4gpc.dungeonframework.JsonClasses;
+using p4gpc.dungeonframework.Configuration;
 using System.Reflection;
 using Reloaded.Memory.Pointers;
 
-namespace p4gpc.dungeonloader.Accessors
+namespace p4gpc.dungeonframework.Accessors
 {
     public class RoomCompares : Accessor
     {
@@ -101,7 +101,7 @@ namespace p4gpc.dungeonloader.Accessors
             /*
                 * 3C 06 0F 87 ?? ?? ?? ?? 3C 02 0F 85 ?? ?? ?? ??
 
-                Definitely look into this function further down the line, this is definitely something
+                Definitely look into this function further down the line, this is something
                 that will need to be changed for more unique rooms down the line
 
 
@@ -185,7 +185,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop rbx");
 
             // This opcode is proving problematic
-            // instruction_list.Add($"push {jump_point}");
             instruction_list.Add($"push rax");
             instruction_list.Add($"push rax");
             instruction_list.Add($"mov rax, {jump_point}");

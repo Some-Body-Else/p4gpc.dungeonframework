@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 
-namespace p4gpc.dungeonloader.Configuration.Implementation
+namespace p4gpc.dungeonframework.Configuration.Implementation
 {
     public class Utilities
     {

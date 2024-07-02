@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 
-namespace p4gpc.dungeonloader.Configuration.Implementation
+namespace p4gpc.dungeonframework.Configuration.Implementation
 {
     public class Configurator : IConfiguratorV2
     {

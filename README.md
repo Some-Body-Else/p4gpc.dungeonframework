@@ -58,16 +58,16 @@ Order is roughly from top of the list to the bottom, but not necessarily an indi
 - Check to see if map expansion is plausible.<br>
 
 # Screenshots
-![Custom Room](https://github.com/Some-Body-Else/p4gpc.dungeonloader/assets/86819277/eed658f8-d9af-49b9-b593-fcb9d7a6b652) <br>
-![Another Angle](https://github.com/Some-Body-Else/p4gpc.dungeonloader/assets/86819277/11195aca-2219-4bcb-a890-8d5ccb10a770) <br>
-![Go Big Mode](https://github.com/Some-Body-Else/p4gpc.dungeonloader/assets/86819277/310383ec-6c89-46aa-9e5f-319fafe4d920) <br>
+![Custom Room](https://github.com/Some-Body-Else/p4gpc.dungeonframework/assets/86819277/eed658f8-d9af-49b9-b593-fcb9d7a6b652) <br>
+![Another Angle](https://github.com/Some-Body-Else/p4gpc.dungeonframework/assets/86819277/11195aca-2219-4bcb-a890-8d5ccb10a770) <br>
+![Go Big Mode](https://github.com/Some-Body-Else/p4gpc.dungeonframework/assets/86819277/310383ec-6c89-46aa-9e5f-319fafe4d920) <br>
 
 
 ## Usage
 
 
 ### All Users
-This section is essentially for the future, if I'm being honest. While defining custom rooms/floors/templates in the .jsons does work and DungeonLoader does support loading files from a "dungeonloader" folder in the directory of Persona 4 Golden, the purpose of this release is to put it in the public to see if the build as it stands interrupts any part of a regular Persona 4 Golden playthrough. If you do insist on trying to implement custom dungeon stuff at this time, I am on the [Persona modding Discord](https://discord.gg/naoto) if you have any questions or insights.<br><br>
+This section is essentially for the future, if I'm being honest. While defining custom rooms/floors/templates in the .jsons does work and DungeonLoader does support loading files from a "dungeonframework" folder in the directory of Persona 4 Golden, the purpose of this release is to put it in the public to see if the build as it stands interrupts any part of a regular Persona 4 Golden playthrough. If you do insist on trying to implement custom dungeon stuff at this time, I am on the [Persona modding Discord](https://discord.gg/naoto) if you have any questions or insights.<br><br>
 
 That being said, there is one configuration options I wish to make note of: if the warning/error text about loading the default files is something that annoys you, it can be suppressed via an option in the Reloaded-II config.
 
@@ -80,7 +80,7 @@ DungeonLoader expects to load in a set of .json files with the following names:
 - dungeon_template_dict.json
 - dungeon_templates.json<br>
 
-When it comes to loading custom .json files, you must create a folder named "dungeonloader" in your Persona 4 Golden executable's directory and place them in there. <br>
+When it comes to loading custom .json files, you must create a folder named "dungeonframework" in your Persona 4 Golden executable's directory and place them in there. <br>
 
 ## The Big Explanation Bit
 

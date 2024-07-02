@@ -7,7 +7,7 @@
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <OutputPath>$(RELOADEDIIMODS)/p4gpc.dungeonloader</OutputPath>
+    <OutputPath>$(RELOADEDIIMODS)/p4gpc.dungeonframework</OutputPath>
     <Deterministic>true</Deterministic>
 
     <!-- IL Trimming Support forked from https://github.com/space-wizards/RobustToolbox, under the MIT License
@@ -27,7 +27,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <RobustLinkRoots Include="p4gpc.dungeonloader" />
+    <RobustLinkRoots Include="p4gpc.dungeonframework" />
     <!-- Add assemblies to be trimmed. You might need to add their dependencies too!  -->
     <!-- <RobustLinkAssemblies Include="Reloaded.Memory" /> -->
   </ItemGroup>

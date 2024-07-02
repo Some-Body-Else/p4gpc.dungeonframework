@@ -5,7 +5,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace p4gpc.dungeonloader.Configuration.Implementation
+namespace p4gpc.dungeonframework.Configuration.Implementation
 {
     public class Configurable<TParentType> : IUpdatableConfigurable where TParentType : Configurable<TParentType>, new()
     {

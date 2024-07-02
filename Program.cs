@@ -1,7 +1,7 @@
-﻿using p4gpc.dungeonloader.Configuration;
-using p4gpc.dungeonloader.Accessors;
-using p4gpc.dungeonloader.Configuration.Implementation;
-using p4gpc.dungeonloader.JsonClasses;
+﻿using p4gpc.dungeonframework.Configuration;
+using p4gpc.dungeonframework.Accessors;
+using p4gpc.dungeonframework.Configuration.Implementation;
+using p4gpc.dungeonframework.JsonClasses;
 
 using Reloaded.Hooks.ReloadedII.Interfaces;
 using Reloaded.Memory.Sources;
@@ -14,14 +14,14 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace p4gpc.dungeonloader
+namespace p4gpc.dungeonframework
 {
     public class Program : IMod
     {
         /// <summary>
         /// Not quite sure, I'm stealing this from Swine
         /// </summary>
-        private const string MyModId = "p4gpc64.dungeonloader";
+        private const string MyModId = "p4gpc64.dungeonframework";
 
         /// <summary>
         /// Used for writing text to the Reloaded log.
@@ -76,13 +76,14 @@ namespace p4gpc.dungeonloader
             
             Int64 baseAddress = currentProc.MainModule.BaseAddress.ToInt64();
             
-            string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\dungeonloader"));
-            string defaultPath = Path.GetFullPath(Path.Combine(_modLoader.GetModConfigDirectory(_modConfig.ModId), @"..\\..\\..\\")) + "\\Mods\\p4gpc.dungeonloader\\JSON";
+            string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\dungeonframework"));
+            string defaultPath = Path.GetFullPath(Path.Combine(_modLoader.GetModConfigDirectory(_modConfig.ModId), @"..\\..\\..\\")) + "\\Mods\\p4gpc.dungeonframework\\JSON";
 
             _utilities = new Utilities(_configuration, _logger, baseAddress);
             _jsonImporter = new JsonImporter(_configuration, _utilities, modPath, defaultPath);
             _utilities.Log("JSON files loaded.");
 
+            // Debugger.Launch();
             _accessors = new List<Accessor>();
             _accessors.Append(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new FloorTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));

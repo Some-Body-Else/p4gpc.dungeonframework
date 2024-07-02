@@ -17,14 +17,14 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 
-using p4gpc.dungeonloader.Exceptions;
-using p4gpc.dungeonloader.JsonClasses;
-using p4gpc.dungeonloader.Configuration;
+using p4gpc.dungeonframework.Exceptions;
+using p4gpc.dungeonframework.JsonClasses;
+using p4gpc.dungeonframework.Configuration;
 using System.Reflection;
 using Reloaded.Memory.Pointers;
 using System.Data.SqlTypes;
 
-namespace p4gpc.dungeonloader.Accessors
+namespace p4gpc.dungeonframework.Accessors
 {
     public class RoomTable : Accessor
     {

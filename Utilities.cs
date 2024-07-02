@@ -1,4 +1,4 @@
-﻿using p4gpc.dungeonloader.Configuration;
+﻿using p4gpc.dungeonframework.Configuration;
 
 using Reloaded.Memory.Sigscan;
 using Reloaded.Memory.Sources;
@@ -13,9 +13,9 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
-using static p4gpc.dungeonloader.Configuration.Config;
+using static p4gpc.dungeonframework.Configuration.Config;
 
-namespace p4gpc.dungeonloader
+namespace p4gpc.dungeonframework
 {
     /// <summary>
     /// The entirety of this file is stolen from AnimatedSwine37, specifically their XP Share mod for P4G
@@ -73,7 +73,7 @@ namespace p4gpc.dungeonloader
 
         public void LogThrownException(string message)
         {
-            _logger.WriteLine($"[DungeonLoader] {message}", System.Drawing.Color.DarkRed);
+            _logger.WriteLine($"[DungeonFramework] {message}", System.Drawing.Color.DarkRed);
         }
 
         /// <summary>

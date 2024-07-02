@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace p4gpc.dungeonloader.Exceptions
+namespace p4gpc.dungeonframework.Exceptions
 {
     public class CustomException : Exception
     {

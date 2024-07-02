@@ -1,7 +1,7 @@
-﻿using p4gpc.dungeonloader.Configuration.Implementation;
+﻿using p4gpc.dungeonframework.Configuration.Implementation;
 using System.ComponentModel;
 
-namespace p4gpc.dungeonloader.Configuration
+namespace p4gpc.dungeonframework.Configuration
 {
     public class Config : Configurable<Config>
     {
@@ -9,7 +9,7 @@ namespace p4gpc.dungeonloader.Configuration
         [DisplayName("Default Json Folder Path")]
         [Description("Path that mod expects to find JSON files within, assuming no files are found in the mod directory of P4G.")]
         [DefaultValue("JSON folder within mod's folder")]
-        public string defaultPath { get; set; } = (System.IO.Directory.GetCurrentDirectory() + "/Mods/p4gpc.dungeonloader/JSON");
+        public string defaultPath { get; set; } = (System.IO.Directory.GetCurrentDirectory() + "/Mods/p4gpc.dungeonframework/JSON");
          */
 
         [DisplayName("Suppress default warning/error text")]

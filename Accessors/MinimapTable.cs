@@ -17,16 +17,16 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 
-using p4gpc.dungeonloader.Exceptions;
-using p4gpc.dungeonloader.JsonClasses;
-using p4gpc.dungeonloader.Configuration;
+using p4gpc.dungeonframework.Exceptions;
+using p4gpc.dungeonframework.JsonClasses;
+using p4gpc.dungeonframework.Configuration;
 using System.Reflection;
 using Reloaded.Memory.Pointers;
 using static System.Formats.Asn1.AsnWriter;
 using System.Data.SqlTypes;
-using static p4gpc.dungeonloader.Accessors.TemplateTable;
+using static p4gpc.dungeonframework.Accessors.TemplateTable;
 
-namespace p4gpc.dungeonloader.Accessors
+namespace p4gpc.dungeonframework.Accessors
 {
     public class MinimapTable : Accessor
     {
@@ -81,6 +81,13 @@ namespace p4gpc.dungeonloader.Accessors
          * indices for each room
          */
         private nuint _minimapIndexLookupTable;
+
+        /*
+         * Address for a flag that needs to be checked to determine the behavior of the new minimap updating function.
+         * Without this, going down stairs results in the minimap attempting to find a valid tile to connect to when none yet exist,
+         * causing an internal stack overflow.
+         */
+        private nuint _minimapUpdateInitCheck;
 
         private int minimapCounter = 0;
 
@@ -148,7 +155,6 @@ namespace p4gpc.dungeonloader.Accessors
                 {
                 }
             }
-
             _newMinimapTable = _memory.Allocate(totalMinimapTableSize);
             _utils.LogDebug($"Location of MinimapPath table: {_newMinimapTable.ToString("X8")}", Config.DebugLevels.TableLocations);
 
@@ -161,6 +167,9 @@ namespace p4gpc.dungeonloader.Accessors
             _minimapRevealStack = _memory.Allocate(808);
             _utils.LogDebug($"Location of MinimapRevealStack: {_minimapRevealStack.ToString("X8")}", Config.DebugLevels.TableLocations);
 
+            _minimapUpdateInitCheck = _memory.Allocate(1);
+            _utils.LogDebug($"Location of MinimapUpdateInitCheck: {_minimapRevealStack.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _memory.SafeWrite(_minimapUpdateInitCheck, 0);
 
             offset = 0;
             for (int i = 0; i < _minimaps.Count; i++)
@@ -352,6 +361,11 @@ namespace p4gpc.dungeonloader.Accessors
             search_string = "0F B6 F3 44 8B FE 40 0F B6 C7 49 C1 E7 04 49 03 C7";
             func = _utils.SigScan(search_string, $"ReplaceMinimapPositionCheck");
             ReplaceMinimapPositionCheck(func, search_string);
+            _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+
+            search_string = "BA A8 01 00 00 8B 0D 70 9A C6 FD";
+            func = _utils.SigScan(search_string, $"ResetMinimapInitialUpdataeCheck");
+            ResetMinimapInitialUpdataeCheck(func, search_string);
             _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
         }
 
@@ -693,6 +707,7 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"mov rcx, r12");
             instruction_list.Add($"add rcx, rdi");
 
+            // Examine entry in Map RAM
             instruction_list.Add($"mov rbx, [rcx]");
             instruction_list.Add($"and rbx, 0xFF");
             instruction_list.Add($"cmp rbx, 1");
@@ -707,8 +722,12 @@ namespace p4gpc.dungeonloader.Accessors
 
             // Fetch room ID
             instruction_list.Add($"movzx r10, byte [rcx+0x4]");
-            instruction_list.Add($"cmp r10, 06");
+
+            // Check if map has 
+            instruction_list.Add($"mov r15, {_minimapUpdateInitCheck}");
+            instruction_list.Add($"cmp [r15], byte 0x00");
             instruction_list.Add($"jne LOOP_START");
+            instruction_list.Add($"mov [r15], byte 0x01");
             //Entrance tile
             instruction_list.Add($"mov rbx, r13");
 
@@ -840,14 +859,13 @@ namespace p4gpc.dungeonloader.Accessors
             // Same upper nybble
             instruction_list.Add($"movzx r14, byte [rdx+0x01]");
             instruction_list.Add($"and r14, 0xF0");
-            // NEW
+
             instruction_list.Add($"cmp r14l, 0");
             instruction_list.Add($"je FOUND_BEFORE_W");
             instruction_list.Add($"cmp r14l, r15l");
             instruction_list.Add($"jne CHECK_NORTH");
 
             instruction_list.Add($"label FOUND_BEFORE_W");
-            // NEW
 
             // Has the tile has already been discovered in some previous iteration?
             instruction_list.Add($"mov r14l, [rdx+0x0F]");
@@ -874,14 +892,14 @@ namespace p4gpc.dungeonloader.Accessors
                 // Same upper nybble
             instruction_list.Add($"movzx r14, byte [rdx+0x01]");
             instruction_list.Add($"and r14, 0xF0");
-            // NEW
+
             instruction_list.Add($"cmp r14l, 0");
             instruction_list.Add($"je FOUND_BEFORE_N");
             instruction_list.Add($"cmp r14l, r15l");
             instruction_list.Add($"jne MARK_CURRENT");
 
             instruction_list.Add($"label FOUND_BEFORE_N");
-            //NEW
+
             // Has the tile has already been discovered in some previous iteration?
             instruction_list.Add($"mov r14l, [rdx+0x0F]");
             instruction_list.Add($"cmp r14l, 0x01");
@@ -900,7 +918,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"mov dx, [r14]");
             instruction_list.Add($"and rdx, 0xFFFF");
 
-            // NEW
             // Check to see minimap bit to the right is filled
             instruction_list.Add($"xor rbx, rbx");
             instruction_list.Add($"mov r11, r8");
@@ -939,7 +956,6 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"jne MARK_TILE");
 
             instruction_list.Add($"jmp DO_NOT_MARK");
-            // NEW
 
             instruction_list.Add($"label MARK_TILE");
             // Mark that the current room has been found
@@ -967,7 +983,8 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"sub rsi, 1");
             instruction_list.Add($"cmp rsi, 0");
             instruction_list.Add($"jne LOOP_START");
-
+            //instruction_list.Add("jmp END_OF_FUNCTION");
+            
             // End of function, undo stack changes
             instruction_list.Add($"label END_OF_FUNCTION");
             instruction_list.Add($"mov rsp, rbp");
@@ -1014,6 +1031,22 @@ namespace p4gpc.dungeonloader.Accessors
             instruction_list.Add($"pop rax");
             instruction_list.Add($"ret");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        void ResetMinimapInitialUpdataeCheck(Int64 functionAddress, string pattern)
+        {
+            /*
+             This is something that the modified MinimapUpdateFunction requires in order to account for the first tile of each floor.
+             Since it is a depth-first search based on the existance of a valid room, the first tile encountered must be marked valid
+             so it can be referenced for surrounding tiles
+             */
+            List<string> instruction_list = new List<string>();
+            instruction_list.Add($"use64");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"mov rax, {_minimapUpdateInitCheck}");
+            instruction_list.Add($"mov [rax], byte 0x00");
+            instruction_list.Add($"pop rax");
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.ExecuteFirst, _utils.GetPatternLength(pattern)).Activate());
         }
     }
 }

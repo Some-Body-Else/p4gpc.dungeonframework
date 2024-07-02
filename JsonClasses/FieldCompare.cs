@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace p4gpc.dungeonloader.JsonClasses
+namespace p4gpc.dungeonframework.JsonClasses
 {
     public enum RoomLoadType
     {
