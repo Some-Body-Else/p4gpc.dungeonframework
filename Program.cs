@@ -87,6 +87,7 @@ namespace p4gpc.dungeonframework
             _accessors = new List<Accessor>();
             _accessors.Append(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new FloorTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Append(new EncountTables(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new RoomTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new MinimapTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new RoomCompares(_hooks, _utilities, _memory, _configuration, _jsonImporter));

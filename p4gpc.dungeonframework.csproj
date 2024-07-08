@@ -58,6 +58,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="JSON\encounters.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="JSON\encounter_tables.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="JSON\loot_tables.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="JSON\room_compare_search.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

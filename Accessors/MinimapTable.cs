@@ -11,20 +11,9 @@ using static Reloaded.Hooks.Definitions.X64.FunctionAttribute;
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Text;
-using System.Diagnostics;
 
-using p4gpc.dungeonframework.Exceptions;
 using p4gpc.dungeonframework.JsonClasses;
 using p4gpc.dungeonframework.Configuration;
-using System.Reflection;
-using Reloaded.Memory.Pointers;
-using static System.Formats.Asn1.AsnWriter;
-using System.Data.SqlTypes;
-using static p4gpc.dungeonframework.Accessors.TemplateTable;
 
 namespace p4gpc.dungeonframework.Accessors
 {
@@ -389,6 +378,42 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"mov rsi, rbx");
             instruction_list.Add($"sub rsi, rdi");
             instruction_list.Add($"mov rbp, {_newMinimapPathLookupTable}");
+
+            /*
+             * This is too scuffed for my liking, but sacrifices must be made.
+             * 
+             * All of the data from ENCOUNT.TBL is loaded in AFTER the hooks are initially established, so I can't replace
+             * the address with my own in the traditional fashion. However, I CAN do it during runtime, and this particular
+             * function will be executed ONCE after the addresses are loaded in.
+             */
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+
+            // Not fond of hardcoding, but I also don't want to drag in a C# function for this code, so
+            // I'll take my lumps here.
+            instruction_list.Add($"mov rax, 0x140EC0900");
+            instruction_list.Add($"mov rbx, {EncountTables._enemyEncountersAddress}");
+            instruction_list.Add($"mov [rax], rbx");
+
+            instruction_list.Add($"mov rax, 0x140EC0930");
+            instruction_list.Add($"mov rbx, {EncountTables._floorEncountersAddress}");
+            instruction_list.Add($"mov [rax], rbx");
+
+            instruction_list.Add($"mov rax, 0x140EC0938");
+            instruction_list.Add($"mov rbx, {EncountTables._lootTablesAddress}");
+            instruction_list.Add($"mov [rax], rbx");
+
+            instruction_list.Add($"mov rax, 0x140EC0950");
+            instruction_list.Add($"mov rbx, {FloorTable._newFloorObjectTable}");
+            instruction_list.Add($"mov [rax], rbx");
+
+            /*
+             Heads up to future me or anyone poking around here, these are all part of a table of addresses that are loaded in at
+             start of runtime, so looking at what they point to could be handy
+             */
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, length).Activate());
         }
         void StartupMinimapCapSwap(Int64 functionAddress, string pattern)

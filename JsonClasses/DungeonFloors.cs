@@ -9,15 +9,19 @@ namespace p4gpc.dungeonframework.JsonClasses
     
     public class DungeonFloor
     {
-        public UInt16 ID { get; set; }
-        public UInt16 subID { get; set; }
-        public UInt32 Byte04 { get; set; }
+        public ushort ID { get; set; }
+        public ushort subID { get; set; }
+        public uint Byte04 { get; set; }
         public byte tileCountMin { get; set; }
         public byte tileCountMax { get; set; }
-        public UInt16 Byte0A { get; set; }
-        public byte dungeonScript{ get; set; }
-        public byte usedEnv{ get; set; }
+        public ushort Byte0A { get; set; }
+        public byte dungeonScript { get; set; }
+        public byte usedEnv { get; set; }
         public string? floorName { get; set; }
-        public nuint nameAddress { get; set; }
+        public ushort EncountTableLookup { get; set; }
+        public byte MinEncounterCount { get; set; }
+        public byte InitialEncounterCount { get; set; }
+        public byte MaxChestCount { get; set; }
+        public ushort LootTableLookup { get; set; }
     }
 }

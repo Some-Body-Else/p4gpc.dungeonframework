@@ -20,6 +20,7 @@ using System.Diagnostics;
 using p4gpc.dungeonframework.Exceptions;
 using p4gpc.dungeonframework.JsonClasses;
 using p4gpc.dungeonframework.Configuration;
+using System.Drawing;
 
 namespace p4gpc.dungeonframework.Accessors
 {
@@ -35,6 +36,7 @@ namespace p4gpc.dungeonframework.Accessors
         private nuint _newFloorTable;
         private nuint _newFloorNames;
         private nuint _newFloorNamesLookup;
+        public static nuint _newFloorObjectTable;
 
         public FloorTable(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
@@ -67,6 +69,10 @@ namespace p4gpc.dungeonframework.Accessors
             _utils.LogDebug($"New floor table address: {_newFloorTable.ToString("X8")}", Config.DebugLevels.TableLocations);
             _utils.LogDebug($"New floor table size: {totalTemplateTableSize.ToString("X8")} bytes", Config.DebugLevels.TableLocations);
 
+            _newFloorObjectTable = _memory.Allocate(_floors.Count()*10);
+            _utils.LogDebug($"New floor object table address: {_newFloorObjectTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New floor object table size: {(_floors.Count()*10).ToString("X8")} bytes", Config.DebugLevels.TableLocations);
+
 
             _newFloorNames = _memory.Allocate(floorNameByteCount);
             _utils.LogDebug($"New floor name table address: {_newFloorTable.ToString("X8")}", Config.DebugLevels.TableLocations);
@@ -78,6 +84,7 @@ namespace p4gpc.dungeonframework.Accessors
 
             totalTemplateTableSize = 0;
             int floorNameCounter = 0;
+            int floorObjCounter = 0;
             foreach (DungeonFloor floor in _floors)
             {
                 _memory.SafeWrite(_newFloorTable + (nuint)totalTemplateTableSize, floor.ID);
@@ -119,6 +126,21 @@ namespace p4gpc.dungeonframework.Accessors
                 floorNameCounter+= 8;
 
 
+                _memory.SafeWrite(_newFloorObjectTable + (nuint)floorObjCounter, floor.EncountTableLookup);
+                floorObjCounter += 2;
+                _memory.SafeWrite(_newFloorObjectTable + (nuint)floorObjCounter, floor.MinEncounterCount);
+                floorObjCounter += 1;
+                _memory.SafeWrite(_newFloorObjectTable + (nuint)floorObjCounter, floor.InitialEncounterCount);
+                floorObjCounter += 1;
+                _memory.SafeWrite(_newFloorObjectTable + (nuint)floorObjCounter, floor.MaxChestCount);
+                floorObjCounter += 1;
+                _memory.SafeWrite(_newFloorObjectTable + (nuint)floorObjCounter, (byte)0);
+                floorObjCounter += 1;
+                _memory.SafeWrite(_newFloorObjectTable + (nuint)floorObjCounter, floor.LootTableLookup);
+                floorObjCounter += 2;
+                _memory.SafeWrite(_newFloorObjectTable + (nuint)floorObjCounter, (ushort)0);
+                floorObjCounter += 2;
+                
             }
 
 
@@ -148,6 +170,11 @@ namespace p4gpc.dungeonframework.Accessors
 
             _utils.LogDebug($"Replaced address [F0 01 A8 40 01 00 00 00] at: {address.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
+            /*
+            * Floor object data table starts at 014105D9F0 in-game, need to swap out the address for our new table
+            */
+            //address = _utils.SigScan("F0 D9 05 41 01 00 00 00", "FloorObjTableAddress");
+            //_memory.SafeWrite(address, (UInt64)_newFloorObjectTable);
         }
 
         private void FloorTableWave1(Int64 functionAddress, string pattern, byte offsetSize)
