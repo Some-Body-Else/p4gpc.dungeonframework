@@ -14,17 +14,13 @@ using System.Collections.Generic;
 
 using p4gpc.dungeonframework.JsonClasses;
 using p4gpc.dungeonframework.Configuration;
+using System.Diagnostics;
 
 namespace p4gpc.dungeonframework.Accessors
 {
     public class MinimapTable : Accessor
     {
-        /*
-        To do:
-            - Determine how minimap updates are made (what enables room to be hidden by doors?)
-            - 
-         */
-
+    
         private List<DungeonMinimap> _minimaps;
         private nuint _newMinimapTable;
 
@@ -105,21 +101,7 @@ namespace p4gpc.dungeonframework.Accessors
             List<long> _roomTables = new List<long>();
             int offset = 0;
 
-
-            /*
-             There are two hardcoded tables containing the names of minimap tiles that we need to concern ourselves with.
-             One of them only contains the minimap names and is called on startup, used to load in all the minimap tiles into the game.
-             Second one has the filepath included with the name, that one is called (as far as I can tell) every frame to render the minimap.
-
-            Both of these tables have a table that actually points to the location of the strings (since their length is variable).
-            Majority of all other minimap-related issues involve direct room comparsions, so those are pending to be files under RoomCompares.
-             
-             Plan for the table is to just have the one table, but have two seperate pointer tables, one pointing to
-             the start of the filepath and the other pointing to the start of the filename. That way, we only have 3 tables
-             instead of 4 and can perform the same functions. Need to write an algorithm to calculate that out
-             
-             */
-
+            Debugger.Launch();
             for (int i = 0; i < _minimaps.Count; i++)
             {
                 search_string = "field/smap/";
@@ -292,7 +274,7 @@ namespace p4gpc.dungeonframework.Accessors
                     _memory.SafeWrite((_minimapTextureScaleTable+(nuint)(i+offset)*8), _minimaps[i].texScaleSingle[0]);
                     _memory.SafeWrite((_minimapTextureScaleTable+(nuint)(i+offset)*8+4), _minimaps[i].texScaleSingle[1]);
                     
-                    // TODO: Determine if singleOrientBased should EVER be true. False for all vanilla tiles.
+                    // SingleOrientBased is necessary for hypothetical tiles with uneven x/y values, like a 2x3 tile
                     if (_minimaps[i].singleOrientBased)
                     {
                         _memory.SafeWrite((_minimapTextureOrientTable+(nuint)(i+offset)), (byte)1);

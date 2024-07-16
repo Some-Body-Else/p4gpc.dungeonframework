@@ -60,7 +60,7 @@ namespace p4gpc.dungeonframework
 
         public void StartEx(IModLoaderV1 loaderApi, IModConfigV1 modConfig)
         {
-            // Debugger.Launch();
+            
 
             _modLoader = (IModLoader)loaderApi;
             _modConfig = (IModConfig)modConfig;
@@ -83,7 +83,7 @@ namespace p4gpc.dungeonframework
             _jsonImporter = new JsonImporter(_configuration, _utilities, modPath, defaultPath);
             _utilities.Log("JSON files loaded.");
 
-            // Debugger.Launch();
+            
             _accessors = new List<Accessor>();
             _accessors.Append(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new FloorTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
@@ -100,7 +100,7 @@ namespace p4gpc.dungeonframework
             // this is to be ignored for the moment.
             // _accessors.Append(new FieldCompares(_hooks, _utilities, _memory, _configuration, _jsonImporter));
 
-            _utilities.Log("DungeonLoader set up complete!");
+            _utilities.Log("DungeonFramework set up complete!");
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)

@@ -50,25 +50,25 @@ namespace p4gpc.dungeonframework
 
         public void Log(string message)
         {
-            _logger.WriteLine($"[DungeonLoader] {message}");
+            _logger.WriteLine($"[DungeonFramework] {message}");
         }
 
         public void LogDebug(string message, DebugLevels debugLevel)
         {
             if ((byte)Configuration.logDebug >= (byte)debugLevel)
             {
-                _logger.WriteLine($"[DungeonLoader] {message}", debugLevelDict[(int)debugLevel]);
+                _logger.WriteLine($"[DungeonFramework] {message}", debugLevelDict[(int)debugLevel]);
             }
         }
 
         public void LogWarning(string message)
         {
-            _logger.WriteLine($"[DungeonLoader] Warning: {message}", System.Drawing.Color.Yellow);
+            _logger.WriteLine($"[DungeonFramework] Warning: {message}", System.Drawing.Color.Yellow);
         }
 
         public void LogError(string message)
         {
-            _logger.WriteLine($"[DungeonLoader] Error: {message}", System.Drawing.Color.Red);
+            _logger.WriteLine($"[DungeonFramework] Error: {message}", System.Drawing.Color.Red);
         }
 
         public void LogThrownException(string message)

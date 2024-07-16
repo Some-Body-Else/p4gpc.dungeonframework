@@ -46,7 +46,7 @@ namespace p4gpc.dungeonframework.Accessors
 
         protected override void Initialize()
         {
-            // Debugger.Launch();
+            
             List<long> functions;
             String address_str_old;
             String search_string = "0F ?? ?? ?? ";

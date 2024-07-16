@@ -78,7 +78,6 @@ namespace p4gpc.dungeonframework.Accessors
 
         protected override void Initialize()
         {
-            //Debugger.Launch();
             TemplateAccessType accessType;
             Instruction instruction_type;
             List<Int64> functions;

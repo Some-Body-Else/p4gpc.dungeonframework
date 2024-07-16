@@ -47,7 +47,7 @@ namespace p4gpc.dungeonframework.Accessors
 
         protected override void Initialize()
         {
-            // Debugger.Launch();
+            
             List<Int64> functions;
             List<Int64> nameOffsets = new List<Int64>();
             Int64 offset = 0;

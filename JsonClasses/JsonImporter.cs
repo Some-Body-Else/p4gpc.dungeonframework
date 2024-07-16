@@ -137,7 +137,6 @@ namespace p4gpc.dungeonframework.JsonClasses
                 _dungeon_template_dict.Add(Byte.Parse(key), temp[key]);
             }
 
-            Debugger.Launch();
 
             if (File.Exists(jsonPath + "/encounters.json"))
             {
