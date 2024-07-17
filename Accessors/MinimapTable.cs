@@ -101,7 +101,6 @@ namespace p4gpc.dungeonframework.Accessors
             List<long> _roomTables = new List<long>();
             int offset = 0;
 
-            Debugger.Launch();
             for (int i = 0; i < _minimaps.Count; i++)
             {
                 search_string = "field/smap/";
