@@ -32,8 +32,8 @@ Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and mak
 - Allows for the addition of more dungeon floors to the game.<br>
 - Allows for the addition of custom dungeon templates to the game.<br>
 - Tie dungeon floor names to the .json, allowing them to be easily modified.<br>
-- Allows for the addition of custom dungeon rooms to the game **(limited but possible)**.<br>
-
+- Allows for the addition of custom dungeon rooms to the game.<br>
+- Allows for custom fields to be more easily added to the game.<br>
 
 ### What it Currently Does Not Do
 
@@ -48,12 +48,7 @@ Reloaded-II mod that takes elements of Persona 4 Golden's dungeon system and mak
 ### Laundry List
 
 Order is roughly from top of the list to the bottom, but not necessarily an indicator of how things will be done.<br>
-- Determine current unknown values <br>
-  - Do testing with custom 2x2 and 3x3 rooms <br>
-  - Look into .fbn files found within field .arc files <br>
-- Figure out more details behind dungeon generation <br>
-  - Figure if expanding the room size cap is possible <br>
-- Change how the type of field is determined <br>
+- Figure if expanding the room size cap is possible <br>
 - Get an icon for the mod.<br>
 - Check to see if map expansion is plausible.<br>
 
@@ -134,10 +129,10 @@ expected to collectively hold, as well as which particular tiles are expected to
 List of templates and what their associated dungeons are:<br><br>
 
 **Template 0**: Contains rooms 1, 2, 3, 4, 5, 6, 7, 9, and 10<br>
-**Used by**: Marukyu Striptease, Heaven, Yomotsu Hirasaka<br><br>
+**Used by**: Marukyu Striptease, Heaven<br><br>
 
 **Template 1**: Contains rooms 1, 2, 3, 4, 5, 6, 7, 8, 11, and 12<br>
-**Used by**: Yukiko's Castle, Void Quest<br><br>
+**Used by**: Yukiko's Castle, Void Quest, Yomotsu Hirasakata<br><br>
 
 **Template 2**: Contains rooms 1, 2, 3, 4, 5, 6, 8, 13, and 14<br>
 **Used by**: Steamy Bathhouse, Secret Laboratory, Magatsu Mandala/Inaba, Hollow Forest<br><br>
@@ -155,13 +150,15 @@ Much of the minimap still remains unknown for the moment, but what is known is w
 ### Field Compares
 Previously unmentioned because there's no real good place to bring it up, but Persona 4 Golden checks field type based on their ID.<br>
 If a field's ID is:<br>
-- Below 40, it is considered a regular field, like the TV Hub.<br> 
+- Field 1 is a special case, it is the overworld map.<br>
+- Below 20, fields are considered overworld fields.<br>
+- Below 40, fields are static dungeon fields (mostly the same as overworld fields, but keeping the distinction because these fields sometimes use the in-dungeon battle models for the player).<br> 
 - Between 40 and 59, it is considered a randomly-generated floor, used for most dungeon floors.<br> 
 - Between 60 and 79, it is considered a pregenerated floor, used for any dungeon floor with a miniboss encounter.<br> 
 - Between 80 and 199, admittedly unsure since there is one field I've seen in that range (100) and I'm not quite sure what it is.<br>
 - 200 and above is a battle field for the various encounters in the game.<br><br>
 
-I have plans to try and change this form of field identification into something more usable for modders, but those plans will not be put into motion for the forseeable future.<br>
+The mod now covers most of these comparisons. The few exceptions that I found are not for ranges, but rather to check for flags set for individual fields. These flags will be accounted for at a later time.
 
 ### Room Compares
 Most of these are found in regards to the minimap functions, there are times where the game makes decisions based on the ID of the room. The functions most of these are found around seem to be transformation functions, which makes sense considering the data the game has at hand during execution at that time lacks some potentially critical information, such as the size of the room.
