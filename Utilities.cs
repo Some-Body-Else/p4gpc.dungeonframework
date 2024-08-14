@@ -1,6 +1,7 @@
 ﻿using p4gpc.dungeonframework.Configuration;
 
 using Reloaded.Memory.Sigscan;
+using Reloaded.Memory.Sigscan.Definitions;
 using Reloaded.Memory.Sources;
 using Reloaded.Mod.Interfaces;
 using Reloaded.Memory.SigScan.ReloadedII.Interfaces;

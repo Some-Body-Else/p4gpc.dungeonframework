@@ -18,12 +18,14 @@ namespace p4gpc.dungeonframework.JsonClasses
         private List<DungeonFloor> _floors;
         private List<DungeonRoom> _rooms;
         private List<DungeonMinimap> _minimap;
-        private FieldCompare _fieldCompare;
+        private List<FieldCompares> _fieldCompares;
         private Dictionary<byte, byte> _dungeon_template_dict = new Dictionary<byte, byte>();
+        private List<DungeonLinks> _links;
 
         private List<EnemyEncounter> _enemyEncounters;
         private List<FloorEncounter> _floorEncounters;
         private List<LootTable> _lootTables;
+        private ChestPalette _chestPalettes;
 
 
         public JsonImporter(Config config, Utilities _utils, string jsonPath = "", string defaultPath="" )
@@ -74,7 +76,7 @@ namespace p4gpc.dungeonframework.JsonClasses
             {
                 if (hasCustom && !config.suppressWarnErr)
                 {
-                    _utils.LogError($"Attempt to load dungeon_minimap.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_rooms.json");
+                    _utils.LogError($"Attempt to load dungeon_rooms.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_rooms.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/dungeon_rooms.json");
             }
@@ -96,26 +98,6 @@ namespace p4gpc.dungeonframework.JsonClasses
             }
             jsonContents = jsonReader.ReadToEnd();
             _minimap = JsonSerializer.Deserialize<List<DungeonMinimap>>(jsonContents)!;
-
-            /*
-            Currently unsupported, reasoning given in Program.cs 
-
-             if (File.Exists(jsonPath + "/field_compares.json"))
-            {
-
-                jsonReader = new StreamReader(jsonPath + "/field_compares.json");
-            }
-            else
-            {
-                if (hasCustom && !config.suppressWarnErr)
-                {
-                    _utils.LogError($"Attempt to load field_compares.json from Persona 4 Golden mod folder failed, defaulting to vanilla field_compares.json");
-                }
-                jsonReader = new StreamReader(defaultPath + "/field_compares.json");
-            }
-            jsonContents = jsonReader.ReadToEnd();
-            _fieldCompare = JsonSerializer.Deserialize<FieldCompare>(jsonContents)!;
-             */
 
             if (File.Exists(jsonPath + "/dungeon_template_dict.json"))
             {
@@ -147,7 +129,7 @@ namespace p4gpc.dungeonframework.JsonClasses
             {
                 if (hasCustom && !config.suppressWarnErr)
                 {
-                    _utils.LogError($"Attempt to load encounters.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_minimap.json");
+                    _utils.LogError($"Attempt to load encounters.json from Persona 4 Golden mod folder failed, defaulting to vanilla encounters.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/encounters.json");
             }
@@ -163,7 +145,7 @@ namespace p4gpc.dungeonframework.JsonClasses
             {
                 if (hasCustom && !config.suppressWarnErr)
                 {
-                    _utils.LogError($"Attempt to load encounter_tables.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_minimap.json");
+                    _utils.LogError($"Attempt to load encounter_tables.json from Persona 4 Golden mod folder failed, defaulting to vanilla encounter_tables.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/encounter_tables.json");
             }
@@ -179,12 +161,79 @@ namespace p4gpc.dungeonframework.JsonClasses
             {
                 if (hasCustom && !config.suppressWarnErr)
                 {
-                    _utils.LogError($"Attempt to load loot_tables.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_minimap.json");
+                    _utils.LogError($"Attempt to load loot_tables.json from Persona 4 Golden mod folder failed, defaulting to vanilla loot_tables.json");
                 }
                 jsonReader = new StreamReader(defaultPath + "/loot_tables.json");
             }
             jsonContents = jsonReader.ReadToEnd();
             _lootTables = JsonSerializer.Deserialize<List<LootTable>>(jsonContents)!;
+
+
+            if (File.Exists(jsonPath + "/field_compares.json"))
+            {
+
+                jsonReader = new StreamReader(jsonPath + "/field_compares.json");
+            }
+            else
+            {
+                if (hasCustom && !config.suppressWarnErr)
+                {
+                    _utils.LogError($"Attempt to load field_compares.json from Persona 4 Golden mod folder failed, defaulting to vanilla field_compares.json");
+                }
+                jsonReader = new StreamReader(defaultPath + "/field_compares.json");
+            }
+
+            _fieldCompares = new();
+            jsonContents = jsonReader.ReadToEnd();
+            var tempo = JsonSerializer.Deserialize<List<Dictionary<string, List<byte> > > >(jsonContents)!;
+            foreach (var entry in tempo)
+            {
+                FieldCompares compare = new();
+                compare.rooms = new();
+                foreach (var key in entry.Keys)
+                {
+                    RoomEntry roomEntry = new();
+                    roomEntry.LoadType = (RoomLoadType)entry[key][0];
+                    roomEntry.Flags = entry[key][1];
+                    compare.rooms.Add(byte.Parse(key), roomEntry);
+                }
+                _fieldCompares.Add(compare);
+
+            }
+
+            if (File.Exists(jsonPath + "/dungeon_links.json"))
+            {
+
+                jsonReader = new StreamReader(jsonPath + "/dungeon_links.json");
+            }
+            else
+            {
+                if (hasCustom && !config.suppressWarnErr)
+                {
+                    _utils.LogError($"Attempt to load dungeon_links.json from Persona 4 Golden mod folder failed, defaulting to vanilla dungeon_links.json");
+                }
+                jsonReader = new StreamReader(defaultPath + "/dungeon_links.json");
+            }
+            jsonContents = jsonReader.ReadToEnd();
+            _links = JsonSerializer.Deserialize<List<DungeonLinks>>(jsonContents)!;
+
+
+            if (File.Exists(jsonPath + "/chest_palettes.json"))
+            {
+
+                jsonReader = new StreamReader(jsonPath + "/chest_palettes.json");
+            }
+            else
+            {
+                if (hasCustom && !config.suppressWarnErr)
+                {
+                    _utils.LogError($"Attempt to load chest_palettes.json from Persona 4 Golden mod folder failed, defaulting to vanilla chest_palettes.json");
+                }
+                jsonReader = new StreamReader(defaultPath + "/chest_palettes.json");
+            }
+            jsonContents = jsonReader.ReadToEnd();
+            _chestPalettes = JsonSerializer.Deserialize<ChestPalette>(jsonContents)!;
+
 
             jsonReader.Close();
         }
@@ -207,9 +256,9 @@ namespace p4gpc.dungeonframework.JsonClasses
             return _minimap;
         }
 
-        public FieldCompare GetFieldCompare()
+        public List<FieldCompares> GetFieldCompare()
         {
-            return _fieldCompare;
+            return _fieldCompares;
         }
 
         public Dictionary<byte, byte> GetDungeonTemplateDictionary()
@@ -230,6 +279,15 @@ namespace p4gpc.dungeonframework.JsonClasses
         public List<LootTable> GetLootTables()
         {
             return _lootTables;
+        }
+        public List<DungeonLinks> GetLinks()
+        {
+            return _links;
+        }
+
+        public ChestPalette GetChestPalettes()
+        {
+            return _chestPalettes;
         }
     }
 }

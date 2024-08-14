@@ -28,12 +28,6 @@ namespace p4gpc.dungeonframework.Accessors
 {
     public class RoomTable : Accessor
     {
-        /*
-        To do:
-            -Account for room connection table (Maybe, since it's tile-by-tile basis, it might have all bases covered already)
-            --Doesn't appear so. Could also just cut out some related chaff with it
-         */
-
         private List<DungeonRoom> _rooms;
         private nuint _newRoomTable;
 

@@ -41,7 +41,6 @@ namespace p4gpc.dungeonframework.Accessors
 
         public EncountTables(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)
         {
-            // _fieldCompareTable = jsonImporter.GetFieldCompare();
             _enemyEncounters = jsonImporter.GetEnemyEncounters();
             _floorEncounters = jsonImporter.GetEncounterTables();
             _lootTables = jsonImporter.GetLootTables();
@@ -52,16 +51,16 @@ namespace p4gpc.dungeonframework.Accessors
         protected override void Initialize()
         {
             _enemyEncountersAddress = _memory.Allocate(_enemyEncounters.Count()*0x16);
-            _utils.LogDebug($"New floor object table address: {_enemyEncountersAddress.ToString("X8")}", Config.DebugLevels.TableLocations);
-            _utils.LogDebug($"New floor object table size: {(_enemyEncounters.Count()*0x16).ToString("X8")} bytes", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New enemy encounter table address: {_enemyEncountersAddress.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New enemy encounter table size: {(_enemyEncounters.Count()*0x16).ToString("X8")} bytes", Config.DebugLevels.TableLocations);
 
             _floorEncountersAddress = _memory.Allocate(_floorEncounters.Count()*0xFC);
-            _utils.LogDebug($"New floor object table address: {_floorEncountersAddress.ToString("X8")}", Config.DebugLevels.TableLocations);
-            _utils.LogDebug($"New floor object table size: {(_floorEncounters.Count()*0xFC).ToString("X8")} bytes", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New floor encounter table address: {_floorEncountersAddress.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New floor encounter table size: {(_floorEncounters.Count()*0xFC).ToString("X8")} bytes", Config.DebugLevels.TableLocations);
 
             _lootTablesAddress = _memory.Allocate(_lootTables.Count()*0x15C);
-            _utils.LogDebug($"New floor object table address: {_lootTablesAddress.ToString("X8")}", Config.DebugLevels.TableLocations);
-            _utils.LogDebug($"New floor object table size: {(_lootTables.Count()*0x15C).ToString("X8")} bytes", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New floor loot table address: {_lootTablesAddress.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _utils.LogDebug($"New floor loot table size: {(_lootTables.Count()*0x15C).ToString("X8")} bytes", Config.DebugLevels.TableLocations);
 
             int counter = 0;
             foreach (EnemyEncounter encounter in _enemyEncounters)

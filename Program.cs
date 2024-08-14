@@ -91,14 +91,7 @@ namespace p4gpc.dungeonframework
             _accessors.Append(new RoomTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new MinimapTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new RoomCompares(_hooks, _utilities, _memory, _configuration, _jsonImporter));
-
-            // Field comparison replacements are a larger-scale thing I want to tackle later.
-            // What type of field you deal with (overworld, dungeon, battle, other?) is dictated by what
-            // range of number its ID falls into. As you might imagine, this makes the possibility of creating
-            // custom fields more difficult, since instead of just using an unused ID, you'd have to find one
-            // in a specific range instead. However, for the moment, I'm focusing on dungeon-only stuff, so
-            // this is to be ignored for the moment.
-            // _accessors.Append(new FieldCompares(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Append(new FieldComparesAccessor(_hooks, _utilities, _memory, _configuration, _jsonImporter));
 
             _utilities.Log("DungeonFramework set up complete!");
         }

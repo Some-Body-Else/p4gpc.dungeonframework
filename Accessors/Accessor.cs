@@ -5,7 +5,6 @@ using Reloaded.Hooks.Definitions.X64;
 using Reloaded.Memory.Sources;
 using Reloaded.Memory;
 using Reloaded.Memory.Sigscan;
-using Reloaded.Mod.Interfaces;
 
 using static Reloaded.Hooks.Definitions.X64.FunctionAttribute;
 
@@ -22,6 +21,7 @@ using p4gpc.dungeonframework.JsonClasses;
 using p4gpc.dungeonframework.Configuration;
 using System.ComponentModel.Design;
 using System.Reflection.Metadata.Ecma335;
+using static p4gpc.dungeonframework.Accessors.Accessor;
 
 namespace p4gpc.dungeonframework.Accessors
 {
@@ -39,6 +39,12 @@ namespace p4gpc.dungeonframework.Accessors
         protected List<IReverseWrapper> _reverseWrapperList;
         protected List<IAsmHook> _functionHookList;
         protected List<String> _commands;
+
+        private CrashLogFunction _crashLogFunction;
+        private static IReverseWrapper _logCrashWrapper;
+        
+        protected static string _logCrashCallMnemonic;
+
 
 
         /// <summary>
@@ -78,8 +84,16 @@ namespace p4gpc.dungeonframework.Accessors
         protected const byte WORD = 4;
         protected const byte HALFWORD = 2;
         protected const byte BYTE = 1;
+
+        protected void CrashLog(int address_of_crash)
+        {
+            throw new CustomException($"Fatal error on function at: {address_of_crash.ToString("X8")}", _utils);
+        }
+
+
         protected void executeAccessor(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)
         {
+
             _hooks = hooks;
             _utils = utils;
             _memory = memory;
@@ -88,6 +102,15 @@ namespace p4gpc.dungeonframework.Accessors
             _reverseWrapperList = new List<IReverseWrapper>();
             _functionHookList = new List<IAsmHook>();
             _commands = new List<String>();
+
+
+            if (_logCrashWrapper == null)
+            {
+                _crashLogFunction = CrashLog;
+                IReverseWrapper<CrashLogFunction> _tempLogCrashWrapper = _hooks.CreateReverseWrapper<CrashLogFunction>(_crashLogFunction);
+                _logCrashCallMnemonic = _hooks.Utilities.GetAbsoluteCallMnemonics<CrashLogFunction>(_crashLogFunction, out _tempLogCrashWrapper);
+                _logCrashWrapper = _tempLogCrashWrapper;
+            }
 
             if (_lastUsedAddress == 0)
             {
@@ -101,5 +124,11 @@ namespace p4gpc.dungeonframework.Accessors
         }
 
         protected virtual void Initialize(){}
+
+
+        [Function(new[] { Register.rax, }, Register.rax, false)]
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate void CrashLogFunction(int eax);
+
     }
 }

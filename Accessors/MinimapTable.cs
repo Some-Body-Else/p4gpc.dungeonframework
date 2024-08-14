@@ -68,11 +68,13 @@ namespace p4gpc.dungeonframework.Accessors
         private nuint _minimapIndexLookupTable;
 
         /*
-         * Address for a flag that needs to be checked to determine the behavior of the new minimap updating function.
-         * Without this, going down stairs results in the minimap attempting to find a valid tile to connect to when none yet exist,
-         * causing an internal stack overflow.
+         * The minimap-updating logic needs to know something about the size of each room so it can determine if further searching is needed.
+         * Thus, a small table is being created where the data can be stored in a more convienient position
          */
-        private nuint _minimapUpdateInitCheck;
+        private nuint _minimapRoomSizeTable;
+
+        // Keeps track of offsets when dealing with messy BFS stuff
+        private nuint _minimapNameLater;
 
         private int minimapCounter = 0;
 
@@ -134,12 +136,29 @@ namespace p4gpc.dungeonframework.Accessors
             _minimapUnknownPerTextureTable = _memory.Allocate(minimapCounter*8);
             _utils.LogDebug($"Location of UnknownPerTextureTable: {_minimapUnknownPerTextureTable.ToString("X8")}", Config.DebugLevels.TableLocations);
 
-            _minimapRevealStack = _memory.Allocate(808);
+            _minimapRevealStack = _memory.Allocate(432);
             _utils.LogDebug($"Location of MinimapRevealStack: {_minimapRevealStack.ToString("X8")}", Config.DebugLevels.TableLocations);
 
-            _minimapUpdateInitCheck = _memory.Allocate(1);
-            _utils.LogDebug($"Location of MinimapUpdateInitCheck: {_minimapRevealStack.ToString("X8")}", Config.DebugLevels.TableLocations);
-            _memory.SafeWrite(_minimapUpdateInitCheck, 0);
+            _minimapRoomSizeTable = _memory.Allocate(_jsonImporter.GetRooms().Count);
+            _utils.LogDebug($"Location of MinimapRoomSizeTable: {_minimapRoomSizeTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+            _minimapNameLater = _memory.Allocate(20);
+            _utils.LogDebug($"Location of MinimapNameLater: {_minimapNameLater.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+            offset = 0;
+            foreach (DungeonRoom room in _jsonImporter.GetRooms())
+            {
+                // Don't need the actual room size, just need to know if we have to search
+                if (room.sizeX > 1 || room.sizeY > 1)
+                {
+                    _memory.SafeWrite((_minimapRoomSizeTable + (nuint)offset), (byte)1);
+                }
+                else
+                {
+                    _memory.SafeWrite((_minimapRoomSizeTable + (nuint)offset), (byte)0);
+                }
+                offset++;
+            }
 
             offset = 0;
             for (int i = 0; i < _minimaps.Count; i++)
@@ -333,10 +352,10 @@ namespace p4gpc.dungeonframework.Accessors
             ReplaceMinimapPositionCheck(func, search_string);
             _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
-            search_string = "BA A8 01 00 00 8B 0D 70 9A C6 FD";
-            func = _utils.SigScan(search_string, $"ResetMinimapInitialUpdataeCheck");
-            ResetMinimapInitialUpdataeCheck(func, search_string);
-            _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+            // search_string = "BA A8 01 00 00 8B 0D 70 9A C6 FD";
+            // func = _utils.SigScan(search_string, $"ResetMinimapInitialUpdataeCheck");
+            // ResetMinimapInitialUpdataeCheck(func, search_string);
+            // _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
         }
 
         void ReplaceStartupSearch(Int64 functionAddress, int length)
@@ -570,6 +589,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"pop rdx");
             instruction_list.Add($"pop rsi");
             instruction_list.Add($"pop rdi");
+
             // Setup our return address because jumping there is shonky
             instruction_list.Add($"push rax");
             instruction_list.Add($"push rax");
@@ -643,21 +663,6 @@ namespace p4gpc.dungeonframework.Accessors
         void ReplaceMinimapUpdateFunction(Int64 functionAddress, string pattern)
         {
             /*
-             * NOTE:
-             * This is intended only to modify how the minimap updates so that it is no longer dependant on a room's ID number to map it out.
-             * Currently, it is not working, the main effect the player sees is that the minimap tiles do not render.
-             * However, I have ran into at least one case where it appears that an enemy was out-of-bounds and wandered into an area with no collision, crashing the game.
-             * This is worrying, since I have no clue why anything changed here would affect enemy spawning. 
-             * A realistic explanation is that what I'm changing here currently has inadvertant changes that I'm not aware of as I'm fumbling to get this working
-             * Another view would be that this is a bug caused by some other changes this mod makes and that it just rarely surfaced thus far.
-             * Worst-case scenario, the code I am replacing also happens to handle enemy spawning and thus needs to account for another layer.
-             * 
-             * 
-             * BE AWARE
-             * 
-             * Note: After some thinking a few month after this happened, could be due to other shennanigans involving us improperly updating the minimap, so
-             * might not be enemy-related at all.
-             * 
              * TODO:
              * Rework so we can get 1 tile ahead, current iteration is jank with how it reveals the minimap. But it does appear to work. so points on that!
              */
@@ -671,336 +676,512 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"mov [{_lastUsedAddress}], rax");
             instruction_list.Add($"pop rax");
 
-            instruction_list.Add($"push rax");
-            instruction_list.Add($"push rbx");
-            instruction_list.Add($"push rcx");
-            instruction_list.Add($"push rdx");
-            instruction_list.Add($"push r8");
-            instruction_list.Add($"push r9");
+            // RBX - lower offset
+            // RDI - upper offset
+            // RAX - MapRAM address
+            // RCX - Minimap Reveal Address
+            // RDX - StackBase ( For comparisons )
+            // RSI - Direction Stack(?)
+            // RSP - BFS Stack
+            // R# - Temporary variables
+            AccessorRegister LowerOffset = AccessorRegister.rbx;
+            AccessorRegister UpperOffset = AccessorRegister.rdi;
+            AccessorRegister MapRam = AccessorRegister.rax;
+            AccessorRegister MinimapRevealTable = AccessorRegister.rcx;
+            AccessorRegister StackBase = AccessorRegister.rdx;
+            AccessorRegister StackBFS = AccessorRegister.rsp;
+            AccessorRegister StackCardinal = AccessorRegister.rsi;
+            AccessorRegister AddressTempA = AccessorRegister.r8;
+            AccessorRegister VariableTempA = AccessorRegister.r9;
+            AccessorRegister AddressTempB = AccessorRegister.r10;
+            AccessorRegister VariableTempB = AccessorRegister.r11;
+            AccessorRegister AddressTempC = AccessorRegister.r12;
+            AccessorRegister VariableTempC = AccessorRegister.r13;
+            AccessorRegister AddressTempD = AccessorRegister.r12;
+            AccessorRegister VariableTempD = AccessorRegister.r15;
 
-            // Upper and lower offsets, respectively
-            instruction_list.Add($"mov r8, rbx");
-            instruction_list.Add($"and r8, 0xFF");
-            instruction_list.Add($"mov r9, rdi");
-            instruction_list.Add($"and r9, 0xFF");
+            instruction_list.Add($"push {UpperOffset}");
+            instruction_list.Add($"push {LowerOffset}");
+            instruction_list.Add($"push {MapRam}");
+            instruction_list.Add($"push {MinimapRevealTable}");
+            instruction_list.Add($"push {StackBFS}");
+            instruction_list.Add($"push {StackCardinal}");
+            instruction_list.Add($"push {AddressTempA}");
+            instruction_list.Add($"push {VariableTempA}");
+            instruction_list.Add($"push {AddressTempB}");
+            instruction_list.Add($"push {VariableTempB}");
+            instruction_list.Add($"push {AddressTempC}");
+            instruction_list.Add($"push {VariableTempC}");
+            instruction_list.Add($"push {AddressTempD}");
+            instruction_list.Add($"push {VariableTempD}");
 
-            /*
-             Debating on finding these in a more dynamic way, to avoid heartbreak on my end if this game gets an update again.
-             */
+            instruction_list.Add($"and {UpperOffset}, 0xFF");
+            instruction_list.Add($"and {LowerOffset}, 0xFF");
+
+            // Debating on finding these in a more dynamic way, to avoid heartbreak on my end if this game gets an update again.
             // Map base address
-            instruction_list.Add($"mov r12, 0x1411AB39C");
+            instruction_list.Add($"mov {MapRam}, 0x1411AB39C");
             // Minimap reveal table address
-            instruction_list.Add($"mov rax, 0x1451EC580");
-            instruction_list.Add($"mov r13, [rax]");
-
-            // Stack of nodes to process
+            instruction_list.Add($"mov {MinimapRevealTable}, 0x1451EC580");
+            instruction_list.Add($"mov {MinimapRevealTable}, [{MinimapRevealTable}]");
+            // Prepare stacks
             instruction_list.Add($"push rbp");
-            instruction_list.Add($"mov rbp, rsp");
-            instruction_list.Add($"mov rsp, {_minimapRevealStack+0x800}");
+            instruction_list.Add($"mov rbp, {StackBFS}");
+            instruction_list.Add($"mov {StackBFS}, {_minimapRevealStack+400}");
+            instruction_list.Add($"mov {StackCardinal}, {_minimapRevealStack+432}");
 
-            // Counter for how many nodes need to be checked
-            instruction_list.Add($"xor rsi, rsi");
-            instruction_list.Add($"add rsi, 1");
-            
-            // Full offset
-            instruction_list.Add($"xor rdi, rdi");
-            instruction_list.Add($"add rdi, r9");
-            instruction_list.Add($"shl rdi, 4");
-            instruction_list.Add($"add rdi, r8");
-            instruction_list.Add($"shl rdi, 4");
+            // Check to make sure this tile is valid
+            instruction_list.Add($"mov {AddressTempA}, {UpperOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {LowerOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {MapRam}");
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}]");
+            instruction_list.Add($"cmp {VariableTempA}, 1");
+            instruction_list.Add($"jne EOF");
+            // Getting some door-related data
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempA}+0x4]");
+            instruction_list.Add($"mov {VariableTempB}, 0");
+            // Getting some tile-related data
+            instruction_list.Add($"movzx {VariableTempC}, byte [{AddressTempA}+0x1]");
+            instruction_list.Add($"and {VariableTempC}, 0xF0");
 
-            // Address of particular tile in offset table
-            instruction_list.Add($"mov rcx, r12");
-            instruction_list.Add($"add rcx, rdi");
+            // Pushing directionally-adjectent tiles to 'stack'
 
-            // Examine entry in Map RAM
-            instruction_list.Add($"mov rbx, [rcx]");
-            instruction_list.Add($"and rbx, 0xFF");
-            instruction_list.Add($"cmp rbx, 1");
-            instruction_list.Add($"jne END_OF_FUNCTION");
+            // North
+            instruction_list.Add($"sub {AddressTempA}, 0x100");
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0x4]");
+            instruction_list.Add($"and {VariableTempA}, 0xFF");
+            instruction_list.Add($"cmp {VariableTempA}, 0");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempA}");
 
-            // Further inspection needed
-            instruction_list.Add($"label NEED_TO_CHECK");
+            // See if the adjacent tile is part of the same room
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempD}");
+            instruction_list.Add($"jne STORE_NORTH");
+            instruction_list.Add($"mov {AddressTempC}, {_minimapRoomSizeTable}");
+            instruction_list.Add($"add {AddressTempC}, {VariableTempA}");
+            instruction_list.Add($"movzx {AddressTempB}, byte [{AddressTempC}]");
+            // If value here is 0, then it's a 1x1 tile
+            instruction_list.Add($"cmp {AddressTempB}, 0");
+            instruction_list.Add($"je STORE_NORTH");
 
-            // This is where things get REALLY messy; using a breadth-first search algorithm
-            // to find every tile with a matching room ID and a corresponding set of bitflags
-            // to determine what switches are to be flipped when rendering the minimap
+            // Is it a seperate section of the room?
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0x1]");
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempC}");
+            instruction_list.Add($"je STORE_NORTH");
 
-            // Fetch room ID
-            instruction_list.Add($"movzx r10, byte [rcx+0x4]");
+            // Does the other tile specifically connect to this one
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0xA]");
+            instruction_list.Add($"test {VariableTempA}, 4");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempB}");
+            instruction_list.Add($"je STORE_NORTH");
 
-            // Check if map has 
-            instruction_list.Add($"mov r15, {_minimapUpdateInitCheck}");
-            instruction_list.Add($"cmp [r15], byte 0x00");
-            instruction_list.Add($"jne LOOP_START");
-            instruction_list.Add($"mov [r15], byte 0x01");
-            //Entrance tile
-            instruction_list.Add($"mov rbx, r13");
+            // Door pointing here, is it open?
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0xB]");
+            instruction_list.Add($"and {VariableTempA}, 0xF0");
+            instruction_list.Add($"cmp {VariableTempA}, 0");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempA}");
+            instruction_list.Add($"label STORE_NORTH");
+            instruction_list.Add($"mov [{StackCardinal}], {AddressTempA}");
 
-            instruction_list.Add($"add rbx, r9");
-            instruction_list.Add($"add rbx, r9");
+            // West
+            instruction_list.Add($"mov {AddressTempA}, {UpperOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {LowerOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {MapRam}");
+            instruction_list.Add($"sub {AddressTempA}, 0x10");
 
-            instruction_list.Add($"mov rcx, r8");
-            instruction_list.Add($"mov rdx, [rbx]");
+            // Check if room is invalid
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0x4]");
+            instruction_list.Add($"and {VariableTempA}, 0xFF");
+            instruction_list.Add($"cmp {VariableTempA}, 0");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempA}");
+            instruction_list.Add($"je STORE_WEST");
 
-            // Need to check to make sure this tile is connected to an already-revealed tile
-            instruction_list.Add($"bts dx, cx");
-            instruction_list.Add($"mov [rbx], dx");
-            instruction_list.Add("jmp END_OF_FUNCTION");
+            // See if the adjacent tile is part of the same room
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempD}");
+            instruction_list.Add($"jne STORE_WEST");
+            instruction_list.Add($"mov {AddressTempC}, {_minimapRoomSizeTable}");
+            instruction_list.Add($"add {AddressTempC}, {VariableTempA}");
+            instruction_list.Add($"movzx {AddressTempB}, byte [{AddressTempC}]");
+            // If value here is 0, then it's a 1x1 tile
+            instruction_list.Add($"cmp {AddressTempB}, 0");
+            instruction_list.Add($"je STORE_WEST");
+
+            // Is it a seperate section of the room?
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0x1]");
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempC}");
+            instruction_list.Add($"je STORE_WEST");
+
+            // Does the other tile specifically connect to this one
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0xA]");
+            instruction_list.Add($"test {VariableTempA}, 8");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempB}");
+            instruction_list.Add($"je STORE_WEST");
+
+            // Door pointing here, is it open?
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0xB]");
+            instruction_list.Add($"and {VariableTempA}, 0xF0");
+            instruction_list.Add($"cmp {VariableTempA}, 0");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempA}");
+            instruction_list.Add($"label STORE_WEST");
+            instruction_list.Add($"mov [{StackCardinal}-0x8], {AddressTempA}");
+
+            // South
+            instruction_list.Add($"mov {AddressTempA}, {UpperOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {LowerOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {MapRam}");
+            instruction_list.Add($"add {AddressTempA}, 0x100");
+
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0x4]");
+            instruction_list.Add($"and {VariableTempA}, 0xFF");
+            instruction_list.Add($"cmp {VariableTempA}, 0");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempA}");
+            // See if the adjacent tile is part of the same room
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempD}");
+            instruction_list.Add($"jne STORE_SOUTH");
+            instruction_list.Add($"mov {AddressTempC}, {_minimapRoomSizeTable}");
+            instruction_list.Add($"add {AddressTempC}, {VariableTempA}");
+            instruction_list.Add($"movzx {AddressTempB}, byte [{AddressTempC}]");
+            // If value here is 0, then it's a 1x1 tile
+            instruction_list.Add($"cmp {AddressTempB}, 0");
+            instruction_list.Add($"je STORE_SOUTH");
 
 
-            // instruction_list.Add($"and r10l, 0xFF");
+            // Is it a seperate section of the room?
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0x1]");
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempC}");
+            instruction_list.Add($"je STORE_SOUTH");
+
+            // Does the other tile specifically connect to this one
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0xA]");
+            instruction_list.Add($"test {VariableTempA}, 1");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempB}");
+            instruction_list.Add($"je STORE_SOUTH");
+
+            // Door pointing here, is it open?
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0xB]");
+            instruction_list.Add($"and {VariableTempA}, 0xF0");
+            instruction_list.Add($"cmp {VariableTempA}, 0");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempA}");
+            instruction_list.Add($"label STORE_SOUTH");
+            instruction_list.Add($"mov [{StackCardinal}-0x10], {AddressTempA}");
 
 
-            /*
-            -Loop:
-                {
-                    Check if tile is orientated towards any other tiles
-                    --Should alwas be the case
-                    See if tile it is adjacent to has the same upper nybble of bitflags and same room ID
-                    --If yes, see if the tile's corresponding offset is in the list of found offsets
-                    ----If it is, ignore it
-                    ----Otherwise, add it to the found list, push the offset to the internal stack, and increment the stack counter
-                    Modify the current offset's flags
-                    Pop the most recent offset of the internal stack, decrement counter
-                    If counter is higher than 0, repeat, otherwise goto END_OF_FUNCTION
-                }
-            Order of execution for loop might have to be shuffled around, this format could produce an error I think
+            // East
+            instruction_list.Add($"mov {AddressTempA}, {UpperOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {LowerOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {MapRam}");
+            instruction_list.Add($"add {AddressTempA}, 0x10");
 
-             */
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0x4]");
+            instruction_list.Add($"and {VariableTempA}, 0xFF");
+            instruction_list.Add($"cmp {VariableTempA}, 0");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempA}");
+            // See if the adjacent tile is part of the same room
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempD}");
+            instruction_list.Add($"jne STORE_EAST");
 
-            instruction_list.Add($"label LOOP_START");
+            instruction_list.Add($"mov {AddressTempC}, {_minimapRoomSizeTable}");
+            instruction_list.Add($"add {AddressTempC}, {VariableTempA}");
+            instruction_list.Add($"movzx {AddressTempB}, byte [{AddressTempC}]");
+            // If value here is 0, then it's a 1x1 tile
+            instruction_list.Add($"cmp {AddressTempB}, 0");
+            instruction_list.Add($"je STORE_EAST");
 
-            instruction_list.Add($"movzx r15, byte [rcx+0x1]");
-            instruction_list.Add($"and r15, 0xF0");
+            // Is it a seperate section of the room?
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0x1]");
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempC}");
+            instruction_list.Add($"je STORE_EAST");
 
-            instruction_list.Add($"movzx r11, byte [rcx+0xA]");
+            // Does the other tile specifically connect to this one
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0xA]");
+            instruction_list.Add($"test {VariableTempA}, 2");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempB}");
+            instruction_list.Add($"je STORE_EAST");
 
-            // Check for connection on the east side of the room
-            instruction_list.Add($"and r11l, 0x0F");
-            instruction_list.Add($"mov al, r11l");
-            instruction_list.Add($"and al, 0x08");
-            instruction_list.Add($"cmp al, 0x00");
+            // Door pointing here, is it open?
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0xB]");
+            instruction_list.Add($"and {VariableTempA}, 0xF0");
+            instruction_list.Add($"cmp {VariableTempA}, 0");
+            instruction_list.Add($"cmove {AddressTempA}, {VariableTempA}");
+            instruction_list.Add($"label STORE_EAST");
+            instruction_list.Add($"mov [{StackCardinal}-0x18], {AddressTempA}");
 
+            // And now we have our current address
+            instruction_list.Add($"mov {AddressTempA}, {UpperOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {LowerOffset}");
+            instruction_list.Add($"shl {AddressTempA}, 4");
+            instruction_list.Add($"add {AddressTempA}, {MapRam}");
+
+            // Mark current tile as found
+            instruction_list.Add($"mov {AddressTempB}, {MinimapRevealTable}");
+            instruction_list.Add($"add {AddressTempB}, {UpperOffset}");
+            instruction_list.Add($"add {AddressTempB}, {UpperOffset}");
+            instruction_list.Add($"mov {VariableTempA}, {LowerOffset}");
+            instruction_list.Add($"mov {VariableTempB}, [{AddressTempB}]");
+            instruction_list.Add($"bts {VariableTempB}, {VariableTempA}");
+            instruction_list.Add($"mov [{AddressTempB}], {VariableTempB}");
+            instruction_list.Add($"jmp ROOM_CHECK");
+
+            // Mark current tile as found
+            // Seperate block due to some weirdness involving keeping the offsets in play
+            instruction_list.Add($"label TILE_FOUND_START");
+            instruction_list.Add($"mov {AddressTempB}, {MinimapRevealTable}");
+            instruction_list.Add($"add {AddressTempB}, {UpperOffset}");
+            instruction_list.Add($"add {AddressTempB}, {UpperOffset}");
+            instruction_list.Add($"mov {VariableTempA}, {LowerOffset}");
+            instruction_list.Add($"mov {VariableTempB}, [{AddressTempB}]");
+            instruction_list.Add($"bts {VariableTempB}, {VariableTempA}");
+            instruction_list.Add($"mov [{AddressTempB}], {VariableTempB}");
+            instruction_list.Add($"mov {UpperOffset}, {VariableTempC}");
+            instruction_list.Add($"mov {LowerOffset}, {VariableTempD}");
+
+            instruction_list.Add($"label ROOM_CHECK");
+
+            // Check if multi-tile room or not
+            instruction_list.Add($"movzx {VariableTempA}, byte [{AddressTempA}+0x4]");
+            instruction_list.Add($"mov {AddressTempC}, {_minimapRoomSizeTable}");
+            instruction_list.Add($"add {AddressTempC}, {VariableTempA}");
+            instruction_list.Add($"movzx {VariableTempC}, byte [{AddressTempC}]");
+            // If value here is 0, then it's a 1x1 tile, we can start checking the surrounding tiles
+            instruction_list.Add($"cmp {VariableTempC}, 0");
+            instruction_list.Add($"je NEXT_CARDINAL_TILE");
+
+
+            // If multi-tiled, beign searching for other parts that may need to be revealed
+            instruction_list.Add($"label BFS_START");
+            instruction_list.Add($"mov {VariableTempB}, {AddressTempA}");
+            instruction_list.Add($"sub {VariableTempB}, {MapRam}");
+            instruction_list.Add($"shr {VariableTempB}, 4");
+            instruction_list.Add($"mov {VariableTempC}, {VariableTempB}");
+            instruction_list.Add($"and {VariableTempC}, 0xF");
+            instruction_list.Add($"shr {VariableTempB}, 4");
+
+            instruction_list.Add($"add {VariableTempB}, {VariableTempB}");
+            instruction_list.Add($"add {VariableTempB}, {MinimapRevealTable}");
+            instruction_list.Add($"mov {VariableTempD}, [{VariableTempB}]");
+            instruction_list.Add($"bts {VariableTempD}, {VariableTempC}");
+            instruction_list.Add($"mov [{VariableTempB}], {VariableTempD}");
+
+            instruction_list.Add($"movzx {VariableTempB}, byte [{AddressTempA}+0x1]");
+            instruction_list.Add($"movzx {VariableTempC}, byte [{AddressTempA}+0xA]");
+            instruction_list.Add($"and {VariableTempB}, 0xF0");
+
+            // See if there's an east connection
+            instruction_list.Add($"test {VariableTempC}, 0x8");
             instruction_list.Add($"je CHECK_SOUTH");
-            instruction_list.Add($"mov rdx, rcx");
-            instruction_list.Add($"add rdx, 0x10");
-            // Is tile connected to part of the same chain?
-            // Same room ID
-            instruction_list.Add($"movzx r14, byte [rdx+0x04]");
-            instruction_list.Add($"cmp r14l, r10l");
+            // Connected on east side, is it connected to a tile of the same ID?
+            instruction_list.Add($"mov {AddressTempD}, {AddressTempA}");
+            instruction_list.Add($"add {AddressTempD}, 0x10");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x4]");
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempD}");
             instruction_list.Add($"jne CHECK_SOUTH");
-            // Same upper nybble
-            instruction_list.Add($"movzx r14, byte [rdx+0x01]");
-            instruction_list.Add($"and r14, 0xF0");
-            // NEW
-            instruction_list.Add($"cmp r14l, 0");
-            instruction_list.Add($"je FOUND_BEFORE_E");
-            instruction_list.Add($"cmp r14l, r15l");
+            // Same upper nybble?
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x1]");
+            instruction_list.Add($"and {VariableTempD}, 0xF0");
+            instruction_list.Add($"cmp {VariableTempD}, {VariableTempB}");
             instruction_list.Add($"jne CHECK_SOUTH");
 
-            instruction_list.Add($"label FOUND_BEFORE_E");
-            // NEW
-            
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0xA]");
+            instruction_list.Add($"test {VariableTempD}, 4");
+            instruction_list.Add($"je CHECK_SOUTH");
+
             // Has the tile has already been discovered in some previous iteration?
-            instruction_list.Add($"mov r14l, [rdx+0x0F]");
-            instruction_list.Add($"cmp r14l, 0x01");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x0F]");
+            instruction_list.Add($"cmp {VariableTempD}, 0x01");
             instruction_list.Add($"je CHECK_SOUTH");
 
             // Adjacent tile matches all parameters, add it to the stack
-            instruction_list.Add($"push rdx");
-            instruction_list.Add($"add rsi, 1");
+            instruction_list.Add($"push {AddressTempD}");
+            instruction_list.Add($"mov [{AddressTempD}+0x0F], byte 0x01");
 
-            // Check for connection on the south side of the room
+
             instruction_list.Add($"label CHECK_SOUTH");
-            // Does the current entry have any connections on the south of the room
-            instruction_list.Add($"mov al, r11l");
-            instruction_list.Add($"and al, 0x04");
-            instruction_list.Add($"cmp al, 0x00");
+            // See if there's an south connection
+            instruction_list.Add($"test {VariableTempC}, 0x4");
             instruction_list.Add($"je CHECK_WEST");
-            // Calculate address for tile to the south of the current one
-            instruction_list.Add($"mov rdx, rcx");
-            instruction_list.Add($"add rdx, 0x100");
-            // Is tile connected to part of the same chain?
-                // Same room ID
-            instruction_list.Add($"mov r14l, [rdx+0x04]");
-            instruction_list.Add($"cmp r14l, r10l");
+            // Connected on south side, is it connected to a tile of the same ID?
+            instruction_list.Add($"mov {AddressTempD}, {AddressTempA}");
+            instruction_list.Add($"add {AddressTempD}, 0x100");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x4]");
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempD}");
             instruction_list.Add($"jne CHECK_WEST");
-            // Same upper nybble
-            instruction_list.Add($"movzx r14, byte [rdx+0x01]");
-            instruction_list.Add($"and r14, 0xF0");
-            instruction_list.Add($"cmp r14l, r15l");
-
-            instruction_list.Add($"cmp r14l, 0");
-            // NEW
-            instruction_list.Add($"je FOUND_BEFORE_S");
-            instruction_list.Add($"cmp r14l, r15l");
+            // Same upper nybble?
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x1]");
+            instruction_list.Add($"and {VariableTempD}, 0xF0");
+            instruction_list.Add($"cmp {VariableTempD}, {VariableTempB}");
             instruction_list.Add($"jne CHECK_WEST");
 
-            instruction_list.Add($"label FOUND_BEFORE_S");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0xA]");
+            instruction_list.Add($"test {VariableTempD}, 1");
+            instruction_list.Add($"je CHECK_WEST");
 
-            // Has the tile has already been discovered in some previous iteration?
-            instruction_list.Add($"mov r14l, [rdx+0x0F]");
-            instruction_list.Add($"cmp r14l, 0x01");
+            // Has it been marked as found
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x0F]");
+            instruction_list.Add($"cmp {VariableTempD}, 0x01");
             instruction_list.Add($"je CHECK_WEST");
 
             // Adjacent tile matches all parameters, add it to the stack
-            instruction_list.Add($"push rdx");
-            instruction_list.Add($"add rsi, 1");
+            instruction_list.Add($"push {AddressTempD}");
+            instruction_list.Add($"mov [{AddressTempD}+0x0F], byte 0x01");
 
-            // Check for connection on the west side of the room
+
             instruction_list.Add($"label CHECK_WEST");
-            instruction_list.Add($"mov al, r11l");
-            instruction_list.Add($"and al, 0x02");
-            instruction_list.Add($"cmp al, 0x00");
+            // See if there's an west connection
+            instruction_list.Add($"test {VariableTempC}, 0x2");
             instruction_list.Add($"je CHECK_NORTH");
-            instruction_list.Add($"mov rdx, rcx");
-            instruction_list.Add($"sub rdx, 0x10");
-            // Is tile connected to part of the same chain?
-                // Same room ID
-            instruction_list.Add($"mov r14l, [rdx+0x04]");
-            instruction_list.Add($"cmp r14l, r10l");
+            // Connected on west side, is it connected to a tile of the same ID?
+            instruction_list.Add($"mov {AddressTempD}, {AddressTempA}");
+            instruction_list.Add($"sub {AddressTempD}, 0x10");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x4]");
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempD}");
+            instruction_list.Add($"jne CHECK_NORTH");
+            // Same upper nybble?
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x1]");
+            instruction_list.Add($"and {VariableTempD}, 0xF0");
+            instruction_list.Add($"cmp {VariableTempD}, {VariableTempB}");
             instruction_list.Add($"jne CHECK_NORTH");
 
-            // Same upper nybble
-            instruction_list.Add($"movzx r14, byte [rdx+0x01]");
-            instruction_list.Add($"and r14, 0xF0");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0xA]");
+            instruction_list.Add($"test {VariableTempD}, 8");
+            instruction_list.Add($"je CHECK_NORTH");
 
-            instruction_list.Add($"cmp r14l, 0");
-            instruction_list.Add($"je FOUND_BEFORE_W");
-            instruction_list.Add($"cmp r14l, r15l");
-            instruction_list.Add($"jne CHECK_NORTH");
-
-            instruction_list.Add($"label FOUND_BEFORE_W");
-
-            // Has the tile has already been discovered in some previous iteration?
-            instruction_list.Add($"mov r14l, [rdx+0x0F]");
-            instruction_list.Add($"cmp r14l, 0x01");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x0F]");
+            instruction_list.Add($"cmp {VariableTempD}, 0x01");
             instruction_list.Add($"je CHECK_NORTH");
 
             // Adjacent tile matches all parameters, add it to the stack
-            instruction_list.Add($"push rdx");
-            instruction_list.Add($"add rsi, 1");
+            instruction_list.Add($"push {AddressTempD}");
+            instruction_list.Add($"mov [{AddressTempD}+0x0F], byte 0x01");
 
-            // Check for connection on the north side of the room
             instruction_list.Add($"label CHECK_NORTH");
-            instruction_list.Add($"mov al, r11l");
-            instruction_list.Add($"and al, 0x01");
-            instruction_list.Add($"cmp al, 0x00");
-            instruction_list.Add($"je MARK_CURRENT");
-            instruction_list.Add($"mov rdx, rcx");
-            instruction_list.Add($"sub rdx, 0x100");
-            // Is tile connected to part of the same chain?
-                // Same room ID
-            instruction_list.Add($"mov r14l, [rdx+0x04]");
-            instruction_list.Add($"cmp r14l, r10l");
-            instruction_list.Add($"jne MARK_CURRENT");
-                // Same upper nybble
-            instruction_list.Add($"movzx r14, byte [rdx+0x01]");
-            instruction_list.Add($"and r14, 0xF0");
+            // See if there's an north connection
+            instruction_list.Add($"test {VariableTempC}, 0x1");
+            instruction_list.Add($"je BFS_END");
+            // Connected on north side, is it connected to a tile of the same ID?
+            instruction_list.Add($"mov {AddressTempD}, {AddressTempA}");
+            instruction_list.Add($"sub {AddressTempD}, 0x100");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x4]");
+            instruction_list.Add($"cmp {VariableTempA}, {VariableTempD}");
+            instruction_list.Add($"jne BFS_END");
+            // Same upper nybble?
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x1]");
+            instruction_list.Add($"and {VariableTempD}, 0xF0");
+            instruction_list.Add($"cmp {VariableTempD}, {VariableTempB}");
+            instruction_list.Add($"jne BFS_END");
 
-            instruction_list.Add($"cmp r14l, 0");
-            instruction_list.Add($"je FOUND_BEFORE_N");
-            instruction_list.Add($"cmp r14l, r15l");
-            instruction_list.Add($"jne MARK_CURRENT");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0xA]");
+            instruction_list.Add($"test {VariableTempD}, 4");
+            instruction_list.Add($"je BFS_END");
 
-            instruction_list.Add($"label FOUND_BEFORE_N");
-
-            // Has the tile has already been discovered in some previous iteration?
-            instruction_list.Add($"mov r14l, [rdx+0x0F]");
-            instruction_list.Add($"cmp r14l, 0x01");
-           instruction_list.Add($"je MARK_CURRENT");
+            instruction_list.Add($"movzx {VariableTempD}, byte [{AddressTempD}+0x0F]");
+            instruction_list.Add($"cmp {VariableTempD}, 0x01");
+            instruction_list.Add($"je BFS_END");
 
             // Adjacent tile matches all parameters, add it to the stack
-            instruction_list.Add($"push rdx");
-            instruction_list.Add($"add rsi, 1");
+            instruction_list.Add($"push {AddressTempD}");
+            instruction_list.Add($"mov [{AddressTempD}+0x0F], byte 0x01");
 
-            instruction_list.Add($"label MARK_CURRENT");
-
-            // Update internal minimap table
-            instruction_list.Add($"mov r14, r9");
-            instruction_list.Add($"add r14, r14");
-            instruction_list.Add($"add r14, r13");
-            instruction_list.Add($"mov dx, [r14]");
-            instruction_list.Add($"and rdx, 0xFFFF");
-
-            // Check to see minimap bit to the right is filled
-            instruction_list.Add($"xor rbx, rbx");
-            instruction_list.Add($"mov r11, r8");
-            instruction_list.Add($"add r11, 1");
-            instruction_list.Add($"bts rbx, r11");
-            instruction_list.Add($"and bx, dx");
-            instruction_list.Add($"cmp bx, 0");
-            instruction_list.Add($"jne MARK_TILE");
-
-            // Check to see minimap bit to the left is filled
-            instruction_list.Add($"mov r11, r8");
-            instruction_list.Add($"sub r11, 1");
-            instruction_list.Add($"bts rbx, r11");
-            instruction_list.Add($"and bx, dx");
-            instruction_list.Add($"cmp bx, 0");
-            instruction_list.Add($"jne MARK_TILE");
-
-            // Check to see minimap bit above is filled
-            instruction_list.Add($"mov r11, r14");
-            instruction_list.Add($"sub r11, 2");
-            instruction_list.Add($"xor rax, rax");
-            instruction_list.Add($"mov ax, [r11]");
-            instruction_list.Add($"bts rbx, r8");
-            instruction_list.Add($"and bx, ax");
-            instruction_list.Add($"cmp bx, 0");
-            instruction_list.Add($"jne MARK_TILE");
-
-            // Check to see minimap bit below is filled
-            instruction_list.Add($"mov r11, r14");
-            instruction_list.Add($"add r11, 2");
-            instruction_list.Add($"xor rax, rax");
-            instruction_list.Add($"mov ax, [r11]");
-            instruction_list.Add($"bts rbx, r8");
-            instruction_list.Add($"and bx, ax");
-            instruction_list.Add($"cmp bx, 0");
-            instruction_list.Add($"jne MARK_TILE");
-
-            instruction_list.Add($"jmp DO_NOT_MARK");
-
-            instruction_list.Add($"label MARK_TILE");
-            // Mark that the current room has been found
-            instruction_list.Add($"mov [rcx+0x0F], byte 0x01");
-            instruction_list.Add($"bts rdx, r8");
-            instruction_list.Add($"mov [r14], dx");
-
-            instruction_list.Add($"label DO_NOT_MARK");
-
-            // Get the next value from the stack and set up its variables accordingly
-            instruction_list.Add($"pop rcx");
+            // Need to see if anything's left in the stack, and if so, handle that next
+            instruction_list.Add($"label BFS_END");
+            instruction_list.Add($"mov {AddressTempB}, {_minimapRevealStack+400}");
+            instruction_list.Add($"cmp {StackBFS}, {AddressTempB}");
+            instruction_list.Add($"jae NEXT_CARDINAL_TILE");
+            instruction_list.Add($"pop {AddressTempA}");
+            instruction_list.Add($"jmp BFS_START");
 
 
-            instruction_list.Add($"mov rdi, rcx");
-            instruction_list.Add($"sub rdi, r12");
-
-            instruction_list.Add($"mov r8, rdi");
-            instruction_list.Add($"shr r8, 4");
-            instruction_list.Add($"and r8, 0x0F");
-
-            instruction_list.Add($"mov r9, rdi");
-            instruction_list.Add($"shr r9, 8");
-            instruction_list.Add($"and r9, 0xFF");
+            // Look for the next cardinal tile to check, if one exists
+            instruction_list.Add($"label NEXT_CARDINAL_TILE");
             
-            instruction_list.Add($"sub rsi, 1");
-            instruction_list.Add($"cmp rsi, 0");
-            instruction_list.Add($"jne LOOP_START");
-            //instruction_list.Add("jmp END_OF_FUNCTION");
-            
-            // End of function, undo stack changes
-            instruction_list.Add($"label END_OF_FUNCTION");
+            // East
+            instruction_list.Add($"mov {AddressTempC}, [{StackCardinal}-0x18]");
+            instruction_list.Add($"cmp {AddressTempC}, 0");
+            instruction_list.Add($"je SOUTH_CARDINAL_CHECK");
+            instruction_list.Add($"mov {AddressTempA}, {StackCardinal}");
+            instruction_list.Add($"sub {AddressTempA}, 0x18");
+            instruction_list.Add($"mov {AddressTempB}, 0");
+            instruction_list.Add($"mov [{AddressTempA}], {AddressTempB}");
+            instruction_list.Add($"mov {AddressTempA}, {AddressTempC}");
+
+            instruction_list.Add($"mov {VariableTempC}, {UpperOffset}");
+            instruction_list.Add($"mov {VariableTempD}, {LowerOffset}");
+            instruction_list.Add($"add {LowerOffset}, 1");
+            instruction_list.Add($"jmp TILE_FOUND_START");
+
+
+            // South
+            instruction_list.Add($"label SOUTH_CARDINAL_CHECK");
+            instruction_list.Add($"mov {AddressTempC}, [{StackCardinal}-0x10]");
+            instruction_list.Add($"cmp {AddressTempC}, 0");
+            instruction_list.Add($"je WEST_CARDINAL_CHECK");
+            instruction_list.Add($"mov {AddressTempA}, {StackCardinal}");
+            instruction_list.Add($"sub {AddressTempA}, 0x10");
+            instruction_list.Add($"mov {AddressTempB}, 0");
+            instruction_list.Add($"mov [{AddressTempA}], {AddressTempB}");
+            instruction_list.Add($"mov {AddressTempA}, {AddressTempC}");
+
+            instruction_list.Add($"mov {VariableTempC}, {UpperOffset}");
+            instruction_list.Add($"mov {VariableTempD}, {LowerOffset}");
+            instruction_list.Add($"add {UpperOffset}, 1");
+            instruction_list.Add($"jmp TILE_FOUND_START");
+
+            // West
+            instruction_list.Add($"label WEST_CARDINAL_CHECK");
+            instruction_list.Add($"mov {AddressTempC}, [{StackCardinal}-0x8]");
+            instruction_list.Add($"cmp {AddressTempC}, 0");
+            instruction_list.Add($"je NORTH_CARDINAL_CHECK");
+            instruction_list.Add($"mov {AddressTempA}, {StackCardinal}");
+            instruction_list.Add($"sub {AddressTempA}, 0x8");
+            instruction_list.Add($"mov {AddressTempB}, 0");
+            instruction_list.Add($"mov [{AddressTempA}], {AddressTempB}");
+            instruction_list.Add($"mov {AddressTempA}, {AddressTempC}");
+
+            instruction_list.Add($"mov {VariableTempC}, {UpperOffset}");
+            instruction_list.Add($"mov {VariableTempD}, {LowerOffset}");
+            instruction_list.Add($"sub {LowerOffset}, 1");
+            instruction_list.Add($"jmp TILE_FOUND_START");
+
+            // North
+            instruction_list.Add($"label NORTH_CARDINAL_CHECK");
+            instruction_list.Add($"mov {AddressTempC}, [{StackCardinal}]");
+            instruction_list.Add($"cmp {AddressTempC}, 0");
+            instruction_list.Add($"je EOF");
+            instruction_list.Add($"mov {AddressTempB}, 0");
+            instruction_list.Add($"mov [{StackCardinal}], {AddressTempB}");
+            instruction_list.Add($"mov {AddressTempA}, {AddressTempC}");
+
+            instruction_list.Add($"mov {VariableTempC}, {UpperOffset}");
+            instruction_list.Add($"mov {VariableTempD}, {LowerOffset}");
+            instruction_list.Add($"sub {UpperOffset}, 1");
+            instruction_list.Add($"jmp TILE_FOUND_START");
+
+            instruction_list.Add($"label EOF");
             instruction_list.Add($"mov rsp, rbp");
+
             instruction_list.Add($"pop rbp");
-            instruction_list.Add($"pop r9");
-            instruction_list.Add($"pop r8");
-            instruction_list.Add($"pop rdx");
-            instruction_list.Add($"pop rcx");
-            instruction_list.Add($"pop rbx");
-            instruction_list.Add($"pop rax");
+            instruction_list.Add($"pop {VariableTempD}");
+            instruction_list.Add($"pop {AddressTempD}");
+            instruction_list.Add($"pop {VariableTempC}");
+            instruction_list.Add($"pop {AddressTempC}");
+            instruction_list.Add($"pop {VariableTempB}");
+            instruction_list.Add($"pop {AddressTempB}");
+            instruction_list.Add($"pop {VariableTempA}");
+            instruction_list.Add($"pop {AddressTempA}");
+            instruction_list.Add($"pop {StackCardinal}");
+            instruction_list.Add($"pop {StackBFS}");
+            instruction_list.Add($"pop {MinimapRevealTable}");
+            instruction_list.Add($"pop {MapRam}");
+            instruction_list.Add($"pop {LowerOffset}");
+            instruction_list.Add($"pop {UpperOffset}");
+
             instruction_list.Add($"add rsp, 0x30");
             instruction_list.Add($"pop r15");
             instruction_list.Add($"pop r14");
@@ -1049,7 +1230,7 @@ namespace p4gpc.dungeonframework.Accessors
             List<string> instruction_list = new List<string>();
             instruction_list.Add($"use64");
             instruction_list.Add($"push rax");
-            instruction_list.Add($"mov rax, {_minimapUpdateInitCheck}");
+            // instruction_list.Add($"mov rax, {_minimapUpdateInitCheck}");
             instruction_list.Add($"mov [rax], byte 0x00");
             instruction_list.Add($"pop rax");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.ExecuteFirst, _utils.GetPatternLength(pattern)).Activate());

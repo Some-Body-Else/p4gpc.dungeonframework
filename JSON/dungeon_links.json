@@ -1,0 +1,52 @@
+[
+  {
+    "RandomPregen": [ 40, 60 ],
+    "RandomBattle": [ 40, 240 ],
+    "PregenBattle": [ 60, 240 ]
+  },
+  {
+    "RandomPregen": [ 41, 61 ],
+    "RandomBattle": [ 41, 241 ],
+    "PregenBattle": [ 61, 241 ]
+  },
+  {
+    "RandomPregen": [ 42, 62 ],
+    "RandomBattle": [ 42, 242 ],
+    "PregenBattle": [ 62, 242 ]
+  },
+  {
+    "RandomPregen": [ 43, 63 ],
+    "RandomBattle": [ 43, 243 ],
+    "PregenBattle": [ 63, 243 ]
+  },
+  {
+    "RandomPregen": [ 44, 64 ],
+    "RandomBattle": [ 44, 244 ],
+    "PregenBattle": [ 64, 244 ]
+  },
+  {
+    "RandomPregen": [ 45, 65 ],
+    "RandomBattle": [ 45, 245 ],
+    "PregenBattle": [ 65, 245 ]
+  },
+  {
+    "RandomPregen": [ 46, 66 ],
+    "RandomBattle": [ 46, 246 ],
+    "PregenBattle": [ 66, 246 ]
+  },
+  {
+    "RandomPregen": [ 47, 67 ],
+    "RandomBattle": [ 47, 247 ],
+    "PregenBattle": [ 67, 247 ]
+  },
+  {
+    "RandomPregen": [ 48, 68 ],
+    "RandomBattle": [ 48, 248 ],
+    "PregenBattle": [ 68, 248 ]
+  },
+  {
+    "RandomPregen": [ 49, 69 ],
+    "RandomBattle": [ 49, 249 ],
+    "PregenBattle": [ 69, 249 ]
+  }
+]

@@ -51,13 +51,19 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Reloaded.Memory" Version="7.1.0" />
-    <PackageReference Include="Reloaded.Memory.SigScan" Version="3.1.1" />
+    <PackageReference Include="Reloaded.Memory.Sigscan" Version="3.1.0" />
     <PackageReference Include="Reloaded.Memory.SigScan.ReloadedII.Interfaces" Version="1.2.0" />
-    <PackageReference Include="Reloaded.Mod.Interfaces" Version="2.3.0" />
+    <PackageReference Include="Reloaded.Mod.Interfaces" Version="2.4.0" />
     <PackageReference Include="Reloaded.SharedLib.Hooks" Version="1.9.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="JSON\chest_palettes.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="JSON\dungeon_links.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="JSON\encounters.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -66,12 +72,6 @@
     </None>
     <None Update="JSON\loot_tables.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="JSON\room_compare_search.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="JSON\field_compare_search.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="JSON\dungeon_floors.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -88,19 +88,7 @@
     <None Update="JSON\field_compares.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="JSON\floor_search.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="JSON\dungeon_template_dict.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="JSON\minimap_search.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="JSON\room_search.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="JSON\template_search.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
