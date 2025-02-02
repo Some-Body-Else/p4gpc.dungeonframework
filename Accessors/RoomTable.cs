@@ -26,6 +26,10 @@ using System.Data.SqlTypes;
 
 namespace p4gpc.dungeonframework.Accessors
 {
+    /*
+     * TODO: 
+     *      remove connectionPointers from DungeonRoom class and refactor code appropriately
+     */
     public class RoomTable : Accessor
     {
         private List<DungeonRoom> _rooms;
@@ -73,14 +77,17 @@ namespace p4gpc.dungeonframework.Accessors
                 totalTemplateTableSize++;
                 _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, (byte)0);
                 totalTemplateTableSize++;
-                foreach (List<byte> connectionRow in room.connectionPointers)
+
+                // This should be removed at some point, data its referring to is unused in our code,
+                // keeping it around for structural consistency (removing this requires refactoring elsewhere)
+                for (int i = 0; i < 9; i++)
                 {
-                    foreach (byte connection in connectionRow)
-                    {
-                        _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, (byte)0xFF);
-                        totalTemplateTableSize++;
-                    }
+                    // connectionPointer stuff, if wondering where to look later
+                    _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, (byte)0xFF);
+                    totalTemplateTableSize++;
                 }
+
+
                 foreach (List<byte> revealRow in room.revealProperties)
                 {
                     foreach (byte reveal in revealRow)

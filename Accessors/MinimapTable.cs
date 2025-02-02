@@ -35,6 +35,7 @@ namespace p4gpc.dungeonframework.Accessors
         // because it checks from the number of minimap textures, which is normally hardcoded
 
         private nuint _minimapUnknownPerTextureTable;
+
         /*
          * Each of the textures have a set of coordinate textures to dictate what part of the image is actually rendered
          * Stored as a pair of 4-btye floatsm with each texture having 2 pairs of texture coordinates (Top-left and bottom-right)
@@ -73,8 +74,34 @@ namespace p4gpc.dungeonframework.Accessors
          */
         private nuint _minimapRoomSizeTable;
 
-        // Keeps track of offsets when dealing with messy BFS stuff
-        private nuint _minimapNameLater;
+        /*
+         * When multi-tiled rooms (ones that have doors) are shown on the minimap, the pieces associated with each
+         * part gets shuffled around a bit based upon the rotation of the room in the dungeon. These offsets, I think,
+         * are based on the top-left "origin" that all of the images are loaded into, which then has the offset applied
+         * before they are loaded into the minimap proper. Something like that, I don't like this explanation but right now
+         * I can't think of other words for it, so it's sticking. Likewise, this is just a table address so we can re-route
+         * all the rotation values to a single place.
+         */
+        private nuint _minimapRotateAlignmentTable;
+
+        /*
+         * Offset table for easily accessing relevant entries for above table, since there's no knowning exactly how many pieces a room's minimap tiles is split into
+         */
+        private nuint _minimapRotateAlignmentOffsetTable;
+
+
+
+        /*
+         The register math for the function dealing with the RotateAlignmentTable is *really* tight, basically all the registers are used for intermediate math or holding
+         values used immedaitely afterwards, and due to the existance of a function call in the middle, the stack is off-limits. Using this address as additional storage.
+         */
+        private nuint _minimapCurrentRotateAlignment;
+
+
+        /*
+         * Count of how many entries for a given room in the RotateAlignmentTable
+         */
+        private nuint _minimapRotateAlignmentCountTable;
 
         private int minimapCounter = 0;
 
@@ -92,16 +119,14 @@ namespace p4gpc.dungeonframework.Accessors
             List<long> functions;
 
             String search_string;
-            long address;
             long func;
-            uint oldAddress;
+            long jump_target;
+            long jump_target2;
             int totalMinimapTableSize = 0;
-            byte SIB;
-            byte prefixExists;
-            AccessorRegister regToZero;
 
             List<long> _roomTables = new List<long>();
             int offset = 0;
+            int multiTileCount = 0;
 
             for (int i = 0; i < _minimaps.Count; i++)
             {
@@ -112,9 +137,9 @@ namespace p4gpc.dungeonframework.Accessors
                 minimapCounter++;
                 if (_minimaps[i].multipleNames)
                 {
-                    int numOfVariants = _minimaps[i].names.Count;
-                    for (int j = 0; j < numOfVariants; j++)
+                    for (int j = 0; j < _minimaps[i].names.Count; j++)
                     {
+                        multiTileCount++;
                         search_string = "field/smap/";
                         search_string += _minimaps[i].names[j];
                         search_string += char.MinValue;
@@ -122,9 +147,6 @@ namespace p4gpc.dungeonframework.Accessors
                         offset += search_string.Length+1;
                         minimapCounter++;
                     }
-                }
-                else
-                {
                 }
             }
             _newMinimapTable = _memory.Allocate(totalMinimapTableSize);
@@ -142,8 +164,18 @@ namespace p4gpc.dungeonframework.Accessors
             _minimapRoomSizeTable = _memory.Allocate(_jsonImporter.GetRooms().Count);
             _utils.LogDebug($"Location of MinimapRoomSizeTable: {_minimapRoomSizeTable.ToString("X8")}", Config.DebugLevels.TableLocations);
 
-            _minimapNameLater = _memory.Allocate(20);
-            _utils.LogDebug($"Location of MinimapNameLater: {_minimapNameLater.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _minimapRotateAlignmentTable = _memory.Allocate(multiTileCount*8);
+            _utils.LogDebug($"Location of MinimapRotateAlignmentTable: {_minimapRotateAlignmentTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+            _minimapRotateAlignmentOffsetTable = _memory.Allocate(minimapCounter*8);
+            _utils.LogDebug($"Location of MinimapRotateAlignmentOffsetTable: {_minimapRotateAlignmentOffsetTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+            _minimapCurrentRotateAlignment = _memory.Allocate(16);
+            _utils.LogDebug($"Location of MinimapRotateAlignmentOffsetTable: {_minimapCurrentRotateAlignment.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+            _minimapRotateAlignmentCountTable = _memory.Allocate(_minimaps.Count*8);
+            _utils.LogDebug($"Location of MinimapRotateAlignmentCountTable: {_minimapRotateAlignmentCountTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
 
             offset = 0;
             foreach (DungeonRoom room in _jsonImporter.GetRooms())
@@ -161,6 +193,7 @@ namespace p4gpc.dungeonframework.Accessors
             }
 
             offset = 0;
+            int rot_offset = 0;
             for (int i = 0; i < _minimaps.Count; i++)
             {
 
@@ -174,9 +207,12 @@ namespace p4gpc.dungeonframework.Accessors
                 _memory.SafeWrite((_newMinimapTable + (nuint)offset + (nuint)search_string.Length), 0);
                 _roomTables.Add(offset);
                 offset += search_string.Length;
+            
                 if (_minimaps[i].multipleNames)
                 {
                     int numOfVariants = _minimaps[i].names.Count;
+                    _memory.SafeWrite((_minimapRotateAlignmentOffsetTable + (nuint)i*8), (Int64)(_minimapRotateAlignmentTable+(nuint)rot_offset));
+                    _memory.SafeWrite((_minimapRotateAlignmentCountTable + (nuint)i*8), (Int64)(numOfVariants));
                     for (int j = 0; j < numOfVariants; j++)
                     {
                         search_string = "field/smap/";
@@ -190,10 +226,34 @@ namespace p4gpc.dungeonframework.Accessors
                         _memory.SafeWrite((_newMinimapTable + (nuint)offset + (nuint)search_string.Length), 0);
                         _roomTables.Add(offset);
                         offset += search_string.Length;
+
+
+                        // Rotation value is stored in Map RAM
+                        
+                        // Rotation == 0
+                        _memory.SafeWrite((_minimapRotateAlignmentTable + (nuint)rot_offset + 0), (byte)(_minimaps[i].tileRevealPartRotations[j][0][0] & 0xFF));
+                        _memory.SafeWrite((_minimapRotateAlignmentTable + (nuint)rot_offset + 1), (byte)(_minimaps[i].tileRevealPartRotations[j][0][1] & 0xFF));
+
+                        // Rotation == 1
+                        _memory.SafeWrite((_minimapRotateAlignmentTable + (nuint)rot_offset + 2), (byte)(_minimaps[i].tileRevealPartRotations[j][1][0] & 0xFF));
+                        _memory.SafeWrite((_minimapRotateAlignmentTable + (nuint)rot_offset + 3), (byte)(_minimaps[i].tileRevealPartRotations[j][1][1] & 0xFF));
+
+                        // Rotation == 2
+                        _memory.SafeWrite((_minimapRotateAlignmentTable + (nuint)rot_offset + 4), (byte)(_minimaps[i].tileRevealPartRotations[j][2][0] & 0xFF));
+                        _memory.SafeWrite((_minimapRotateAlignmentTable + (nuint)rot_offset + 5), (byte)(_minimaps[i].tileRevealPartRotations[j][2][1] & 0xFF));
+
+                        // Rotation == 3
+                        _memory.SafeWrite((_minimapRotateAlignmentTable + (nuint)rot_offset + 6), (byte)(_minimaps[i].tileRevealPartRotations[j][3][0] & 0xFF));
+                        _memory.SafeWrite((_minimapRotateAlignmentTable + (nuint)rot_offset + 7), (byte)(_minimaps[i].tileRevealPartRotations[j][3][1] & 0xFF));
+                        rot_offset+=8;
                     }
                 }
                 else
                 {
+
+                    _memory.SafeWrite((_minimapRotateAlignmentOffsetTable + (nuint)i*8), (Int64)(-1));
+                    _memory.SafeWrite((_minimapRotateAlignmentCountTable + (nuint)i*8), (Int64)(-1));
+                    
                 }
             }
 
@@ -352,10 +412,22 @@ namespace p4gpc.dungeonframework.Accessors
             ReplaceMinimapPositionCheck(func, search_string);
             _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
-            // search_string = "BA A8 01 00 00 8B 0D 70 9A C6 FD";
-            // func = _utils.SigScan(search_string, $"ResetMinimapInitialUpdataeCheck");
-            // ResetMinimapInitialUpdataeCheck(func, search_string);
-            // _utils.LogDebug($"Location of [{search_string}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+
+
+            // Search for jump target
+            //search_string = "44 88 6C 24 38 45 0F B6 C5 40 88 6C 24 30 40 0F B6 D5";
+            search_string = "4C 8D 1D DD E9 BC FF 45 33 C0 48 8B 4C 24 48";
+            jump_target2 = _utils.SigScan(search_string, $"RoomCompareJumpToMulti");
+            search_string = "41 80 F9 09 0F 82 ?? ?? ?? ?? 48 8D ?? ?? 48 03 ?? 45 0F B6 94 C3 ?? ?? ?? ?? 41 0F B6 ?? 83 C0 F7 83 F8 05 0F 87 ?? ?? ?? ??";
+            func = _utils.SigScan(search_string, $"RoomCompareA");
+            _memory.Read((nuint)(func+6), out offset);
+            jump_target = func + offset + 10;
+
+            //LogOpcodeRunsB(function, search_string);
+            ReplaceMinimapTileImagePrep(func, jump_target, jump_target2, search_string);
+            _utils.LogDebug($"Replaced code [{search_string}] at: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+
+
         }
 
         void ReplaceStartupSearch(Int64 functionAddress, int length)
@@ -662,10 +734,6 @@ namespace p4gpc.dungeonframework.Accessors
         }
         void ReplaceMinimapUpdateFunction(Int64 functionAddress, string pattern)
         {
-            /*
-             * TODO:
-             * Rework so we can get 1 tile ahead, current iteration is jank with how it reveals the minimap. But it does appear to work. so points on that!
-             */
             AccessorRegister pushReg;
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
@@ -1194,7 +1262,6 @@ namespace p4gpc.dungeonframework.Accessors
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
-        
         void ReplaceMinimapPositionCheck(Int64 functionAddress, string pattern)
         {
             // There is a set of checks for positioning on the minimap that, with the updated minimap function above,
@@ -1219,21 +1286,183 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"ret");
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
-
-        void ResetMinimapInitialUpdataeCheck(Int64 functionAddress, string pattern)
+        void ReplaceMinimapTileImagePrep(Int64 functionAddress, Int64 jump_point_single, Int64 jump_point_multi, string pattern)
         {
-            /*
-             This is something that the modified MinimapUpdateFunction requires in order to account for the first tile of each floor.
-             Since it is a depth-first search based on the existance of a valid room, the first tile encountered must be marked valid
-             so it can be referenced for surrounding tiles
-             */
+            AccessorRegister pushReg;
+            List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
+            Int64 func_call_addr = 0x140432C70;
+
+            // To do, refactor so that we aren't just adding the constant size of the
+            // instructions and instead 
+            // Int64 jump_point2 = functionAddress + 36 + jump_offset2;
             instruction_list.Add($"use64");
+
             instruction_list.Add($"push rax");
-            // instruction_list.Add($"mov rax, {_minimapUpdateInitCheck}");
-            instruction_list.Add($"mov [rax], byte 0x00");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
             instruction_list.Add($"pop rax");
-            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.ExecuteFirst, _utils.GetPatternLength(pattern)).Activate());
+
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push r9");
+            instruction_list.Add($"and r9, 0xFF");
+            instruction_list.Add($"sub r9, 1");
+            instruction_list.Add($"shl r9, 3");
+            instruction_list.Add($"xor rax, rax");
+            instruction_list.Add($"mov rax, [{_minimapRotateAlignmentOffsetTable} + r9]");
+            instruction_list.Add($"xor rbx, rbx");
+            instruction_list.Add($"not rbx");
+
+            // Check to see if the room has multiple images on the minimap (doors)
+            instruction_list.Add($"cmp {AccessorRegister.rbx}, rax");
+            instruction_list.Add($"pop r9");
+            instruction_list.Add($"jne multi_image");
+            instruction_list.Add($"pop rax");
+            instruction_list.Add($"pop rbx");
+
+            // Single image, room will have everything revealed at once
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"mov rax, {jump_point_single}");
+            instruction_list.Add($"mov [rsp+8], rax");
+            instruction_list.Add($"pop rax");
+
+            instruction_list.Add($"ret");
+
+            instruction_list.Add($"label multi_image");
+            instruction_list.Add($"mov rbx, {_minimapCurrentRotateAlignment}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rbx");
+            // Multi-image, have to load each piece in one at a time
+
+            // Think we have some steps to put here first, but can't remember what.
+            instruction_list.Add($"add rsi, rcx");
+            instruction_list.Add($"add rsi, rsi");
+            instruction_list.Add($"imul rsi, rsi, 8");
+
+            instruction_list.Add($"add rsi, 0x011AB3A0");
+            instruction_list.Add($"mov r10l, byte [r11+rsi]");
+
+            // Set a counter to 1 for the part counting
+            instruction_list.Add($"mov rax, {_minimapCurrentRotateAlignment+8}");
+            instruction_list.Add($"mov [rsp+0x20], byte 0x01");
+            instruction_list.Add($"mov [rax], byte 0x01");
+            instruction_list.Add($"movzx rsi, byte r13b");
+
+            instruction_list.Add($"label loop_start");
+            // Everything from here down will need to be checked to see if it assembles properly
+            instruction_list.Add($"movzx rax, byte [r14]");
+            instruction_list.Add($"movzx r9, byte r10b");
+            instruction_list.Add($"mov rcx, r15");
+            instruction_list.Add($"mov [rsp+0x38], byte sil");
+            instruction_list.Add($"mov [rsp+0x30], byte bpl");
+            instruction_list.Add($"mov [rsp+0x28], byte al");
+
+            // Get the offset coordinates
+
+            instruction_list.Add($"push r14");
+            instruction_list.Add($"push rsi");
+            instruction_list.Add($"push rcx");
+            instruction_list.Add($"push rax");
+
+            // Load baseline RotateAlignment address
+            instruction_list.Add($"mov r14, {_minimapCurrentRotateAlignment}");
+            instruction_list.Add($"mov rcx, [r14]");
+
+
+            // Account for rotation
+            instruction_list.Add($"add rax, rax");
+            instruction_list.Add($"add rcx, rax");
+            
+            instruction_list.Add($"mov dil, byte [rcx]");
+            instruction_list.Add($"mov bl, byte [rcx+1]");
+            instruction_list.Add($"and rbx, 0xFF");
+            instruction_list.Add($"and rdi, 0xFF");
+
+            instruction_list.Add($"pop rax");
+            instruction_list.Add($"pop rcx");
+            instruction_list.Add($"pop rsi");
+            instruction_list.Add($"pop r14");
+
+            instruction_list.Add($"lea rdx, [rdi + rbp]");
+            instruction_list.Add($"lea r8, [rbx + rsi]");
+
+
+            // Our VERY MESSY function call, which I hate but can't think of an alternative for
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rax");
+            // Target call address
+            instruction_list.Add($"mov rax, {func_call_addr}");
+            instruction_list.Add($"mov [rsp+8], rax");
+            // Target return address
+            // Hate the way we're doing this, but can't think of an alternative
+            instruction_list.Add($"lea rax,[rip + 0x7]");
+            instruction_list.Add($"mov [rsp+16], rax");
+            instruction_list.Add($"pop rax");
+            instruction_list.Add($"ret");
+
+            instruction_list.Add($"label ret_addr");
+
+            // Post-call stuff
+            instruction_list.Add($"lea rcx, [rbx + r13]");
+            instruction_list.Add($"mov r8, rcx");
+            instruction_list.Add($"lea rcx, [rdi + rbp]");
+            instruction_list.Add($"mov rdx, rcx");
+            instruction_list.Add($"mov rcx, [rsp+0x40]");
+            instruction_list.Add($"shl r8, 4");
+            instruction_list.Add($"add r8, rdx");
+            instruction_list.Add($"mov [rcx+r8*8+0x208], rax");
+            //instruction_list.Add($"lea r10, [rbx + rsi]");
+
+            instruction_list.Add($"push rsi");
+            instruction_list.Add($"mov rsi, {_minimapCurrentRotateAlignment}");
+            instruction_list.Add($"mov rbx, [rsi]");
+            instruction_list.Add($"add rbx, 0x8");
+            instruction_list.Add($"mov [rsi], rbx");
+
+            instruction_list.Add($"mov rax, {_minimapCurrentRotateAlignment+8}");
+            instruction_list.Add($"mov r9, [rax]");
+            instruction_list.Add($"add r9, 1");
+            instruction_list.Add($"mov [rsp+0x28], byte r9l");
+            instruction_list.Add($"mov [rax], byte r9l");
+
+
+            // Loop condition check
+
+
+            instruction_list.Add($"mov rsi, {_minimapRotateAlignmentCountTable}");
+            instruction_list.Add($"mov al, byte [r14-1]");
+            instruction_list.Add($"mov r10l, byte [r14-1]");
+            instruction_list.Add($"and rax, 0xFF");
+            instruction_list.Add($"sub rax, 1");
+            instruction_list.Add($"shl rax, 3");
+            instruction_list.Add($"add rsi, rax");
+            instruction_list.Add($"mov rbx,  [rsi]");
+            instruction_list.Add($"pop rsi");
+
+            instruction_list.Add($"cmp r9, rbx");
+
+            instruction_list.Add($"jna loop_start");
+
+            // end of loop
+
+            instruction_list.Add($"mov rsi, [rsp+0x158]");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"mov rax, {jump_point_multi}");
+            instruction_list.Add($"mov [rsp+8], rax");
+            instruction_list.Add($"pop rax");
+            instruction_list.Add($"ret");
+
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
+
     }
 }

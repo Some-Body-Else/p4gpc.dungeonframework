@@ -3,12 +3,17 @@
     "roomID": 1,
     "multipleNames": false,
     "name": "smap01.tmx",
+    "names": null,
     "texCoordSingle": [
       [ 0.03125, 0.03125 ],
       [ 0.59375, 0.59375 ]
     ],
-    "texScaleSingle": [ 19.0, 19.0 ],
-    "singleOrientBased": false
+    "texCoordMulti": null,
+    "texScaleSingle": [ 19, 19 ],
+    "texScaleMulti": null,
+    "singleOrientBased": false,
+    "multiOrientBased": null,
+	"tileRevealPartRotations": null
   },
   {
     "roomID": 2,
@@ -19,8 +24,8 @@
       "smap02_02.tmx"
     ],
     "texCoordSingle": [
-      [ 0.0, 0.0 ],
-      [ 1.0, 1.0 ]
+      [ 0, 0 ],
+      [ 1, 1 ]
     ],
     "texCoordMulti": [
       [
@@ -32,82 +37,114 @@
         [ 0.578125, 0.578125 ]
       ]
     ],
-    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleSingle": [ 32, 32 ],
     "texScaleMulti": [
-      [ 19.0, 37.0 ],
-      [ 19.0, 19.0 ]
+      [ 19, 37 ],
+      [ 19, 19 ]
     ],
     "singleOrientBased": false,
-    "multiOrientBased": [
-      true,
-      false
-    ]
+    "multiOrientBased": [ true, false ],
+	"tileRevealPartRotations": 
+	[
+		[ [0,0], [0, 1], [1, 0], [0, 0] ],
+		[ [1, 1], [1, 0], [0, 0], [0, 1] ]
+	]
   },
   {
     "roomID": 3,
     "multipleNames": false,
     "name": "smap03.tmx",
+    "names": null,
     "texCoordSingle": [
-      [ 0.03125, 0.03125 ],
+      [ 0.03125, 0.03125 ], 
       [ 0.59375, 0.59375 ]
     ],
-    "texScaleSingle": [ 19.0, 19.0 ],
-    "singleOrientBased": false
+    "texCoordMulti": null,
+    "texScaleSingle": [ 19, 19 ],
+    "texScaleMulti": null,
+    "singleOrientBased": false,
+    "multiOrientBased": null,
+	"tileRevealPartRotations": null
   },
   {
     "roomID": 4,
     "multipleNames": false,
     "name": "smap04.tmx",
+    "names": null,
     "texCoordSingle": [
       [ 0.03125, 0.03125 ],
       [ 0.59375, 0.59375 ]
     ],
-    "texScaleSingle": [ 19.0, 19.0 ],
-    "singleOrientBased": false
+    "texCoordMulti": null,
+    "texScaleSingle": [ 19, 19 ],
+    "texScaleMulti": null,
+    "singleOrientBased": false,
+    "multiOrientBased": null,
+	"tileRevealPartRotations": null
   },
   {
     "roomID": 5,
     "multipleNames": false,
     "name": "smap05.tmx",
+    "names": null,
     "texCoordSingle": [
       [ 0.03125, 0.03125 ],
       [ 0.59375, 0.59375 ]
     ],
-    "texScaleSingle": [ 19.0, 19.0 ],
-    "singleOrientBased": false
+    "texCoordMulti": null,
+    "texScaleSingle": [ 19, 19 ],
+    "texScaleMulti": null,
+    "singleOrientBased": false,
+    "multiOrientBased": null,
+	"tileRevealPartRotations": null
   },
   {
     "roomID": 6,
     "multipleNames": false,
     "name": "smap06.tmx",
+    "names": null,
     "texCoordSingle": [
       [ 0.03125, 0.03125 ],
       [ 0.59375, 0.59375 ]
     ],
-    "texScaleSingle": [ 19.0, 19.0 ],
-    "singleOrientBased": false
+    "texCoordMulti": null,
+    "texScaleSingle": [ 19, 19 ],
+    "texScaleMulti": null,
+    "singleOrientBased": false,
+    "multiOrientBased": null,
+	"tileRevealPartRotations": null
   },
   {
     "roomID": 7,
     "multipleNames": false,
     "name": "smap07.tmx",
+    "names": null,
     "texCoordSingle": [
       [ 0.015625, 0.015625 ],
       [ 0.578125, 0.578125 ]
     ],
-    "texScaleSingle": [ 37.0, 37.0 ],
-    "singleOrientBased": false
+    "texCoordMulti": null,
+    "texScaleSingle": [ 37, 37 ],
+    "texScaleMulti": null,
+    "singleOrientBased": false,
+    "multiOrientBased": null,
+	"tileRevealPartRotations": null
   },
   {
     "roomID": 8,
     "multipleNames": false,
     "name": "smap08.tmx",
+    "names": null,
     "texCoordSingle": [
       [ 0.015625, 0.015625 ],
       [ 0.578125, 0.578125 ]
     ],
-    "texScaleSingle": [ 37.0, 37.0 ],
-    "singleOrientBased": false
+    "texCoordMulti": null,
+    "texScaleSingle": [ 37, 37 ],
+    "texScaleMulti": null,
+    "singleOrientBased": false,
+    "multiOrientBased": null,
+	"tileRevealPartRotations": null
   },
   {
     "roomID": 9,
@@ -118,8 +155,8 @@
       "smap09_02.tmx"
     ],
     "texCoordSingle": [
-      [ 0.0, 0.0 ],
-      [ 1.0, 1.0 ]
+      [ 0, 0 ],
+      [ 1, 1 ]
     ],
     "texCoordMulti": [
       [
@@ -128,19 +165,20 @@
       ],
       [
         [ 0.296875, 0.015625 ],
-        [ 0.875, 0.59375 ]
+        [ 0.875, 0.59375 ] 
       ]
     ],
-    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleSingle": [ 32, 32 ],
     "texScaleMulti": [
-      [ 19.0, 19.0 ],
-      [ 37.0, 37.0 ]
-    ],
+      [ 19, 19 ], 
+      [ 37, 37 ]
+	],
     "singleOrientBased": false,
-    "multiOrientBased": [
-      false,
-      false
-    ]
+    "multiOrientBased": [ false, false ],
+	"tileRevealPartRotations": [
+		[ [0, 0], [0, 2], [2, 2], [2, 0] ],
+		[ [1, 0], [0, 0], [0, 1], [1, 1] ]
+	]
   },
   {
     "roomID": 10,
@@ -151,8 +189,8 @@
       "smap09_02.tmx"
     ],
     "texCoordSingle": [
-      [ 0.0, 0.0 ],
-      [ 1.0, 1.0 ]
+      [ 0, 0 ],
+      [ 1, 1 ]
     ],
     "texCoordMulti": [
       [
@@ -161,19 +199,20 @@
       ],
       [
         [ 0.296875, 0.015625 ],
-        [ 0.875, 0.59375 ]
+        [ 0.875, 0.59375 ] 
       ]
     ],
-    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleSingle": [ 32, 32 ],
     "texScaleMulti": [
-      [ 19.0, 19.0 ],
-      [ 37.0, 37.0 ]
-    ],
+      [ 19, 19 ], 
+      [ 37, 37 ]
+	],
     "singleOrientBased": false,
-    "multiOrientBased": [
-      false,
-      false
-    ]
+    "multiOrientBased": [ false, false ],
+	"tileRevealPartRotations": [
+		[ [0, 0], [0, 2], [2, 2], [2, 0] ],
+		[ [1, 0], [0, 0], [0, 1], [1, 1] ]
+	]
   },
   {
     "roomID": 11,
@@ -184,8 +223,8 @@
       "smap11_02.tmx"
     ],
     "texCoordSingle": [
-      [ 0.0, 0.0 ],
-      [ 1.0, 1.0 ]
+      [ 0, 0 ],
+      [ 1, 1 ]
     ],
     "texCoordMulti": [
       [
@@ -197,16 +236,17 @@
         [ 0.875, 0.59375 ]
       ]
     ],
-    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleSingle": [ 32, 32 ],
     "texScaleMulti": [
-      [ 19.0, 55.0 ],
-      [ 37.0, 37.0 ]
+      [ 19, 55 ],
+      [ 37, 37 ]
     ],
     "singleOrientBased": false,
-    "multiOrientBased": [
-      true,
-      false
-    ]
+    "multiOrientBased": [ true, false ],
+	"tileRevealPartRotations": [
+		[ [0, 0], [0, 2], [2, 0], [0, 0] ],
+		[ [1, 0], [0, 0], [0, 1], [1, 1] ]
+	]
   },
   {
     "roomID": 12,
@@ -217,8 +257,8 @@
       "smap11_02.tmx"
     ],
     "texCoordSingle": [
-      [ 0.0, 0.0 ],
-      [ 1.0, 1.0 ]
+      [ 0, 0 ],
+      [ 1, 1 ]
     ],
     "texCoordMulti": [
       [
@@ -230,16 +270,17 @@
         [ 0.875, 0.59375 ]
       ]
     ],
-    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleSingle": [ 32, 32 ],
     "texScaleMulti": [
-      [ 19.0, 55.0 ],
-      [ 37.0, 37.0 ]
+      [ 19, 55 ],
+      [ 37, 37 ]
     ],
     "singleOrientBased": false,
-    "multiOrientBased": [
-      true,
-      false
-    ]
+    "multiOrientBased": [ true, false ],
+	"tileRevealPartRotations": [
+		[ [0, 0], [0, 2], [2, 0], [0, 0] ],
+		[ [1, 0], [0, 0], [0, 1], [1, 1] ]
+	]
   },
   {
     "roomID": 13,
@@ -251,11 +292,11 @@
       "smap09_01.tmx"
     ],
     "texCoordSingle": [
-      [ 0.0, 0.0 ],
-      [ 1.0, 1.0 ]
+      [ 0, 0 ],
+      [ 1, 1 ]
     ],
     "texCoordMulti": [
-      [
+      [ 
         [ 0.03125, 0.03125 ],
         [ 0.59375, 0.59375 ]
       ],
@@ -268,18 +309,19 @@
         [ 0.59375, 0.59375 ]
       ]
     ],
-    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleSingle": [ 32, 32 ],
     "texScaleMulti": [
-      [ 19.0, 19.0 ],
-      [ 37.0, 37.0 ],
-      [ 19.0, 19.0 ]
+      [ 19, 19 ],
+      [ 37, 37 ],
+      [ 19, 19 ]
     ],
     "singleOrientBased": false,
-    "multiOrientBased": [
-      false,
-      false,
-      false
-    ]
+    "multiOrientBased": [ false, false, false ],
+	"tileRevealPartRotations": [
+		[ [0, 2], [2, 2], [2, 0], [0, 0] ],
+		[ [1, 1], [1, 0], [0, 0], [0, 1] ],
+		[ [2, 0], [0, 0], [0, 2], [2, 2] ]
+	]
   },
   {
     "roomID": 14,
@@ -291,11 +333,11 @@
       "smap09_01.tmx"
     ],
     "texCoordSingle": [
-      [ 0.0, 0.0 ],
-      [ 1.0, 1.0 ]
+      [ 0, 0 ],
+      [ 1, 1 ]
     ],
     "texCoordMulti": [
-      [
+      [ 
         [ 0.03125, 0.03125 ],
         [ 0.59375, 0.59375 ]
       ],
@@ -308,17 +350,18 @@
         [ 0.59375, 0.59375 ]
       ]
     ],
-    "texScaleSingle": [ 32.0, 32.0 ],
+    "texScaleSingle": [ 32, 32 ],
     "texScaleMulti": [
-      [ 19.0, 19.0 ],
-      [ 37.0, 37.0 ],
-      [ 19.0, 19.0 ]
+      [ 19, 19 ],
+      [ 37, 37 ],
+      [ 19, 19 ]
     ],
     "singleOrientBased": false,
-    "multiOrientBased": [
-      false,
-      false,
-      false
-    ]
+    "multiOrientBased": [ false, false, false ],
+	"tileRevealPartRotations": [
+		[ [0, 2], [2, 2], [2, 0], [0, 0] ],
+		[ [1, 1], [1, 0], [0, 0], [0, 1] ],
+		[ [2, 0], [0, 0], [0, 2], [2, 2] ]
+	]
   }
 ]

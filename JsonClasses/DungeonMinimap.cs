@@ -17,6 +17,7 @@ namespace p4gpc.dungeonframework.JsonClasses
         public List<float> texScaleSingle { get; set; }
         public List<List<float>> texScaleMulti { get; set; }
         public bool singleOrientBased { get; set; }
-        public List<bool> multiOrientBased{ get; set; }
+        public List<bool> multiOrientBased { get; set; }
+        public List<List<List<int>>> tileRevealPartRotations { get; set; }
     }
 }

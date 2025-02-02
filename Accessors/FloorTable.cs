@@ -28,7 +28,6 @@ namespace p4gpc.dungeonframework.Accessors
         /*
         To do:
             Nothing, for now. Something will probably pop up at some point.
-            --Clarifying some of
          */
 
         private List<DungeonFloor> _floors;
