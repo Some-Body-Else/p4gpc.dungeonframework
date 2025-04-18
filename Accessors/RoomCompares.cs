@@ -85,6 +85,8 @@ namespace p4gpc.dungeonframework.Accessors
             ReplaceStartupSearchB(function, (int)jump_target, search_string);
             _utils.LogDebug($"Replaced code [{search_string}] at: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
+
+
         }
         void ReplaceMinimapTileImagePrep(Int64 functionAddress, Int64 jump_point, string pattern)
         {
@@ -234,7 +236,6 @@ namespace p4gpc.dungeonframework.Accessors
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
-
         void ReplaceStartupSearchB(Int64 functionAddress, int jump_offset, string pattern)
         {
             AccessorRegister pushReg;
@@ -249,7 +250,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"mov rbx, {_lastUsedAddress}");
             instruction_list.Add($"mov [rbx], rax");
             instruction_list.Add($"pop rbx");
-            instruction_list.Add($"pop rax"); ;
+            instruction_list.Add($"pop rax");
 
             instruction_list.Add($"push rbx");
             instruction_list.Add($"push rcx");
@@ -265,8 +266,6 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"pop rcx");
             instruction_list.Add($"pop rbx");
 
-            // This opcode is proving problematic
-            // instruction_list.Add($"push {jump_point}");
             instruction_list.Add($"push rax");
             instruction_list.Add($"push rax");
             instruction_list.Add($"mov rax, {jump_point}");
@@ -276,6 +275,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"ret");
             instruction_list.Add($"label next_point");
 
+            // Probably need to change this down the line
             instruction_list.Add($"pop rcx");
             instruction_list.Add($"mov al, cl");
             instruction_list.Add($"and rax, 0xFF");
@@ -286,5 +286,5 @@ namespace p4gpc.dungeonframework.Accessors
             }
 
 
-        }
+    }
 }

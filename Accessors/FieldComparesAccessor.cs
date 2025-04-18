@@ -27,6 +27,8 @@ using static System.Formats.Asn1.AsnWriter;
 using System.ComponentModel.Design;
 using static System.Net.Mime.MediaTypeNames;
 using System.Runtime.CompilerServices;
+using System.Net;
+using static Reloaded.Hooks.Definitions.X86.FunctionAttribute;
 
 namespace p4gpc.dungeonframework.Accessors
 {
@@ -76,7 +78,7 @@ namespace p4gpc.dungeonframework.Accessors
                 {
                     // 1 byte for room ID (lookup purposes)
                     // 1 byte for type of field/room,
-                    // 1 byte for flags (may remove later)
+                    // 1 byte for flags 
                     fieldCompSize+=3;
                 }
             }
@@ -696,6 +698,7 @@ namespace p4gpc.dungeonframework.Accessors
             // Replacing some flag checks
             search_string = "83 ?? D7 83 ?? 18 77 ?? ?? 13 00 30 01 0F A3 ??";
             functions = _utils.SigScan_FindCount(search_string, "FieldCompare _____ Opcodes", 4);
+            _utils.LogDebug($" ----- NOTING FOR LATE ----- ", Config.DebugLevels.CodeReplacedLocations);
 
             foreach (long function in functions)
             {
@@ -811,6 +814,41 @@ namespace p4gpc.dungeonframework.Accessors
             baseReg = AccessorRegister.rbx;
             _utils.LogDebug($"Location of [{search_string}]: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             ReplaceCameraCollisionLoadCheck(function_single, search_string);
+
+
+            Int64 if_true;
+            Int64 if_false;
+            search_string = "48 8D 15 A2 39 66 00";
+            if_true = _utils.SigScan(search_string, $"dobjIfTrue");
+            search_string = "FF 06 33 C0 48 8B 4D 10 48 33 CC";
+            if_false = _utils.SigScan(search_string, $"dobjIfFalse");
+            search_string = "0F B7 ?? 18 8D 41 D4 66 83 ?? 19";
+            function_single = _utils.SigScan(search_string, $"dobjCheck");
+
+            ReplaceDobjCheckInitialLoad(function_single, if_true, if_false, search_string);
+            _utils.LogDebug($"Replaced code [{search_string}] at: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+
+
+            search_string = "48 8D 15 FB 56 64 00 48 8D 4D D0";
+            if_true = _utils.SigScan(search_string, $"dobjIfTrue");
+            search_string = "41 FF 47 04 41 8B C5 48 8B 4D F0";
+            if_false = _utils.SigScan(search_string, $"dobjIfFalse");
+            search_string = "0F B7 51 18 8D 42 D4 66 83 F8 19 0F 87 64 F2 FF FF";
+            function_single = _utils.SigScan(search_string, $"dobjCheck");
+
+            ReplaceDobjCheckBattleLoad(function_single, if_true, if_false, search_string);
+            _utils.LogDebug($"Replaced code [{search_string}] at: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+
+            //0F B7 51 18 8D 42 D4 66 83 F8 19 0F 87 64 F2 FF FF
+
+            // Implementing a custom flag check to determine if fields will actively ignore the game's vanilla rendering distance limits
+            // for dungeons.
+            search_string = "8B 47 28 A8 02 0F 84 8A 03 00 00";
+            function_single = _utils.SigScan(search_string, $"renderDistanceCheck");
+            _memory.SafeRead((nuint)(function_single + 7), out jumpOffset);
+            jumpLocation = function_single + jumpOffset + 11;
+            ReplaceRenderDistanceCheck(function_single, jumpLocation, search_string);
+            _utils.LogDebug($"Replaced code [{search_string}] at: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
         }
 
@@ -1866,6 +1904,253 @@ namespace p4gpc.dungeonframework.Accessors
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
+
+        void ReplaceDobjCheckInitialLoad(Int64 functionAddress, Int64 if_true, Int64 if_false, string pattern)
+        {
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            baseReg = AccessorRegister.rcx;
+            instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
+
+
+            instruction_list.Add($"movzx rcx, byte [rsi+0x18]");
+            instruction_list.Add($"and rcx, 0xFF");
+
+            usedRegs = SetupRegisters();
+
+
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[1]}");
+            instruction_list.Add($"push {usedRegs[2]}");
+            instruction_list.Add($"push {usedRegs[3]}");
+
+
+            GetRoomFlags(instruction_list, usedRegs, functionAddress, pullFieldFromMemory: true);
+
+            instruction_list.Add($"and {usedRegs[3]}, 0x4");
+            instruction_list.Add($"cmp {usedRegs[3]}, 0x0");
+
+            instruction_list.Add($"jne CHECK_SUCCESS");
+            instruction_list.Add($"pop {usedRegs[3]}");
+            instruction_list.Add($"pop {usedRegs[2]}");
+            instruction_list.Add($"pop {usedRegs[1]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"mov {usedRegs[0]}, {if_false}");
+            instruction_list.Add($"mov [rsp+8], {usedRegs[0]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+            instruction_list.Add($"ret");
+
+            instruction_list.Add($"label CHECK_SUCCESS");
+
+            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_PREGEN, functionAddress);
+            instruction_list.Add($"jne SET_NAME");
+
+            // Pregen floor, need to get corresponding random floor ID
+
+            instruction_list.Add($"mov {usedRegs[2]}, {baseReg}");
+            instruction_list.Add($"mov {usedRegs[0]}, {_randomPregenLinkTable + 1}");
+            instruction_list.Add($"mov {usedRegs[1]}, {_randomPregenLinkTable + (nuint)(_linkList.Count() * 2)}");
+
+
+            instruction_list.Add($"label LOOP2_START");
+            instruction_list.Add($"mov {usedRegs[3]}, [{usedRegs[0]}]");
+            instruction_list.Add($"and {usedRegs[3]}, 0xFF");
+            instruction_list.Add($"cmp {usedRegs[3]}, {usedRegs[2]}");
+            instruction_list.Add($"je SET_NAME_PREGEN");
+            instruction_list.Add($"add {usedRegs[0]}, 2");
+            instruction_list.Add($"cmp {usedRegs[1]}, {usedRegs[0]}");
+            instruction_list.Add($"jne LOOP2_START");
+            // Just gonna keep crashing for the moment
+            instruction_list.Add($"ret");
+
+
+            instruction_list.Add($"label SET_NAME_PREGEN");
+            instruction_list.Add($"mov {usedRegs[3]}, [{usedRegs[0]}-1]");
+            instruction_list.Add($"and {usedRegs[3]}, 0xFF");
+            instruction_list.Add($"mov {baseReg}, {usedRegs[3]}");
+
+            instruction_list.Add($"label SET_NAME");
+
+            instruction_list.Add($"pop {usedRegs[3]}");
+            instruction_list.Add($"pop {usedRegs[2]}");
+            instruction_list.Add($"pop {usedRegs[1]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+            instruction_list.Add($"mov r8, {baseReg}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"mov {usedRegs[0]}, {if_true}");
+            instruction_list.Add($"mov [rsp+8], {usedRegs[0]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+            instruction_list.Add($"ret");
+
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        void ReplaceDobjCheckBattleLoad(Int64 functionAddress, Int64 if_true, Int64 if_false, string pattern)
+        {
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            baseReg = AccessorRegister.rdx;
+            instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
+
+            instruction_list.Add($"movzx rdx, byte [rcx+0x18]");
+            instruction_list.Add($"and rdx, 0xFF");
+
+            usedRegs = SetupRegisters();
+
+
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[1]}");
+            instruction_list.Add($"push {usedRegs[2]}");
+            instruction_list.Add($"push {usedRegs[3]}");
+
+
+            GetRoomFlags(instruction_list, usedRegs, functionAddress, pullFieldFromMemory: true);
+
+            instruction_list.Add($"and {usedRegs[3]}, 0x4");
+            instruction_list.Add($"cmp {usedRegs[3]}, 0x0");
+
+            instruction_list.Add($"jne CHECK_SUCCESS");
+            instruction_list.Add($"pop {usedRegs[3]}");
+            instruction_list.Add($"pop {usedRegs[2]}");
+            instruction_list.Add($"pop {usedRegs[1]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"mov {usedRegs[0]}, {if_false}");
+            instruction_list.Add($"mov [rsp+8], {usedRegs[0]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+            instruction_list.Add($"ret");
+
+            instruction_list.Add($"label CHECK_SUCCESS");
+
+            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_PREGEN, functionAddress);
+            instruction_list.Add($"jne SET_NAME");
+
+            // Pregen floor, need to get corresponding random floor ID
+
+            instruction_list.Add($"mov {usedRegs[2]}, {baseReg}");
+            instruction_list.Add($"mov {usedRegs[0]}, {_randomPregenLinkTable + 1}");
+            instruction_list.Add($"mov {usedRegs[1]}, {_randomPregenLinkTable + (nuint)(_linkList.Count() * 2)}");
+
+
+            instruction_list.Add($"label LOOP2_START");
+            instruction_list.Add($"mov {usedRegs[3]}, [{usedRegs[0]}]");
+            instruction_list.Add($"and {usedRegs[3]}, 0xFF");
+            instruction_list.Add($"cmp {usedRegs[3]}, {usedRegs[2]}");
+            instruction_list.Add($"je SET_NAME_PREGEN");
+            instruction_list.Add($"add {usedRegs[0]}, 2");
+            instruction_list.Add($"cmp {usedRegs[1]}, {usedRegs[0]}");
+            instruction_list.Add($"jne LOOP2_START");
+            // Just gonna keep crashing for the moment
+            instruction_list.Add($"ret");
+
+
+            instruction_list.Add($"label SET_NAME_PREGEN");
+            instruction_list.Add($"mov {usedRegs[3]}, [{usedRegs[0]}-1]");
+            instruction_list.Add($"and {usedRegs[3]}, 0xFF");
+            instruction_list.Add($"mov {baseReg}, {usedRegs[3]}");
+
+            instruction_list.Add($"label SET_NAME");
+
+            instruction_list.Add($"pop {usedRegs[3]}");
+            instruction_list.Add($"pop {usedRegs[2]}");
+            instruction_list.Add($"pop {usedRegs[1]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+            instruction_list.Add($"mov r8, {baseReg}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"mov {usedRegs[0]}, {if_true}");
+            instruction_list.Add($"mov [rsp+8], {usedRegs[0]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+            instruction_list.Add($"ret");
+
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+        }
+
+        void ReplaceRenderDistanceCheck(Int64 functionAddress, Int64 jumpLocation, string pattern)
+        {
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            baseReg = AccessorRegister.r12;
+            outReg = AccessorRegister.rax;
+            instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
+            instruction_list.Add($"cmp {baseReg}, 0");
+            instruction_list.Add($"je CHECK_FAIL");
+
+            usedRegs = SetupRegisters();
+
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[1]}");
+            instruction_list.Add($"push {usedRegs[2]}");
+            instruction_list.Add($"push {usedRegs[3]}");
+
+            GetRoomFlags(instruction_list, usedRegs, functionAddress);
+
+            instruction_list.Add($"and {usedRegs[3]}, 0x8");
+            instruction_list.Add($"cmp {usedRegs[3]}, 0x0");
+            instruction_list.Add($"pop {usedRegs[3]}");
+            instruction_list.Add($"pop {usedRegs[2]}");
+            instruction_list.Add($"pop {usedRegs[1]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+
+            instruction_list.Add($"je CHECK_FAIL");
+
+            instruction_list.Add($"mov rax, {0xA}");
+            instruction_list.Add($"jmp RETURN");
+
+            instruction_list.Add($"label CHECK_FAIL");
+            instruction_list.Add($"mov rax, [rdi+0x28]");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"mov {usedRegs[0]}, {jumpLocation}");
+            instruction_list.Add($"mov [rsp+8], {usedRegs[0]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+
+            instruction_list.Add($"test al, 0x2");
+            instruction_list.Add($"jne RETURN2");
+            instruction_list.Add($"ret");
+
+            instruction_list.Add($"label RETURN2");
+            instruction_list.Add($"add rsp, 0x8");
+
+            instruction_list.Add($"label RETURN");
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+
+        }
+
         private List<AccessorRegister> SetupRegisters()
         {
             List<AccessorRegister> registers = new();
@@ -1895,6 +2180,10 @@ namespace p4gpc.dungeonframework.Accessors
                     lookupAddrReg = AccessorRegister.r9;
                 }
             }
+            else
+            {
+                intermediateRegA = AccessorRegister.rax;
+            }
             registers.Add(lookupAddrReg);
 
             if (baseReg == AccessorRegister.rbx)
@@ -1918,6 +2207,10 @@ namespace p4gpc.dungeonframework.Accessors
                 {
                     compareAddrReg = AccessorRegister.r10;
                 }
+            }
+            else
+            {
+                intermediateRegA = AccessorRegister.rbx;
             }
             registers.Add(compareAddrReg);
 
@@ -1943,6 +2236,10 @@ namespace p4gpc.dungeonframework.Accessors
                     intermediateRegA = AccessorRegister.r11;
                 }
             }
+            else
+            {
+                intermediateRegA = AccessorRegister.rcx;
+            }
             registers.Add(intermediateRegA);
 
             if (baseReg == AccessorRegister.rdx)
@@ -1966,6 +2263,10 @@ namespace p4gpc.dungeonframework.Accessors
                 {
                     intermediateRegB = AccessorRegister.r13;
                 }
+            }
+            else
+            {
+                intermediateRegA = AccessorRegister.rdx;
             }
             registers.Add(intermediateRegB);
 
@@ -2065,6 +2366,69 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"and {registers[3]}, 0xFF");
 
             instruction_list.Add($"cmp {registers[3]}, {(int)roomType}");
+        }
+    
+        private void GetRoomFlags(List<string> instruction_list, List<AccessorRegister> registers, Int64 functionAddress, bool pullFieldFromMemory = false)
+        {
+
+            instruction_list.Add($"mov {registers[0]}, {_fieldComparesLookupAddress}");
+
+            if (!pullFieldFromMemory)
+            {
+                instruction_list.Add($"mov {registers[2]}, {baseReg}");
+            }
+            else
+            {
+                instruction_list.Add($"mov {registers[2]}, {(Int64)0x140ECA340}");
+                instruction_list.Add($"mov {registers[2]}, [{registers[2]}]");
+            }
+            instruction_list.Add($"and {registers[2]}, 0xFF");
+
+            // Multiply by 8 to account for address size
+            instruction_list.Add($"shl {registers[2]}, 3");
+            instruction_list.Add($"add {registers[0]}, {registers[2]}");
+            instruction_list.Add($"mov {registers[1]}, [{registers[0]}]");
+
+            // Get room ID
+            instruction_list.Add($"mov {registers[0]}, {(Int64)0x140ECA344}");
+            instruction_list.Add($"mov {registers[3]}, [{registers[0]}]");
+            instruction_list.Add($"and {registers[3]}, 0xFF");
+
+            // Find address of next entry in table
+            if (!pullFieldFromMemory)
+            {
+                instruction_list.Add($"mov {registers[2]}, {baseReg}");
+            }
+            else
+            {
+                instruction_list.Add($"mov {registers[2]}, {(Int64)0x140ECA340}");
+                instruction_list.Add($"mov {registers[2]}, [{registers[2]}]");
+            }
+            instruction_list.Add($"and {registers[2]}, 0xFF");
+            instruction_list.Add($"add {registers[2]}, 1");
+            instruction_list.Add($"shl {registers[2]}, 3");
+            instruction_list.Add($"mov {registers[0]}, {_fieldComparesLookupAddress}");
+            instruction_list.Add($"add {registers[0]}, {registers[2]}");
+            instruction_list.Add($"mov {registers[2]}, [{registers[0]}]");
+
+
+            instruction_list.Add($"label LOOP_START3");
+            instruction_list.Add($"mov {registers[0]}, [{registers[1]}]");
+            instruction_list.Add($"and {registers[0]}, 0xFF");
+            instruction_list.Add($"cmp {registers[3]}, {registers[0]}");
+            instruction_list.Add($"je FOUND_FLAGS");
+            instruction_list.Add($"add {registers[1]}, 3");
+            instruction_list.Add($"cmp {registers[1]}, {registers[2]}");
+            instruction_list.Add($"jne LOOP_START3");
+            // Something's gone wrong, gonna crash the game for the moment
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"{_logCrashCallMnemonic}");
+
+            instruction_list.Add($"label FOUND_FLAGS");
+
+            instruction_list.Add($"add {registers[1]}, 2");
+            instruction_list.Add($"mov {registers[3]}, [{registers[1]}]");
+            instruction_list.Add($"and {registers[3]}, 0xFF");
         }
     }
 }
