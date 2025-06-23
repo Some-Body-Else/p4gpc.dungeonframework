@@ -816,6 +816,18 @@ namespace p4gpc.dungeonframework.Accessors
             ReplaceCameraCollisionLoadCheck(function_single, search_string);
 
 
+            //0F B7 51 18 8D 42 D4 66 83 F8 19 0F 87 64 F2 FF FF
+
+            // Implementing a custom flag check to determine if fields will actively ignore the game's vanilla rendering distance limits
+            // for dungeons.
+            search_string = "8B 47 28 A8 02 0F 84 8A 03 00 00";
+            function_single = _utils.SigScan(search_string, $"renderDistanceCheckRoom");
+            _memory.SafeRead((nuint)(function_single + 7), out jumpOffset);
+            jumpLocation = function_single + jumpOffset + 11;
+            _utils.LogDebug($"Replaced code [{search_string}] at: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+            ReplaceRenderDistanceCheckRoom(function_single, jumpLocation, search_string);
+
+
             Int64 if_true;
             Int64 if_false;
             search_string = "48 8D 15 A2 39 66 00";
@@ -839,16 +851,15 @@ namespace p4gpc.dungeonframework.Accessors
             ReplaceDobjCheckBattleLoad(function_single, if_true, if_false, search_string);
             _utils.LogDebug($"Replaced code [{search_string}] at: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
 
-            //0F B7 51 18 8D 42 D4 66 83 F8 19 0F 87 64 F2 FF FF
 
-            // Implementing a custom flag check to determine if fields will actively ignore the game's vanilla rendering distance limits
-            // for dungeons.
-            search_string = "8B 47 28 A8 02 0F 84 8A 03 00 00";
-            function_single = _utils.SigScan(search_string, $"renderDistanceCheck");
-            _memory.SafeRead((nuint)(function_single + 7), out jumpOffset);
-            jumpLocation = function_single + jumpOffset + 11;
-            ReplaceRenderDistanceCheck(function_single, jumpLocation, search_string);
+
+            // 41 8B 01 83 C0 D4 83 F8
+            search_string = "41 8B 01 83 C0 D4 83 F8";
+            jumpLocation = _utils.SigScan(search_string, $"dobjIfTrue");
+            search_string = "74 38 0F 1F 84 00 00 00 00 00 83 62 28 FD";
+            function_single = _utils.SigScan(search_string, $"renderDistanceCheckObject");
             _utils.LogDebug($"Replaced code [{search_string}] at: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+            ReplaceRenderDistanceCheckObject(function_single, jumpLocation, search_string);
 
         }
 
@@ -2090,7 +2101,7 @@ namespace p4gpc.dungeonframework.Accessors
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
         }
 
-        void ReplaceRenderDistanceCheck(Int64 functionAddress, Int64 jumpLocation, string pattern)
+        void ReplaceRenderDistanceCheckRoom(Int64 functionAddress, Int64 jumpLocation, string pattern)
         {
             List<AccessorRegister> usedRegs;
             List<string> instruction_list = new List<string>();
@@ -2148,6 +2159,58 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"label RETURN");
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
+
+        }
+
+
+        void ReplaceRenderDistanceCheckObject(Int64 functionAddress, Int64 jumpLocation, string pattern)
+        {
+            List<AccessorRegister> usedRegs;
+            List<string> instruction_list = new List<string>();
+            baseReg = AccessorRegister.r8;
+            outReg = AccessorRegister.rdx;
+            instruction_list.Add($"use64");
+
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"push rbx");
+            instruction_list.Add($"mov rax, {functionAddress}");
+            instruction_list.Add($"mov rbx, {_lastUsedAddress}");
+            instruction_list.Add($"mov [rbx], rax");
+            instruction_list.Add($"pop rbx");
+            instruction_list.Add($"pop rax");
+
+            instruction_list.Add($"cmp {baseReg}, 0");
+            instruction_list.Add($"je CHECK_FAIL");
+
+            usedRegs = SetupRegisters();
+
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[1]}");
+            instruction_list.Add($"push {usedRegs[2]}");
+            instruction_list.Add($"push {usedRegs[3]}");
+
+            GetRoomFlags(instruction_list, usedRegs, functionAddress);
+
+            instruction_list.Add($"and {usedRegs[3]}, 0x8");
+            instruction_list.Add($"cmp {usedRegs[3]}, 0x0");
+            instruction_list.Add($"pop {usedRegs[3]}");
+            instruction_list.Add($"pop {usedRegs[2]}");
+            instruction_list.Add($"pop {usedRegs[1]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+
+            instruction_list.Add($"je CHECK_FAIL");
+
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"push {usedRegs[0]}");
+            instruction_list.Add($"mov {usedRegs[0]}, {jumpLocation}");
+            instruction_list.Add($"mov [rsp+8], {usedRegs[0]}");
+            instruction_list.Add($"pop {usedRegs[0]}");
+
+            instruction_list.Add($"ret");
+
+            instruction_list.Add($"label CHECK_FAIL");
+
+            _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.ExecuteFirst, _utils.GetPatternLength(pattern)).Activate());
 
         }
 

@@ -152,14 +152,6 @@ namespace p4gpc.dungeonframework.Accessors
             foreach (long color in _chestPalletes.Colors)
             {
                 // Accounting for endianness shennanigans
-                /*
-                 * Not-so fun fact, I saw that the updated Reloaded-II library came with a function to handle endian swapping.
-                 * I tried updating, thinking "what's the worst that could happen". The answer was rendering every single usage of
-                 * the memory object as an error source with no clear direction on a fix. This also happened at around midnight,
-                 * so I was immediately thrown into a panic as I tried to un-brick this thing before just deciding to downgrade again.
-                 * 
-                 * Never update to the newest version of a library when you are two major versions behind.
-                 */
                 Int32 Color_Reversed = (Int32) ( ((color & 0xFF000000) >> 24) + ((color & 0xFF0000) >> 8) + ((color & 0xFF00) << 8) + ((color & 0xFF) << 24) ) ;
                 _memory.SafeWrite(_chestPaletteAddress + (nuint)floorObjCounter, Color_Reversed);
                 floorObjCounter+=4;
