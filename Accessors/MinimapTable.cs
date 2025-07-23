@@ -749,8 +749,8 @@ namespace p4gpc.dungeonframework.Accessors
             // RAX - MapRAM address
             // RCX - Minimap Reveal Address
             // RDX - StackBase ( For comparisons )
-            // RSI - Direction Stack(?)
-            // RSP - BFS Stack
+            // RSI - Direction Stack
+            // RSP - DFS Stack
             // R# - Temporary variables
             AccessorRegister LowerOffset = AccessorRegister.rbx;
             AccessorRegister UpperOffset = AccessorRegister.rdi;
@@ -1024,7 +1024,7 @@ namespace p4gpc.dungeonframework.Accessors
 
 
             // If multi-tiled, beign searching for other parts that may need to be revealed
-            instruction_list.Add($"label BFS_START");
+            instruction_list.Add($"label DFS");
             instruction_list.Add($"mov {VariableTempB}, {AddressTempA}");
             instruction_list.Add($"sub {VariableTempB}, {MapRam}");
             instruction_list.Add($"shr {VariableTempB}, 4");
@@ -1163,7 +1163,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"cmp {StackBFS}, {AddressTempB}");
             instruction_list.Add($"jae NEXT_CARDINAL_TILE");
             instruction_list.Add($"pop {AddressTempA}");
-            instruction_list.Add($"jmp BFS_START");
+            instruction_list.Add($"jmp DFS");
 
 
             // Look for the next cardinal tile to check, if one exists

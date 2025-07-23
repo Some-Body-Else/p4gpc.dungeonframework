@@ -188,7 +188,7 @@ namespace p4gpc.dungeonframework.Accessors
                     counter += 4;
                 }
             }
-            
+
         }
     }
 }
