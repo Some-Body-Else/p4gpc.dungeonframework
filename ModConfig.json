@@ -2,7 +2,7 @@
   "ModId": "p4gpc.dungeonframework",
   "ModName": "Persona 4 Golden Dungeon Framework",
   "ModAuthor": "Somebody Else",
-  "ModVersion": "0.2.0",
+  "ModVersion": "0.4.0",
   "ModDescription": "Mod created to load in dungeon-related data for Persona 4 Golden mods.",
   "ModDll": "p4gpc.dungeonframework.dll",
   "ModIcon": "Preview.png",

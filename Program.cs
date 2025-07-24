@@ -75,9 +75,10 @@ namespace p4gpc.dungeonframework
             using var currentProc = Process.GetCurrentProcess();
             
             Int64 baseAddress = currentProc.MainModule.BaseAddress.ToInt64();
-            
+            Debugger.Launch();
+
             string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\dungeonframework"));
-            string defaultPath = Path.GetFullPath(Path.Combine(_modLoader.GetModConfigDirectory(_modConfig.ModId), @"..\\..\\..\\")) + "\\Mods\\p4gpc.dungeonframework\\JSON";
+            string defaultPath = Path.GetFullPath(_modLoader.GetModConfigDirectory(_modConfig.ModId) + "\\JSON");
 
             _utilities = new Utilities(_configuration, _logger, baseAddress);
             _jsonImporter = new JsonImporter(_configuration, _utilities, modPath, defaultPath);
