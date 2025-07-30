@@ -77,7 +77,7 @@ namespace p4gpc.dungeonframework
             Int64 baseAddress = currentProc.MainModule.BaseAddress.ToInt64();
 
             string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\dungeonframework"));
-            string defaultPath = Path.GetFullPath(_modLoader.GetModConfigDirectory(_modConfig.ModId) + "\\JSON");
+            string defaultPath = Path.GetFullPath(_modLoader.GetDirectoryForModId(_modConfig.ModId) + "\\JSON");
 
             _utilities = new Utilities(_configuration, _logger, baseAddress);
             _jsonImporter = new JsonImporter(_configuration, _utilities, modPath, defaultPath);
@@ -90,7 +90,6 @@ namespace p4gpc.dungeonframework
             _accessors.Append(new EncountTables(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new RoomTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new MinimapTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
-            // _accessors.Append(new RoomCompares(_hooks, _utilities, _memory, _configuration, _jsonImporter));
             _accessors.Append(new FieldComparesAccessor(_hooks, _utilities, _memory, _configuration, _jsonImporter));
 
             _utilities.Log("DungeonFramework set up complete!");
