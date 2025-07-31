@@ -907,7 +907,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"cmp {baseReg}, 0xFFFF");
             instruction_list.Add($"je CHECK_FAIL");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.OVERWORLD, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.OVERWORLD, functionAddress);
             instruction_list.Add($"je CHECK_SUCCESS");
             instruction_list.Add($"jmp CHECK_FAIL");
 
@@ -1015,7 +1015,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"cmp {baseReg}, 0xFFFF");
             instruction_list.Add($"je CHECK_FAIL");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_RANDOM, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_RANDOM, functionAddress);
             instruction_list.Add($"je CHECK_SUCCESS");
             instruction_list.Add($"jmp CHECK_FAIL");
 
@@ -1085,7 +1085,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"push {usedRegs[2]}");
             instruction_list.Add($"push {usedRegs[3]}");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_RANDOM, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_RANDOM, functionAddress);
 
             instruction_list.Add($"pop {usedRegs[3]}");
             instruction_list.Add($"pop {usedRegs[2]}");
@@ -1121,7 +1121,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"cmp {baseReg}, 0xFFFF");
             instruction_list.Add($"je CHECK_FAIL");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_RANDOM, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_RANDOM, functionAddress);
             instruction_list.Add($"je CHECK_SUCCESS");
             instruction_list.Add($"jmp CHECK_FAIL");
 
@@ -1197,7 +1197,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"cmp {baseReg}, 0xFFFF");
             instruction_list.Add($"je CHECK_FAIL");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_PREGEN, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_PREGEN, functionAddress);
             instruction_list.Add($"je CHECK_SUCCESS");
             instruction_list.Add($"jmp CHECK_FAIL");
 
@@ -1293,7 +1293,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"cmp {baseReg}, 0xFFFF");
             instruction_list.Add($"je CHECK_FAIL");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_PREGEN, functionAddress, checkBaseAgainstRam:true);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_PREGEN, functionAddress, checkBaseAgainstRam:true);
             instruction_list.Add($"je CHECK_SUCCESS");
             instruction_list.Add($"jmp CHECK_FAIL");
 
@@ -1392,7 +1392,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"cmp {baseReg}, 0xFFFF");
             instruction_list.Add($"je CHECK_FAIL");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.BATTLE, functionAddress, pullFieldFromMemory: true);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.BATTLE, functionAddress, pullFieldFromMemory: true);
             instruction_list.Add($"je CHECK_SUCCESS");
             instruction_list.Add($"jmp CHECK_FAIL");
 
@@ -1460,7 +1460,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"push {usedRegs[2]}");
             instruction_list.Add($"push {usedRegs[3]}");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_STATIC, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_STATIC, functionAddress);
             instruction_list.Add($"je CHECK_SUCCESS");
             instruction_list.Add($"jmp CHECK_FAIL");
 
@@ -1531,7 +1531,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"cmp {baseReg}, 0xFFFF");
             instruction_list.Add($"je CHECK_FAIL");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_RANDOM, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_RANDOM, functionAddress);
             instruction_list.Add($"jne CHECK_FAIL");
 
 
@@ -1603,11 +1603,11 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"push {usedRegs[2]}");
             instruction_list.Add($"push {usedRegs[3]}");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_RANDOM, functionAddress, roomIdFromRegAddr:true);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_RANDOM, functionAddress, roomIdFromRegAddr:true);
             instruction_list.Add($"je CHECK_SUCCESS");
-            instruction_list.Add($"cmp {usedRegs[3]}, {(int)RoomLoadType.DUNGEON_PREGEN}");
+            instruction_list.Add($"cmp {usedRegs[3]}, {(int)FieldLoadType.DUNGEON_PREGEN}");
             instruction_list.Add($"je CHECK_SUCCESS");
-            instruction_list.Add($"cmp {usedRegs[3]}, {(int)RoomLoadType.DUNGEON_STATIC}");
+            instruction_list.Add($"cmp {usedRegs[3]}, {(int)FieldLoadType.DUNGEON_STATIC}");
             
             
             instruction_list.Add($"jne CHECK_FAIL");
@@ -1663,7 +1663,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"push {usedRegs[2]}");
             instruction_list.Add($"push {usedRegs[3]}");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_PREGEN, functionAddress, roomIdFromRegAddr:true);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_PREGEN, functionAddress, roomIdFromRegAddr:true);
             instruction_list.Add($"jne CHECK_FAIL");
             // Pregen floor, need to get corresponding random floor ID
 
@@ -1729,10 +1729,10 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"push {usedRegs[2]}");
             instruction_list.Add($"push {usedRegs[3]}");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_RANDOM, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_RANDOM, functionAddress);
             instruction_list.Add($"je RANDOM_CONVERT");
 
-            instruction_list.Add($"cmp {usedRegs[3]}, {(int)RoomLoadType.DUNGEON_PREGEN}");
+            instruction_list.Add($"cmp {usedRegs[3]}, {(int)FieldLoadType.DUNGEON_PREGEN}");
             instruction_list.Add($"jne CHECK_FAIL");
             // Pregen floor, need to get corresponding random floor ID
 
@@ -1837,9 +1837,9 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"push {usedRegs[2]}");
             instruction_list.Add($"push {usedRegs[3]}");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.OVERWORLD, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.OVERWORLD, functionAddress);
             instruction_list.Add($"je CHECK_FLAGS");
-            instruction_list.Add($"cmp {usedRegs[3]}, {(int)RoomLoadType.DUNGEON_STATIC}");
+            instruction_list.Add($"cmp {usedRegs[3]}, {(int)FieldLoadType.DUNGEON_STATIC}");
             instruction_list.Add($"jne CHECK_FAIL");
             instruction_list.Add($"label CHECK_FLAGS");
 
@@ -1903,7 +1903,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"push {usedRegs[2]}");
             instruction_list.Add($"push {usedRegs[3]}");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_RANDOM, functionAddress, checkBaseAgainstRam:true);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_RANDOM, functionAddress, checkBaseAgainstRam:true);
 
             instruction_list.Add($"pop {usedRegs[3]}");
             instruction_list.Add($"pop {usedRegs[2]}");
@@ -1964,7 +1964,7 @@ namespace p4gpc.dungeonframework.Accessors
 
             instruction_list.Add($"label CHECK_SUCCESS");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_PREGEN, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_PREGEN, functionAddress);
             instruction_list.Add($"jne SET_NAME");
 
             // Pregen floor, need to get corresponding random floor ID
@@ -2056,7 +2056,7 @@ namespace p4gpc.dungeonframework.Accessors
 
             instruction_list.Add($"label CHECK_SUCCESS");
 
-            CheckForRoomType(instruction_list, usedRegs, RoomLoadType.DUNGEON_PREGEN, functionAddress);
+            CheckForRoomType(instruction_list, usedRegs, FieldLoadType.DUNGEON_PREGEN, functionAddress);
             instruction_list.Add($"jne SET_NAME");
 
             // Pregen floor, need to get corresponding random floor ID
@@ -2338,7 +2338,7 @@ namespace p4gpc.dungeonframework.Accessors
 
         // pullFieldFromMemory is needed because one or two of the functions being replaced don't have the field stored in a register
         // Likewise, one function pulls the room ID not from a known memory location, but from an address in RBX
-        private void CheckForRoomType(List<string> instruction_list, List<AccessorRegister> registers, RoomLoadType roomType, Int64 functionAddress, bool pullFieldFromMemory = false, bool roomIdFromRegAddr = false, bool checkBaseAgainstRam = false)
+        private void CheckForRoomType(List<string> instruction_list, List<AccessorRegister> registers, FieldLoadType roomType, Int64 functionAddress, bool pullFieldFromMemory = false, bool roomIdFromRegAddr = false, bool checkBaseAgainstRam = false)
         {
             instruction_list.Add($"mov {registers[0]}, {_fieldComparesLookupAddress}");
 

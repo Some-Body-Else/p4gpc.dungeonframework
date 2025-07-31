@@ -1470,19 +1470,11 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"pop rbx");
             instruction_list.Add($"pop rax");
 
+
             instruction_list.Add($"mov rcx, r15");
 
-            instruction_list.Add($"sub rax, {_templateTable}");
-            instruction_list.Add($"and rax, 0xFF");
-            instruction_list.Add($"shr rax, 2");
 
-            instruction_list.Add($"push rcx");
-            instruction_list.Add($"mov rcx, 3");
-            instruction_list.Add($"push rdx");
-            instruction_list.Add($"mov rdx, 0");
-            instruction_list.Add($"div rcx");
-            instruction_list.Add($"pop rdx");
-            instruction_list.Add($"pop rcx");
+            instruction_list.Add($"mov rax, [{_currentTemplate}]");
 
             instruction_list.Add($"push rcx");
             instruction_list.Add($"mov rcx, rax");
@@ -1491,8 +1483,9 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"pop rcx");
 
 
+
             GetTemplateEntryAddress(instruction_list, AccessorRegister.rax);
-            // 
+            
             instruction_list.Add($"pop r14");
             instruction_list.Add($"or r14l, [rax+1]");
 

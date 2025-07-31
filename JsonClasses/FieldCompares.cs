@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace p4gpc.dungeonframework.JsonClasses
 {
-    public enum RoomLoadType
+    public enum FieldLoadType
     {
         MAP,                // Overworld map
         OVERWORLD,          // Regular fields, think Inaba's shopping district
@@ -18,13 +18,13 @@ namespace p4gpc.dungeonframework.JsonClasses
         DUNGEON_PREGEN,     // Dungeon floors with minibosses
         BATTLE              // Punchups
     }
-    public class RoomEntry
+    public class FieldEntry
     {
-        public RoomLoadType LoadType { get; set; }
+        public FieldLoadType LoadType { get; set; }
         public byte Flags { get; set; }
     }
     public class FieldCompares
     {
-        public Dictionary<byte, RoomEntry> rooms { get; set; }
+        public Dictionary<byte, FieldEntry> rooms { get; set; }
     }
 }

@@ -192,10 +192,10 @@ namespace p4gpc.dungeonframework.JsonClasses
                 compare.rooms = new();
                 foreach (var key in entry.Keys)
                 {
-                    RoomEntry roomEntry = new();
-                    roomEntry.LoadType = (RoomLoadType)entry[key][0];
-                    roomEntry.Flags = entry[key][1];
-                    compare.rooms.Add(byte.Parse(key), roomEntry);
+                    FieldEntry fieldEntry = new();
+                    fieldEntry.LoadType = (FieldLoadType)entry[key][0];
+                    fieldEntry.Flags = entry[key][1];
+                    compare.rooms.Add(byte.Parse(key), fieldEntry);
                 }
                 _fieldCompares.Add(compare);
 
