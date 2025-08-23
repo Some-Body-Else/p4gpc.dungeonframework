@@ -43,6 +43,8 @@ namespace p4gpc.dungeonframework.Accessors
         // TODO: See if we can easily use this to circumvent code replacements elegantly
         private nuint _currentTemplate;
         private nuint _templateTypeTable;
+        private nuint _templateDataLookupTable;
+
         private long _templateTable;
 
 
@@ -97,7 +99,6 @@ namespace p4gpc.dungeonframework.Accessors
             _currentTemplate = _memory.Allocate(sizeof(byte));
             _utils.LogDebug($"Location of CurrentTemplate: {_currentTemplate.ToString("X8")}", Config.DebugLevels.TableLocations);
 
-
             _templateTable = _utils.SigScan("08 09 01 02 03 05 06 07 09 0A 04 00 09 0A 01 02 03 05 07 06 08 0B 0C 04 08 09 01 02 03 05 06 08 0D 0E 04 00", "TemplateTable");
             _templateTable = _utils.StripBaseAddress(_templateTable);
             
@@ -109,6 +110,18 @@ namespace p4gpc.dungeonframework.Accessors
             
             _templateTypeTable = _memory.Allocate(sizeof(byte)*256);
             _utils.LogDebug($"Location of TemplateTypeTable table: {_templateTypeTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+
+            /*
+             * 0x0 - _templateLookupTable
+             * 0x8 - _templateExitLookupTable
+             * 0x10 - _templateTypeTable
+             */
+            _templateDataLookupTable = _memory.Allocate(sizeof(Int64) * 3);
+            _utils.LogDebug($"Location of TemplateDataLookupTable table: {_templateDataLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _memory.SafeWrite(_templateDataLookupTable, _templateLookupTable);
+            _memory.SafeWrite(_templateDataLookupTable + 0x8, _templateExitLookupTable);
+            _memory.SafeWrite(_templateDataLookupTable + 0x10, _templateTypeTable);
 
             for (int i = 0; i <= 255; i++)
             {
@@ -428,7 +441,6 @@ namespace p4gpc.dungeonframework.Accessors
                         {
                         }
                         _utils.LogDebug($"Location of [{search_string}]: {function.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
-                        // ReplaceMoveInstruction(function, search_string, (TemplateAccessType)i);
                         ReplaceCompareInstruction(function, search_string, (TemplateAccessType)i, temp, false);
 
                     }
@@ -699,6 +711,68 @@ namespace p4gpc.dungeonframework.Accessors
 
         }
 
+        protected override void Update()
+        {
+            Int32 totalTemplateTableSize = 0;
+            nuint templateTableAddress;
+            byte idByte;
+
+            // Update our template-related data
+            _templates = _jsonImporter.GetTemplates();
+            _dungeon_template_dict = _jsonImporter.GetDungeonTemplateDictionary();
+
+            // De-allocate the old values
+            _memory.Free(_templateLookupTable);
+            _memory.Free(_templateExitLookupTable);
+
+            // Allocate space for the new values
+            _templateLookupTable = _memory.Allocate(_templates.Count() * DOUBLEWORD);
+            _utils.LogDebug($"Location of updated TemplateLookupTable table: {_templateLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+            _templateExitLookupTable = _memory.Allocate(_templates.Count());
+            _utils.LogDebug($"Location of updated TemplateExitLookupTable table: {_templateExitLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+            // Write/rwrite data to match new templates
+            for (int i = 0; i <= 255; i++)
+            {
+                if (_dungeon_template_dict.TryGetValue((byte)i, out idByte))
+                {
+                    _memory.SafeWrite(_templateTypeTable + (nuint)i, _dungeon_template_dict[(byte)i]);
+                }
+                else
+                {
+                    _memory.SafeWrite(_templateTypeTable + (nuint)i, 0xFF);
+                }
+            }
+
+            int tablecounter = 0;
+            foreach (DungeonTemplates template in _templates)
+            {
+
+                totalTemplateTableSize = 0;
+                templateTableAddress = _memory.Allocate((template.roomExCount + 2));
+                _memory.SafeWrite(_templateLookupTable + (nuint)(DOUBLEWORD * tablecounter), templateTableAddress);
+
+                _memory.SafeWrite(templateTableAddress, template.roomCount);
+                _memory.SafeWrite(templateTableAddress + 1, template.roomExCount);
+                totalTemplateTableSize += 2;
+                foreach (byte room in template.rooms)
+                {
+                    _memory.SafeWrite((templateTableAddress + (nuint)(totalTemplateTableSize)), room);
+                    totalTemplateTableSize++;
+                }
+                _memory.SafeWrite(_templateExitLookupTable + (nuint)tablecounter, template.exitNum);
+
+                tablecounter++;
+            }
+
+            // Update values at address
+            _utils.LogDebug($"Location of TemplateDataLookupTable table: {_templateDataLookupTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _memory.SafeWrite(_templateDataLookupTable, _templateLookupTable);
+            _memory.SafeWrite(_templateDataLookupTable + 0x8, _templateExitLookupTable);
+            _memory.SafeWrite(_templateDataLookupTable + 0x10, _templateTypeTable);
+        }
+
         private void ReplaceMoveInstructionE(Int64 functionAddress, string pattern, TemplateAccessType accessType)
         {
             AccessorRegister pushReg;
@@ -807,18 +881,6 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"push {inReg}");
             instruction_list.Add($"push {baseReg}");
 
-            instruction_list.Add($"shr {inReg}, 8");
-            instruction_list.Add($"cmp {inReg}, 0");
-            instruction_list.Add($"jne swap_regs");
-
-
-
-            instruction_list.Add($"pop {baseReg}");
-            instruction_list.Add($"pop {inReg}");
-            instruction_list.Add($"jmp code_start");
-
-
-            instruction_list.Add($"label swap_regs");
             instruction_list.Add($"pop {inReg}");
             instruction_list.Add($"pop {baseReg}");
 
@@ -843,8 +905,11 @@ namespace p4gpc.dungeonframework.Accessors
                 instruction_list.Add($"mov {inReg}, rax");
                 instruction_list.Add($"pop rax");
             }
-
-            instruction_list.Add($"movzx {outReg}, byte [{_templateExitLookupTable} + {inReg}]");
+            instruction_list.Add($"push {baseReg}");
+            instruction_list.Add($"mov {baseReg}, {_templateDataLookupTable}");
+            instruction_list.Add($"mov {baseReg}, [{baseReg}+0x8]");
+            instruction_list.Add($"movzx {outReg}, byte [{baseReg} + {inReg}]");
+            instruction_list.Add($"pop {baseReg}");
 
             if (inReg == outReg)
             {
@@ -1474,7 +1539,8 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"mov rcx, r15");
 
 
-            instruction_list.Add($"mov rax, [{_currentTemplate}]");
+            instruction_list.Add($"mov rax, {_currentTemplate}");
+            instruction_list.Add($"mov rax, [rax]");
 
             instruction_list.Add($"push rcx");
             instruction_list.Add($"mov rcx, rax");
@@ -1602,7 +1668,8 @@ namespace p4gpc.dungeonframework.Accessors
              Need to figure a way to determine to use roomcount or roomcountex
              */
             instruction_list.Add($"add rax, 0x28");
-            instruction_list.Add($"mov r13, {_templateTypeTable}");
+            instruction_list.Add($"mov r13, {_templateDataLookupTable}");
+            instruction_list.Add($"mov r13, [r13+0x10]");
             instruction_list.Add($"add r13, rax");
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, _utils.GetPatternLength(pattern)).Activate());
@@ -1635,7 +1702,8 @@ namespace p4gpc.dungeonframework.Accessors
             functionList.Add($"push {pushReg2}");
 
 
-            functionList.Add($"mov {pushReg2}, {_templateLookupTable}");
+            functionList.Add($"mov {pushReg2}, {_templateDataLookupTable}");
+            functionList.Add($"mov {pushReg2}, [{pushReg2}]");
             functionList.Add($"mov {pushReg}, 0");
 
             functionList.Add($"label add_loop");

@@ -34,10 +34,13 @@ namespace p4gpc.dungeonframework.Accessors
     {
         private List<DungeonRoom> _rooms;
         private nuint _newRoomTable;
+        private nuint _newRoomDataTable;
+        private List<KeyValuePair<long, int>> _roomTableAddressLocations;
 
         public RoomTable(IReloadedHooks hooks, Utilities utils, IMemory memory, Config config, JsonImporter jsonImporter)// : base(hooks, utils, memory, config, jsonImporter)
         {
             _rooms = jsonImporter.GetRooms();
+            _roomTableAddressLocations = new List<KeyValuePair<long, int>>();
             executeAccessor(hooks, utils, memory, config, jsonImporter);
             _utils.LogDebug("Room hooks established.", Config.DebugLevels.AlertConnections);
         }
@@ -58,15 +61,13 @@ namespace p4gpc.dungeonframework.Accessors
 
             List<long> _roomTables; 
 
-            foreach (DungeonRoom room in _rooms)
-            {
-                totalTemplateTableSize += 86;
-            }
-
-            _newRoomTable = _memory.Allocate(totalTemplateTableSize);
+            _newRoomTable = _memory.Allocate(_rooms.Count()*86);
             _utils.LogDebug($"Address of NewRoomTable: {_newRoomTable.ToString("X8")}", Config.DebugLevels.TableLocations);
 
-            totalTemplateTableSize = 0;
+            _newRoomDataTable = _memory.Allocate(sizeof(Int64)*1);
+            _utils.LogDebug($"Address of NewRoomDataTable: {_newRoomDataTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _memory.SafeWrite(_newRoomDataTable, _newRoomTable);
+
             foreach (DungeonRoom room in _rooms)
             {
                 _memory.SafeWrite(_newRoomTable+(nuint)totalTemplateTableSize, room.ID);
@@ -150,39 +151,46 @@ namespace p4gpc.dungeonframework.Accessors
 
                 address_str_old = (oldAddress+0x10).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
+
                 func = _utils.SigScan("0F 10 ?? ?? " + address_str_old, $"RoomTable Address Chunk #2 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x10));
                 _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+                _roomTableAddressLocations.Add(new KeyValuePair<long, int>(func+4, 0x10));
 
                 address_str_old = (oldAddress+0x20).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("0F 10 ?? ?? " + address_str_old, $"RoomTable Address Chunk #3 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x20));
                 _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+                _roomTableAddressLocations.Add(new KeyValuePair<long, int>(func+4, 0x20));
 
                 address_str_old = (oldAddress+0x30).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("0F 10 ?? ?? " + address_str_old, $"RoomTable Address Chunk #4 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x30));
                 _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+                _roomTableAddressLocations.Add(new KeyValuePair<long, int>(func+4, 0x30));
 
                 address_str_old = (oldAddress+0x40).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("0F 10 ?? ?? " + address_str_old, $"RoomTable Address Chunk #5 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x40));
                 _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+                _roomTableAddressLocations.Add(new KeyValuePair<long, int>(func+4, 0x40));
 
                 address_str_old = (oldAddress+0x50).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("8B 84 ?? " + address_str_old, $"RoomTable Address Chunk #6 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+3, (Int32)(_newRoomTable+0x50));
                 _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+                _roomTableAddressLocations.Add(new KeyValuePair<long, int>(func+3, 0x50));
 
                 address_str_old = (oldAddress+0x54).ToString("X8");
                 address_str_old = address_str_old.Substring(6, 2) + " " + address_str_old.Substring(4, 2) + " " + address_str_old.Substring(2, 2) + " " + address_str_old.Substring(0, 2);
                 func = _utils.SigScan("0F B7 ?? ?? " + address_str_old, $"RoomTable Address Chunk #7 [{oldAddress.ToString("X8")}]");
                 _memory.SafeWrite((nuint)func+4, (Int32)(_newRoomTable+0x54));
                 _utils.LogDebug($"Location of [0F 10 ?? ?? {address_str_old}]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+                _roomTableAddressLocations.Add(new KeyValuePair<long, int>(func+4, 0x54));
 
             }
             address_str_old = "0F B6 41 FF 48 8D 49 03";
@@ -192,6 +200,77 @@ namespace p4gpc.dungeonframework.Accessors
             ReplacePointerLookup(func, 11, address);
             _utils.LogDebug($"Location of [0F B6 41 FF 48 8D 49 03 8B 04 82]: {func.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             _utils.LogDebug($"Location of [41 8B C9 B8 01 00 00 00 D3 E0 3B C7]: {address.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
+        }
+
+        protected override void Update()
+        {
+            int totalTemplateTableSize = 0;
+
+            _rooms = _jsonImporter.GetRooms();
+            _memory.Free(_newRoomTable);
+
+            _newRoomTable = _memory.Allocate(_rooms.Count() * 86);
+
+            foreach (DungeonRoom room in _rooms)
+            {
+                _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, room.ID);
+                totalTemplateTableSize++;
+                _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, room.sizeX);
+                totalTemplateTableSize++;
+                _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, room.sizeY);
+                totalTemplateTableSize++;
+                _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, (byte)0);
+                totalTemplateTableSize++;
+
+                // This should be removed at some point, data its referring to is unused in our code,
+                // keeping it around for structural consistency (removing this requires refactoring elsewhere)
+                for (int i = 0; i < 9; i++)
+                {
+                    // connectionPointer stuff, if wondering where to look later
+                    _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, (byte)0xFF);
+                    totalTemplateTableSize++;
+                }
+
+
+                foreach (List<byte> revealRow in room.revealProperties)
+                {
+                    foreach (byte reveal in revealRow)
+                    {
+                        _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, reveal);
+                        totalTemplateTableSize++;
+                    }
+                }
+                _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, room.x_y_offsets[0]);
+                totalTemplateTableSize++;
+                _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, room.x_y_offsets[1]);
+                totalTemplateTableSize++;
+                foreach (List<byte> row in room.mapRamOutline)
+                {
+                    foreach (byte value in row)
+                    {
+
+                        _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, value);
+                        totalTemplateTableSize++;
+                    }
+                }
+                _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, (byte)0);
+                totalTemplateTableSize++;
+                foreach (List<int> row in room.connectionValues)
+                {
+                    foreach (int value in row)
+                    {
+                        _memory.SafeWrite(_newRoomTable + (nuint)totalTemplateTableSize, value);
+                        totalTemplateTableSize += 4;
+                    }
+                }
+            }
+
+            foreach (KeyValuePair<long, int> entry in _roomTableAddressLocations)
+            {
+                _memory.SafeWrite(entry.Key, (Int32)(_newRoomTable + (nuint)entry.Value));
+            }
+            _utils.LogDebug($"Address of NewRoomTable: {_newRoomTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _memory.SafeWrite(_newRoomDataTable, _newRoomTable);
         }
 
         private void ReplaceImul(Int64 functionAddress, int length, AccessorRegister offsetReg)
@@ -211,7 +290,11 @@ namespace p4gpc.dungeonframework.Accessors
 
             instruction_list.Add($"imul rcx, rax, 0x56");
             instruction_list.Add($"mov {offsetReg}, 0");
-            instruction_list.Add($"movups xmm0, [{_newRoomTable} + rcx]");
+            instruction_list.Add($"push rax");
+            instruction_list.Add($"mov rax, {_newRoomDataTable}");
+            instruction_list.Add($"mov rax, [rax]");
+            instruction_list.Add($"movups xmm0, [rax + rcx]");
+            instruction_list.Add($"pop rax");
 
             _functionHookList.Add(_hooks.CreateAsmHook(instruction_list.ToArray(), functionAddress, AsmHookBehaviour.DoNotExecuteOriginal, length).Activate());
         }

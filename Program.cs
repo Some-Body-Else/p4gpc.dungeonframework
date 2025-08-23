@@ -58,6 +58,8 @@ namespace p4gpc.dungeonframework
 
         private Utilities _utilities;
 
+        string? custom_json_path;
+
         public void StartEx(IModLoaderV1 loaderApi, IModConfigV1 modConfig)
         {
             
@@ -70,29 +72,57 @@ namespace p4gpc.dungeonframework
             var configurator = new Configurator(_modLoader.GetModConfigDirectory(_modConfig.ModId));
             _configuration = configurator.GetConfiguration<Config>(0);
             _configuration.ConfigurationUpdated += OnConfigurationUpdated;
+            
 
             _memory = new Memory();
             using var currentProc = Process.GetCurrentProcess();
             
             Int64 baseAddress = currentProc.MainModule.BaseAddress.ToInt64();
-
-            string modPath = Path.GetFullPath(Path.Combine(currentProc.MainModule.FileName, @"..\\dungeonframework"));
             string defaultPath = Path.GetFullPath(_modLoader.GetDirectoryForModId(_modConfig.ModId) + "\\JSON");
 
             _utilities = new Utilities(_configuration, _logger, baseAddress);
-            _jsonImporter = new JsonImporter(_configuration, _utilities, modPath, defaultPath);
+            _jsonImporter = new JsonImporter(_configuration, _utilities, defaultPath, true);
             _utilities.Log("JSON files loaded.");
 
-            
+
+
+            this._modLoader.ModLoading += this.OnModLoading;
+            this._modLoader.OnModLoaderInitialized += this.UpdateModData;
+
             _accessors = new List<Accessor>();
-            _accessors.Append(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
-            _accessors.Append(new FloorTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
-            _accessors.Append(new EncountTables(_hooks, _utilities, _memory, _configuration, _jsonImporter));
-            _accessors.Append(new RoomTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
-            _accessors.Append(new MinimapTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
-            _accessors.Append(new FieldComparesAccessor(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Add(new TemplateTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Add(new FloorTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Add(new EncountTables(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Add(new RoomTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Add(new MinimapTable(_hooks, _utilities, _memory, _configuration, _jsonImporter));
+            _accessors.Add(new FieldComparesAccessor(_hooks, _utilities, _memory, _configuration, _jsonImporter));
 
             _utilities.Log("DungeonFramework set up complete!");
+        }
+
+        private void OnModLoading(IModV1 mod, IModConfigV1 config)
+        {
+            var modDir = this._modLoader.GetDirectoryForModId(config.ModId);
+            var dungeon_JSON_dir = Path.Join(modDir, "dungeonframework");
+            if (Directory.Exists(dungeon_JSON_dir))
+            {
+                _utilities.Log(dungeon_JSON_dir);
+                custom_json_path = dungeon_JSON_dir;
+            }
+
+        }
+
+        private void UpdateModData()
+        {
+            if (custom_json_path != null)
+            {
+                _jsonImporter = new JsonImporter(_configuration, _utilities, custom_json_path, false);
+                foreach (Accessor accessor in _accessors)
+                {
+                    accessor.updateAccessor(_jsonImporter);
+                }
+                _utilities.Log("DungeonFramework JSON contents updated!");
+            }
         }
 
         private void OnConfigurationUpdated(IConfigurable obj)

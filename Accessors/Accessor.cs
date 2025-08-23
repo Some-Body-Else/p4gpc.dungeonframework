@@ -87,7 +87,8 @@ namespace p4gpc.dungeonframework.Accessors
 
         protected void CrashLog(int address_of_crash)
         {
-            throw new CustomException($"Fatal error on function at: {address_of_crash.ToString("X8")}", _utils);
+            _utils.LogThrownException($"Fatal error on function at: {address_of_crash.ToString("X8")}");
+            while (true) ;
         }
 
 
@@ -123,7 +124,17 @@ namespace p4gpc.dungeonframework.Accessors
             Task.WaitAll(initialTasks.ToArray());
         }
 
+        public void updateAccessor(JsonImporter newJson)
+        {
+            _jsonImporter = newJson;
+            List<Task> initialTasks = new List<Task>();
+            initialTasks.Add(Task.Run((() => Update())));
+            Task.WaitAll(initialTasks.ToArray());
+        }
+
         protected virtual void Initialize(){}
+
+        protected virtual void Update(){}
 
 
         [Function(new[] { Register.rax, }, Register.rax, false)]

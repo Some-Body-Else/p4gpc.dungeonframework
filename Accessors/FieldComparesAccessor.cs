@@ -41,6 +41,7 @@ namespace p4gpc.dungeonframework.Accessors
         private nuint _randomPregenLinkTable;
         private nuint _randomBattleLinkTable;
         private nuint _pregenBattleLinkTable;
+        private nuint _fieldComparesDataTable;
 
         private byte mod;
         private byte scale;
@@ -100,6 +101,16 @@ namespace p4gpc.dungeonframework.Accessors
             _pregenBattleLinkTable = _memory.Allocate((int)_linkList.Count()*2);
             _utils.LogDebug($"Location of Pregen/Battle Link Table: {_pregenBattleLinkTable.ToString("X8")}", Config.DebugLevels.TableLocations);
 
+            _fieldComparesDataTable = _memory.Allocate((sizeof(Int64)) * 8);
+            _utils.LogDebug($"Location of _fieldComparesDataTable: {_fieldComparesDataTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _memory.SafeWrite(_fieldComparesDataTable, _fieldComparesAddress);
+            _memory.SafeWrite(_fieldComparesDataTable+0x8, _fieldComparesLookupAddress);
+            _memory.SafeWrite(_fieldComparesDataTable+0x10, _randomPregenLinkTable);
+            _memory.SafeWrite(_fieldComparesDataTable+0x18, (_randomPregenLinkTable + (nuint)(_linkList.Count() * 2)));
+            _memory.SafeWrite(_fieldComparesDataTable+0x20, _randomBattleLinkTable);
+            _memory.SafeWrite(_fieldComparesDataTable+0x28, (_randomBattleLinkTable + (nuint)(_linkList.Count() * 2)));
+            _memory.SafeWrite(_fieldComparesDataTable+0x30, _pregenBattleLinkTable);
+            _memory.SafeWrite(_fieldComparesDataTable+0x38, (_pregenBattleLinkTable + (nuint)(_linkList.Count()*2)));
 
             fieldCompSize = 0;
             fieldCompLookupSize = 0;
@@ -861,6 +872,98 @@ namespace p4gpc.dungeonframework.Accessors
             _utils.LogDebug($"Replaced code [{search_string}] at: {function_single.ToString("X8")}", Config.DebugLevels.CodeReplacedLocations);
             ReplaceRenderDistanceCheckObject(function_single, jumpLocation, search_string);
 
+        }
+
+        protected override void Update()
+        {
+            nuint fieldCompSize = 0;
+            nuint fieldCompLookupSize = 0;
+
+
+            _fieldCompareTable = _jsonImporter.GetFieldCompare();
+            _linkList = _jsonImporter.GetLinks();
+
+            foreach (FieldCompares fieldCompares in _fieldCompareTable)
+            {
+                fieldCompLookupSize++;
+                foreach (var room in fieldCompares.rooms)
+                {
+                    // 1 byte for room ID (lookup purposes)
+                    // 1 byte for type of field/room,
+                    // 1 byte for flags 
+                    fieldCompSize += 3;
+                }
+            }
+
+            _memory.Free(_fieldComparesAddress);
+            _memory.Free(_fieldComparesLookupAddress);
+            _memory.Free(_randomPregenLinkTable);
+            _memory.Free(_randomBattleLinkTable);
+            _memory.Free(_pregenBattleLinkTable);
+
+            _fieldComparesAddress = _memory.Allocate((int)fieldCompSize);
+            _utils.LogDebug($"Location of Field Compares Table: {_fieldComparesAddress.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _fieldComparesLookupAddress = _memory.Allocate((int)(fieldCompLookupSize * 8));
+            _utils.LogDebug($"Location of Field Compares Lookup Table: {_fieldComparesLookupAddress.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+
+            _randomPregenLinkTable = _memory.Allocate((int)_linkList.Count() * 2);
+            _utils.LogDebug($"Location of Random/Pregen Link Table: {_randomPregenLinkTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+
+            _randomBattleLinkTable = _memory.Allocate((int)_linkList.Count() * 2);
+            _utils.LogDebug($"Location of Random/Battle Link Table: {_randomBattleLinkTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+
+            _pregenBattleLinkTable = _memory.Allocate((int)_linkList.Count() * 2);
+            _utils.LogDebug($"Location of Pregen/Battle Link Table: {_pregenBattleLinkTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+
+            fieldCompSize = 0;
+            fieldCompLookupSize = 0;
+            foreach (FieldCompares fieldCompares in _fieldCompareTable)
+            {
+                _memory.SafeWrite(_fieldComparesLookupAddress + (fieldCompLookupSize * 8), (UInt64)(_fieldComparesAddress + fieldCompSize));
+                fieldCompLookupSize++;
+                foreach (byte key in fieldCompares.rooms.Keys)
+                {
+                    // 1 byte for room ID (lookup purposes)
+                    _memory.SafeWrite(_fieldComparesAddress + fieldCompSize, key);
+                    fieldCompSize++;
+                    // 1 byte for type of field/room
+                    _memory.SafeWrite(_fieldComparesAddress + fieldCompSize, (byte)fieldCompares.rooms[key].LoadType);
+                    fieldCompSize++;
+                    // 1 byte for flags (may remove later)
+                    _memory.SafeWrite(_fieldComparesAddress + fieldCompSize, fieldCompares.rooms[key].Flags);
+                    fieldCompSize++;
+                }
+
+            }
+
+
+            fieldCompSize = 0;
+            fieldCompLookupSize = 0;
+            foreach (DungeonLinks links in _linkList)
+            {
+                _memory.SafeWrite(_randomPregenLinkTable + (fieldCompLookupSize * 2), (byte)links.RandomPregen[0]);
+                _memory.SafeWrite(_randomPregenLinkTable + (fieldCompLookupSize * 2 + 1), (byte)links.RandomPregen[1]);
+
+                _memory.SafeWrite(_randomBattleLinkTable + (fieldCompLookupSize * 2), (byte)links.RandomBattle[0]);
+                _memory.SafeWrite(_randomBattleLinkTable + (fieldCompLookupSize * 2 + 1), (byte)links.RandomBattle[1]);
+
+                _memory.SafeWrite(_pregenBattleLinkTable + (fieldCompLookupSize * 2), (byte)links.PregenBattle[0]);
+                _memory.SafeWrite(_pregenBattleLinkTable + (fieldCompLookupSize * 2 + 1), (byte)links.PregenBattle[1]);
+                fieldCompLookupSize++;
+            }
+
+            _utils.LogDebug($"Location of _fieldComparesDataTable: {_fieldComparesDataTable.ToString("X8")}", Config.DebugLevels.TableLocations);
+            _memory.SafeWrite(_fieldComparesDataTable, _fieldComparesAddress);
+            _memory.SafeWrite(_fieldComparesDataTable + 0x8, _fieldComparesLookupAddress);
+            _memory.SafeWrite(_fieldComparesDataTable + 0x10, _randomPregenLinkTable);
+            _memory.SafeWrite(_fieldComparesDataTable + 0x18, (_randomPregenLinkTable + (nuint)(_linkList.Count() * 2)));
+            _memory.SafeWrite(_fieldComparesDataTable + 0x20, _randomBattleLinkTable);
+            _memory.SafeWrite(_fieldComparesDataTable + 0x28, (_randomBattleLinkTable + (nuint)(_linkList.Count() * 2)));
+            _memory.SafeWrite(_fieldComparesDataTable + 0x30, _pregenBattleLinkTable);
+            _memory.SafeWrite(_fieldComparesDataTable + 0x38, (_pregenBattleLinkTable + (nuint)(_linkList.Count() * 2)));
         }
 
         private void ReplaceWithJump(Int64 functionAddress, string pattern, Int64 jumpLocation)
@@ -1668,8 +1771,10 @@ namespace p4gpc.dungeonframework.Accessors
             // Pregen floor, need to get corresponding random floor ID
 
             instruction_list.Add($"mov {usedRegs[2]}, {baseReg}");
-            instruction_list.Add($"mov {usedRegs[0]}, {_randomPregenLinkTable+1}");
-            instruction_list.Add($"mov {usedRegs[1]}, {_randomPregenLinkTable + (nuint)(_linkList.Count()*2)}");
+            instruction_list.Add($"mov {usedRegs[0]}, {_fieldComparesDataTable}");
+            instruction_list.Add($"mov {usedRegs[1]}, [{usedRegs[0]}+0x18]");
+            instruction_list.Add($"mov {usedRegs[0]}, [{usedRegs[0]}+0x10]");
+            instruction_list.Add($"add {usedRegs[0]}, 1");
 
 
             instruction_list.Add($"label LOOP2_START");
@@ -1737,14 +1842,16 @@ namespace p4gpc.dungeonframework.Accessors
             // Pregen floor, need to get corresponding random floor ID
 
             instruction_list.Add($"mov {usedRegs[2]}, {baseReg}");
-            instruction_list.Add($"mov {usedRegs[0]}, {_pregenBattleLinkTable}");
-            instruction_list.Add($"mov {usedRegs[1]}, {_pregenBattleLinkTable + (nuint)(_linkList.Count()*2)}");
+            instruction_list.Add($"mov {usedRegs[0]}, {_fieldComparesDataTable}");
+            instruction_list.Add($"mov {usedRegs[1]}, [{usedRegs[0]}+0x38]");
+            instruction_list.Add($"mov {usedRegs[0]}, [{usedRegs[0]}+0x30]");
             instruction_list.Add($"jmp LOOP2_START");
 
             instruction_list.Add($"label RANDOM_CONVERT");
             instruction_list.Add($"mov {usedRegs[2]}, {baseReg}");
-            instruction_list.Add($"mov {usedRegs[0]}, {_randomBattleLinkTable}");
-            instruction_list.Add($"mov {usedRegs[1]}, {_randomBattleLinkTable + (nuint)(_linkList.Count()*2)}");
+            instruction_list.Add($"mov {usedRegs[0]}, {_fieldComparesDataTable}");
+            instruction_list.Add($"mov {usedRegs[1]}, [{usedRegs[0]}+0x28]");
+            instruction_list.Add($"mov {usedRegs[0]}, [{usedRegs[0]}+0x20]");
 
 
             instruction_list.Add($"label LOOP2_START");
@@ -1970,8 +2077,10 @@ namespace p4gpc.dungeonframework.Accessors
             // Pregen floor, need to get corresponding random floor ID
 
             instruction_list.Add($"mov {usedRegs[2]}, {baseReg}");
-            instruction_list.Add($"mov {usedRegs[0]}, {_randomPregenLinkTable + 1}");
-            instruction_list.Add($"mov {usedRegs[1]}, {_randomPregenLinkTable + (nuint)(_linkList.Count() * 2)}");
+            instruction_list.Add($"mov {usedRegs[0]}, {_fieldComparesDataTable}");
+            instruction_list.Add($"mov {usedRegs[1]}, [{usedRegs[0]}+0x18]");
+            instruction_list.Add($"mov {usedRegs[0]}, [{usedRegs[0]}+0x10]");
+            instruction_list.Add($"add {usedRegs[0]}, 1");
 
 
             instruction_list.Add($"label LOOP2_START");
@@ -2062,8 +2171,10 @@ namespace p4gpc.dungeonframework.Accessors
             // Pregen floor, need to get corresponding random floor ID
 
             instruction_list.Add($"mov {usedRegs[2]}, {baseReg}");
-            instruction_list.Add($"mov {usedRegs[0]}, {_randomPregenLinkTable + 1}");
-            instruction_list.Add($"mov {usedRegs[1]}, {_randomPregenLinkTable + (nuint)(_linkList.Count() * 2)}");
+            instruction_list.Add($"mov {usedRegs[0]}, {_fieldComparesDataTable}");
+            instruction_list.Add($"mov {usedRegs[1]}, [{usedRegs[0]}+0x18]");
+            instruction_list.Add($"mov {usedRegs[0]}, [{usedRegs[0]}+0x10]");
+            instruction_list.Add($"add {usedRegs[0]}, 1");
 
 
             instruction_list.Add($"label LOOP2_START");
@@ -2340,7 +2451,8 @@ namespace p4gpc.dungeonframework.Accessors
         // Likewise, one function pulls the room ID not from a known memory location, but from an address in RBX
         private void CheckForRoomType(List<string> instruction_list, List<AccessorRegister> registers, FieldLoadType roomType, Int64 functionAddress, bool pullFieldFromMemory = false, bool roomIdFromRegAddr = false, bool checkBaseAgainstRam = false)
         {
-            instruction_list.Add($"mov {registers[0]}, {_fieldComparesLookupAddress}");
+            instruction_list.Add($"mov {registers[0]}, {_fieldComparesDataTable}");
+            instruction_list.Add($"mov {registers[0]}, [{registers[0]}+0x8]");
 
             if (!pullFieldFromMemory)
             {
@@ -2405,7 +2517,8 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"and {registers[2]}, 0xFF");
             instruction_list.Add($"add {registers[2]}, 1");
             instruction_list.Add($"shl {registers[2]}, 3");
-            instruction_list.Add($"mov {registers[0]}, {_fieldComparesLookupAddress}");
+            instruction_list.Add($"mov {registers[0]}, {_fieldComparesDataTable}");
+            instruction_list.Add($"mov {registers[0]}, [{registers[0]}+0x8]");
             instruction_list.Add($"add {registers[0]}, {registers[2]}");
             instruction_list.Add($"mov {registers[2]}, [{registers[0]}]");
 
@@ -2422,6 +2535,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"mov rax, {functionAddress}");
             instruction_list.Add($"{_logCrashCallMnemonic}");
 
+
             instruction_list.Add($"label FOUND_DATA");
 
             instruction_list.Add($"add {registers[1]}, 1");
@@ -2434,7 +2548,8 @@ namespace p4gpc.dungeonframework.Accessors
         private void GetRoomFlags(List<string> instruction_list, List<AccessorRegister> registers, Int64 functionAddress, bool pullFieldFromMemory = false)
         {
 
-            instruction_list.Add($"mov {registers[0]}, {_fieldComparesLookupAddress}");
+            instruction_list.Add($"mov {registers[0]}, {_fieldComparesDataTable}");
+            instruction_list.Add($"mov {registers[0]}, [{registers[0]}+0x8]");
 
             if (!pullFieldFromMemory)
             {
@@ -2470,7 +2585,8 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"and {registers[2]}, 0xFF");
             instruction_list.Add($"add {registers[2]}, 1");
             instruction_list.Add($"shl {registers[2]}, 3");
-            instruction_list.Add($"mov {registers[0]}, {_fieldComparesLookupAddress}");
+            instruction_list.Add($"mov {registers[0]}, {_fieldComparesDataTable}");
+            instruction_list.Add($"mov {registers[0]}, [{registers[0]}+0x8]");
             instruction_list.Add($"add {registers[0]}, {registers[2]}");
             instruction_list.Add($"mov {registers[2]}, [{registers[0]}]");
 
@@ -2483,7 +2599,7 @@ namespace p4gpc.dungeonframework.Accessors
             instruction_list.Add($"add {registers[1]}, 3");
             instruction_list.Add($"cmp {registers[1]}, {registers[2]}");
             instruction_list.Add($"jne LOOP_START3");
-            // Something's gone wrong, gonna crash the game for the moment
+            // Something's gone wrong, going to loop the game so that I can figure out where the crash happened
             instruction_list.Add($"mov rax, {functionAddress}");
             instruction_list.Add($"{_logCrashCallMnemonic}");
 

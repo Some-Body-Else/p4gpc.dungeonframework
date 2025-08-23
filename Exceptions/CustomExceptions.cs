@@ -22,7 +22,13 @@ namespace p4gpc.dungeonframework.Exceptions
 
         }
     }
+    public class MissingDefaultJSONException : CustomException
+    {
+        public MissingDefaultJSONException(Utilities _utils, string json_name) : base($"Missing JSON file in DungeonFramework JSON folder: {json_name}", _utils)
+        {
 
+        }
+    }
     public class InvalidSAddressValueLoadException : CustomException
     {
         public InvalidSAddressValueLoadException(Utilities _utils, Int64 address) : base($"$Failed to load value from function at address {address.ToString("X8")}", _utils)
